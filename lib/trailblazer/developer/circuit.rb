@@ -22,7 +22,12 @@ module Trailblazer
 
           _task = task_map[task, id]
           # outgoing
-          _task.outgoing = map[task].collect { |k,v| flow_map[_task, k, v] }
+          _task.outgoing = map[task].collect { |direction, target| flow_map[_task, direction, task_map[target, debug[target]]] }
+
+          # incoming
+          _task.incoming = map.collect { |source, hsh| hsh.find_all { |direction, target| target==task }
+            .collect { |direction, target| [direction, source] } }.flatten.each_cons(2)
+            .collect { |direction, source| flow_map[task_map[source, debug[source]], direction, _task] }
         end
 
 
@@ -37,7 +42,7 @@ module Trailblazer
 
       class FlowMap < Hash
         def [](source, direction, target)
-          key = [source, direction, target]
+          key = [source.id, direction, target.id]
 
           super(key) or self[key] = Flow.new(Circuit.get_id("Flow"), source, target)
         end
