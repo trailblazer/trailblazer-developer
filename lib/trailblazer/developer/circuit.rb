@@ -17,6 +17,8 @@ module Trailblazer
 
         map, stop_events, debug = circuit.to_fields
 
+        stop_events.each { |evt| task_map[evt, debug[task] || "End.#{task}"] }
+
         map.each do |task, connections|
           id = debug[task] || task.to_s
 
