@@ -2,6 +2,7 @@ require "test_helper"
 
 
 require "trailblazer/developer"
+require "trailblazer/circuit"
 
 require "representable"
 require "representable/xml"
@@ -20,7 +21,35 @@ module Event
   end
 end
 
+module Activity
+  class Task < Representable::Decorator
+    include Representable::XML
+    self.representation_wrap = :task
+
+    property :id,   attribute: true
+    property :name, attribute: true
+
+    collection :outgoing, exec_context: :decorator
+    collection :incoming, exec_context: :decorator
+
+    def outgoing
+      represented.outgoing.map(&:id)
+    end
+
+    def incoming
+      represented.incoming.map(&:id)
+    end
+  end
+end
+
 Start = Struct.new(:id, :outgoing)
+
+class Model < Representable::Decorator
+  include Representable::XML
+  self.representation_wrap = false
+
+  collection :task, decorator: Activity::Task
+end
 
 
 # puts Event::Start.new(start).to_xml
@@ -35,7 +64,7 @@ class DiagramXMLTest < Minitest::Spec
   end
 
   let(:blog) do
-    Circuit::Activity("blog.read/next") { |evt|
+    Circuit::Activity(id: "blog.read/next", Blog::Read=>:Read, Blog::Next=>:Next, Blog::Comment=>:Comment) { |evt|
       {
         evt[:Start]  => { Circuit::Right => Blog::Read },
         Blog::Read => { Circuit::Right => Blog::Next },
@@ -54,9 +83,18 @@ class DiagramXMLTest < Minitest::Spec
 </startEvent>
     }
   end
+
+  it do
+    require "trailblazer/developer/circuit"
+    model = Trailblazer::Developer::Circuit.bla(blog.circuit)
+
+    # raise model.task[0].inspect
+
+    puts Model.new(model).to_xml
+  end
 end
 
-# <bpmn:startEvent id="StartEvent_1">
+#     <bpmn:startEvent id="StartEvent_1">
 #       <bpmn:outgoing>SequenceFlow_1wsxfd0</bpmn:outgoing>
 #     </bpmn:startEvent>
 #     <bpmn:task id="Task_0vhpnru" name="write&#10;">
