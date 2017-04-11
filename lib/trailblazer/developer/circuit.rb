@@ -4,9 +4,9 @@ module Trailblazer
   module Developer
     module Circuit
       Task = Struct.new(:id, :name, :outgoing, :incoming)
-      Flow = Struct.new(:id, :source, :target)
+      Flow = Struct.new(:id, :sourceRef, :targetRef)
 
-      Model = Struct.new(:start_events, :end_events, :task, :flows)
+      Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
       module_function
       def bla(circuit)

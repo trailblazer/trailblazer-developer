@@ -42,6 +42,23 @@ module Activity
   end
 end
 
+class SequenceFlow < Representable::Decorator
+  include Representable::XML
+  self.representation_wrap = :SequenceFlow
+
+  property :id,   attribute: true
+  property :sourceRef, attribute: true, exec_context: :decorator
+  property :targetRef, attribute: true, exec_context: :decorator
+
+  def sourceRef
+    represented.sourceRef.id
+  end
+
+  def targetRef
+    represented.targetRef.id
+  end
+end
+
 Start = Struct.new(:id, :outgoing)
 
 class Model < Representable::Decorator
@@ -49,6 +66,7 @@ class Model < Representable::Decorator
   self.representation_wrap = false
 
   collection :task, decorator: Activity::Task
+  collection :sequence_flow, decorator: SequenceFlow
 end
 
 
