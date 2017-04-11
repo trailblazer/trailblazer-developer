@@ -17,26 +17,20 @@ module Trailblazer
 
         map, stop_events, debug = circuit.to_fields
 
-        stop_events.each { |evt| task_map[evt, debug[task] || "End.#{task}"] }
+        # Register all end events.
+        stop_events.each { |evt| task_map[evt, debug[evt] || evt] }
 
         map.each do |task, connections|
           id = debug[task] || task.to_s
 
           _task = task_map[task, id]
-          # outgoing
+          # Outgoing
           _task.outgoing = map[task].collect { |direction, target| flow_map[_task, direction, task_map[target, debug[target]]] }
 
-          # incoming
+          # Incoming. Feel free to improve this!
           _task.incoming = map.collect { |source, hsh| hsh.find_all { |direction, target| target==task }
             .collect { |direction, target| [direction, source] } }.flatten.each_cons(2)
             .collect { |direction, source| flow_map[task_map[source, debug[source]], direction, _task] }
-        end
-
-
-        puts task_map.inspect
-
-        map.each do |task, connections|
-          # tasks[task].
         end
 
         model = Model.new([], [], task_map.values, flow_map.values)
