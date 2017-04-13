@@ -63,7 +63,7 @@ module BPMN
 
     collection :start_events, as: :startEvent, decorator: Activity::Task, namespace: "bpmn"
     collection :task, decorator: Activity::Task,                          namespace: "bpmn"
-    collection :sequence_flow, decorator: SequenceFlow
+    collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow
   end
 
   class Definitions < Representable::Decorator
