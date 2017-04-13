@@ -8,23 +8,13 @@ require "representable"
 require "representable/xml"
 
 
-
-
-
-module Event
-  class Start < Representable::Decorator
-    include Representable::XML
-    self.representation_wrap = :startEvent
-
-    property :id, attribute: true
-    collection :outgoing
-  end
-end
-
 module Activity
   class Task < Representable::Decorator
     include Representable::XML
-    self.representation_wrap = :task
+    include Representable::XML::Namespace
+    # namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
+
+    self.representation_wrap = :task # overridden via :as.
 
     property :id,   attribute: true
     property :name, attribute: true
@@ -61,12 +51,28 @@ end
 
 Start = Struct.new(:id, :outgoing)
 
-class Model < Representable::Decorator
-  include Representable::XML
-  self.representation_wrap = false
+Definitions = Struct.new(:process, :diagram)
 
-  collection :task, decorator: Activity::Task
-  collection :sequence_flow, decorator: SequenceFlow
+module BPMN
+  class Process < Representable::Decorator
+    include Representable::XML
+    include Representable::XML::Namespace
+    self.representation_wrap = :process
+
+    namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
+
+    collection :start_events, as: :startEvent, decorator: Activity::Task, namespace: "bpmn"
+    collection :task, decorator: Activity::Task,                          namespace: "bpmn"
+    collection :sequence_flow, decorator: SequenceFlow
+  end
+
+  class Definitions < Representable::Decorator
+    include Representable::XML
+    include Representable::XML::Namespace
+    self.representation_wrap = :definitions
+
+    property :process, decorator: Process, namespace: "bpmn"
+  end
 end
 
 
@@ -92,23 +98,13 @@ class DiagramXMLTest < Minitest::Spec
     }
   end
 
-
-  it do
-  start = Start.new(1, ["SequenceFlow_12"])
-    Event::Start.new(start).to_xml.must_equal_xml %{
-<startEvent id="1">
-  <outgoing>SequenceFlow_12</outgoing>
-</startEvent>
-    }
-  end
-
   it do
     require "trailblazer/developer/circuit"
-    model = Trailblazer::Developer::Circuit.bla(blog.circuit)
+    model = Trailblazer::Developer::Circuit.bla(blog)
 
     # raise model.task[0].inspect
 
-    puts Model.new(model).to_xml
+    puts BPMN::Definitions.new(Definitions.new(model)).to_xml
   end
 end
 

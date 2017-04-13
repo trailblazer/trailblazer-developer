@@ -2,6 +2,8 @@ require 'securerandom'
 
 module Trailblazer
   module Developer
+    # Transforms a circuit into a debugging data structure that can be passed into
+    # a representer to render the bpmn:Diagram XML.
     module Circuit
       Task = Struct.new(:id, :name, :outgoing, :incoming)
       Flow = Struct.new(:id, :sourceRef, :targetRef)
@@ -9,16 +11,15 @@ module Trailblazer
       Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
       module_function
-      def bla(circuit)
+      def bla(activity)
+        circuit  = activity.circuit
         flow_map = FlowMap.new
         task_map = TaskMap.new
-
-        sequence_flows = []
 
         map, stop_events, debug = circuit.to_fields
 
         # Register all end events.
-        stop_events.each { |evt| task_map[evt, debug[evt] || evt] }
+        end_events = stop_events.collect { |evt| task_map[evt, debug[evt] || evt] }
 
         map.each do |task, connections|
           id = debug[task] || task.to_s
@@ -33,7 +34,9 @@ module Trailblazer
             .collect { |direction, source| flow_map[task_map[source, debug[source]], direction, _task] }
         end
 
-        model = Model.new([], [], task_map.values, flow_map.values)
+        start_events = [task_map[activity[:Start], nil]] # horrible API.
+
+        model = Model.new(start_events, [], task_map.values-start_events, flow_map.values)
       end
 
       class FlowMap < Hash

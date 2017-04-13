@@ -4,3 +4,4 @@ source 'https://rubygems.org'
 gemspec
 
 gem "trailblazer-circuit", path: "../circuit"
+gem "representable", path: "../representable"
