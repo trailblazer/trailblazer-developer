@@ -62,6 +62,7 @@ module BPMN
     namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
     collection :start_events, as: :startEvent, decorator: Activity::Task, namespace: "bpmn"
+    collection :end_events, as: :endEvent, decorator: Activity::Task, namespace: "bpmn"
     collection :task, decorator: Activity::Task,                          namespace: "bpmn"
     collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow
   end

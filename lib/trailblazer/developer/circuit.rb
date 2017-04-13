@@ -36,7 +36,7 @@ module Trailblazer
 
         start_events = [task_map[activity[:Start], nil]] # horrible API.
 
-        model = Model.new(start_events, [], task_map.values-start_events, flow_map.values)
+        model = Model.new(start_events, end_events, task_map.values-start_events-end_events, flow_map.values)
       end
 
       class FlowMap < Hash
