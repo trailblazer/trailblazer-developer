@@ -5,8 +5,6 @@ require "trailblazer/developer"
 require "trailblazer/diagram/bpmn"
 require "trailblazer/circuit"
 
-# puts Event::Start.new(start).to_xml
-
 class DiagramXMLTest < Minitest::Spec
   Circuit = Trailblazer::Circuit
 
@@ -31,15 +29,3 @@ class DiagramXMLTest < Minitest::Spec
     puts Trailblazer::Diagram::BPMN.to_xml(blog)
   end
 end
-
-#     <bpmn:startEvent id="StartEvent_1">
-#       <bpmn:outgoing>SequenceFlow_1wsxfd0</bpmn:outgoing>
-#     </bpmn:startEvent>
-#     <bpmn:task id="Task_0vhpnru" name="write&#10;">
-#       <bpmn:incoming>SequenceFlow_1wsxfd0</bpmn:incoming>
-#       <bpmn:outgoing>SequenceFlow_0iwxv4o</bpmn:outgoing>
-#     </bpmn:task>
-#     <bpmn:sequenceFlow id="SequenceFlow_1wsxfd0" sourceRef="StartEvent_1" targetRef="Task_0vhpnru" />
-# <bpmn:endEvent id="EndEvent_03m4k14">
-#       <bpmn:incoming>SequenceFlow_1cisj8a</bpmn:incoming>
-#     </bpmn:endEvent>

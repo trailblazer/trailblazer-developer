@@ -6,6 +6,7 @@ require "trailblazer/developer/circuit"
 module Trailblazer
   module Diagram
     module BPMN
+      # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
       def self.to_xml(activity)
         model = Trailblazer::Developer::Circuit.bla(activity)
 
