@@ -28,12 +28,7 @@ class DiagramXMLTest < Minitest::Spec
   end
 
   it do
-    require "trailblazer/developer/circuit"
-    model = Trailblazer::Developer::Circuit.bla(blog)
-
-    # raise model.task[0].inspect
-
-    puts Trailblazer::Diagram::BPMN::Representer::Definitions.new(Trailblazer::Diagram::BPMN::Definitions.new(model)).to_xml
+    puts Trailblazer::Diagram::BPMN.to_xml(blog)
   end
 end
 

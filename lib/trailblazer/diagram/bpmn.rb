@@ -1,9 +1,17 @@
 require "representable"
 require "representable/xml"
 
+require "trailblazer/developer/circuit"
+
 module Trailblazer
   module Diagram
     module BPMN
+      def self.to_xml(activity)
+        model = Trailblazer::Developer::Circuit.bla(activity)
+
+        Representer::Definitions.new(Definitions.new(model)).to_xml
+      end
+
       Definitions = Struct.new(:process, :diagram)
 
       # Representers for BPMN XML.
