@@ -67,12 +67,21 @@ module BPMN
     collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow
   end
 
+  class Diagram < Representable::Decorator
+    include Representable::XML
+    include Representable::XML::Namespace
+    self.representation_wrap = :diagram
+
+    namespace "http://www.omg.org/spec/BPMN/20100524/DI"
+  end
+
   class Definitions < Representable::Decorator
     include Representable::XML
     include Representable::XML::Namespace
-    self.representation_wrap = :definitions
+    self.representation_wrap = :"bpmn:definitions" # TODO: how to add a "self" namespace as if someone called to_xml(namespace: :bmpn) on us?
 
     property :process, decorator: Process, namespace: "bpmn"
+    property :diagram, decorator: Diagram, namespace: "bpmndi"
   end
 end
 
