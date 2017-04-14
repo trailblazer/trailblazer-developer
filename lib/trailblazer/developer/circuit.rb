@@ -21,16 +21,19 @@ module Trailblazer
         # Register all end events.
         end_events = stop_events.collect { |evt| task_map[evt, debug[evt] || evt] }
 
-        map.each do |task, connections|
-          id = debug[task] || task.to_s
+        # make End events show up, too.
+        map = map.merge( stop_events.collect { |evt| [evt, {}] }.to_h)
 
+        map.each do |task, connections|
+          id    = debug[task] || task.to_s
           _task = task_map[task, id]
+
           # Outgoing
           _task.outgoing = map[task].collect { |direction, target| flow_map[_task, direction, task_map[target, debug[target]]] }
 
           # Incoming. Feel free to improve this!
           _task.incoming = map.collect { |source, hsh| hsh.find_all { |direction, target| target==task }
-            .collect { |direction, target| [direction, source] } }.flatten.each_cons(2)
+            .collect { |direction, target| [direction, source] } }.flatten.each_slice(2)
             .collect { |direction, source| flow_map[task_map[source, debug[source]], direction, _task] }
         end
 
