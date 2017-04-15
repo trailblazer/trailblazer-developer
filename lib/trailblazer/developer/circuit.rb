@@ -6,7 +6,7 @@ module Trailblazer
     # a representer to render the bpmn:Diagram XML.
     module Circuit
       Task = Struct.new(:id, :name, :outgoing, :incoming)
-      Flow = Struct.new(:id, :sourceRef, :targetRef)
+      Flow = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
 
       Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
@@ -53,7 +53,7 @@ module Trailblazer
         def [](source, direction, target)
           key = [source.id, direction, target.id]
 
-          super(key) or self[key] = Flow.new(@id_generator.("Flow"), source, target)
+          super(key) or self[key] = Flow.new(@id_generator.("Flow"), source, target, direction)
         end
       end
 

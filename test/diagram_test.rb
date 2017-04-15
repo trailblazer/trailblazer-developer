@@ -59,11 +59,21 @@ class DiagramXMLTest < Minitest::Spec
       <bpmn:outgoing>Flow_10</bpmn:outgoing>
       <bpmn:incoming>Flow_9</bpmn:incoming>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_2" targetRef="Task_3"/>
-    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="Task_5"/>
-    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_5" targetRef="Task_1"/>
-    <bpmn:sequenceFlow id="Flow_9" sourceRef="Task_5" targetRef="Task_8"/>
-    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_8" targetRef="Task_1"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_2" targetRef="Task_3">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="Task_5">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_5" targetRef="Task_1">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Task_5" targetRef="Task_8">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_8" targetRef="Task_1">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
   </bpmn:process>
 </bpmn:definitions>}
   end

@@ -43,11 +43,15 @@ module Trailblazer
 
         class SequenceFlow < Representable::Decorator
           include Representable::XML
-          self.representation_wrap = :SequenceFlow
+          include Representable::XML::Namespace
+          self.representation_wrap = :sequenceFlow
 
           property :id,   attribute: true
           property :sourceRef, attribute: true, exec_context: :decorator
           property :targetRef, attribute: true, exec_context: :decorator
+          property :direction, as: :conditionExpression
+
+          namespace "bla"
 
           def sourceRef
             represented.sourceRef.id
@@ -68,7 +72,7 @@ module Trailblazer
           collection :start_events, as: :startEvent, decorator: Task, namespace: "bpmn"
           collection :end_events, as: :endEvent, decorator: Task,     namespace: "bpmn"
           collection :task, decorator: Task,                          namespace: "bpmn"
-          collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow
+          collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow, namespace: "bpmn"
         end
 
         class Diagram < Representable::Decorator
