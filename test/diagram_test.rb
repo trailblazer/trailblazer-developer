@@ -8,6 +8,16 @@ require "trailblazer/circuit"
 class DiagramXMLTest < Minitest::Spec
   Circuit = Trailblazer::Circuit
 
+  class Id
+    def initialize
+      @count = 0
+    end
+
+    def call(name)
+      "#{name}_#{@count += 1}"
+    end
+  end
+
   module Blog
     Read    = ->(*) { snippet }
     Next    = ->(*) { snippet }
@@ -26,6 +36,35 @@ class DiagramXMLTest < Minitest::Spec
   end
 
   it do
-    puts Trailblazer::Diagram::BPMN.to_xml(blog)
+    puts xml = Trailblazer::Diagram::BPMN.to_xml(blog, id_generator: Id.new)
+    xml.must_equal %{<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI">
+  <bpmn:process>
+    <bpmn:startEvent id="Task_2" name="#&lt;Start: default {}&gt;">
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Task_1" name="#&lt;End: default {}&gt;">
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="Task_3" name="Read">
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="Task_5" name="Next">
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+      <bpmn:outgoing>Flow_9</bpmn:outgoing>
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="Task_8" name="Comment">
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+      <bpmn:incoming>Flow_9</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_2" targetRef="Task_3"/>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_3" targetRef="Task_5"/>
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_5" targetRef="Task_1"/>
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Task_5" targetRef="Task_8"/>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_8" targetRef="Task_1"/>
+  </bpmn:process>
+</bpmn:definitions>}
   end
 end

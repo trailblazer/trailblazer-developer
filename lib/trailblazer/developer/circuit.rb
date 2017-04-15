@@ -11,10 +11,10 @@ module Trailblazer
       Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
       module_function
-      def bla(activity)
+      def bla(activity, id_generator: Id)
         circuit  = activity.circuit
-        flow_map = FlowMap.new
-        task_map = TaskMap.new
+        flow_map = FlowMap.new(id_generator)
+        task_map = TaskMap.new(id_generator)
 
         map, stop_events, debug = circuit.to_fields
 
@@ -42,25 +42,30 @@ module Trailblazer
         model = Model.new(start_events, end_events, task_map.values-start_events-end_events, flow_map.values)
       end
 
-      class FlowMap < Hash
+      class Map < Hash
+        def initialize(id_generator=Id)
+          @id_generator = id_generator
+        end
+      end
+
+      # TODO: make those two one.
+      class FlowMap < Map
         def [](source, direction, target)
           key = [source.id, direction, target.id]
 
-          super(key) or self[key] = Flow.new(Circuit.get_id("Flow"), source, target)
+          super(key) or self[key] = Flow.new(@id_generator.("Flow"), source, target)
         end
       end
 
-      class TaskMap < Hash
+      class TaskMap < Map
         def [](step, name)
           key = step
 
-          super(key) or self[key] = Task.new(Circuit.get_id("Task"), name, [], [])
+          super(key) or self[key] = Task.new(@id_generator.("Task"), name, [], [])
         end
       end
 
-      def get_id(prefix)
-        "#{prefix}_#{SecureRandom.hex[0..8]}"
-      end
+      Id = ->(prefix) { "#{prefix}_#{SecureRandom.hex[0..8]}" }
     end
   end
 end

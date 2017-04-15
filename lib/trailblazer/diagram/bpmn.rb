@@ -7,9 +7,11 @@ module Trailblazer
   module Diagram
     module BPMN
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
-      def self.to_xml(activity)
-        model = Trailblazer::Developer::Circuit.bla(activity)
+      def self.to_xml(activity, *args)
+        # convert circuit to representable data structure.
+        model = Trailblazer::Developer::Circuit.bla(activity, *args)
 
+        # render XML.
         Representer::Definitions.new(Definitions.new(model)).to_xml
       end
 
