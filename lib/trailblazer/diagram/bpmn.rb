@@ -26,7 +26,7 @@ module Trailblazer
         y_left  = 300
 
         shape_width = 33
-        shape_to_shape = 18
+        shape_to_shape = 45
 
         current = start_x
         shapes = []
@@ -60,7 +60,7 @@ module Trailblazer
           source = shapes.find { |shape| shape.id == "Shape_#{flow.sourceRef.id}" }.bounds
           target = shapes.find { |shape| shape.id == "Shape_#{flow.targetRef.id}" }.bounds
 
-          edges << Edge.new("SequenceFlow_#{flow.id}", flow.id, Path(source, target))
+          edges << Edge.new("SequenceFlow_#{flow.id}", flow.id, Path(source, target, target.x!=current))
         end
 
         diagram = Struct.new(:plane).new(Plane.new(shapes, edges))
@@ -69,11 +69,13 @@ module Trailblazer
         Representer::Definitions.new(Definitions.new(model, diagram)).to_xml
       end
 
-      def self.Path(source, target)
+      def self.Path(source, target, do_straight_line)
         if source.y == target.y # --->
           [ Waypoint.new(*fromRight(source)), Waypoint.new(*toLeft(target))]
         else
-          if target.y > source.y # target below source.
+          if do_straight_line
+            [ Waypoint.new(*fromBottom(source)), Waypoint.new(*toLeft(target)) ]
+          elsif target.y > source.y # target below source.
             [ l = Waypoint.new(*fromBottom(source)), r=Waypoint.new(l.x, target.y+target.height/2), Waypoint.new(target.x, r.y) ]
           else # target above source.
             [ l = Waypoint.new(*fromTop(source)), r=Waypoint.new(l.x, target.y+target.height/2), Waypoint.new(target.x, r.y) ]
