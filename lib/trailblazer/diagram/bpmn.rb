@@ -6,8 +6,11 @@ require "trailblazer/developer/circuit"
 module Trailblazer
   module Diagram
     module BPMN
-        Shape = Struct.new(:id, :element, :bounds)
+        Plane  = Struct.new(:shapes, :edges)
+        Shape  = Struct.new(:id, :element, :bounds)
+        Edge   = Struct.new(:id, :element, :waypoints)
         Bounds = Struct.new(:x, :y, :width, :height)
+        Waypoint = Struct.new(:x, :y)
 
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
       def self.to_xml(activity, railway, *args)
@@ -31,9 +34,11 @@ module Trailblazer
         current = start_x
         shapes = []
 
+        # add start.
         shapes << Shape.new("Shape_#{model.start_events[0].id}", model.start_events[0].id, Bounds.new(current, y_right, shape_width, shape_width))
         current += shape_width+shape_to_shape
 
+        # add tasks.
         linear_tasks.each do |name| # DISCUSS: assuming that task is in correct linear order.
           task = model.task.find { |t| t.name == name } or raise "unfixable"
 
@@ -43,12 +48,26 @@ module Trailblazer
           current += shape_width+shape_to_shape
         end
 
+        # add ends.
+        raise "custom end events are not handled, yet" if model.end_events.size != 4
+        # raise "@@@@@ #{model.end_events.last.name.inspect}"
+        shapes << Shape.new("Shape_#{model.end_events[0].id}", model.end_events[0].id, Bounds.new(current, y_right, shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.end_events[1].id}", model.end_events[1].id, Bounds.new(current, y_left,  shape_width, shape_width))
+
+        shapes << Shape.new("Shape_#{model.end_events[2].id}", model.end_events[2].id, Bounds.new(current, y_right-90, shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.end_events[3].id}", model.end_events[3].id, Bounds.new(current, y_left+90,  shape_width, shape_width))
 
 
-        pplane = Struct.new(:shapes)
+        edges = []
+        model.sequence_flow.each do |flow|
+          # puts flow.sourceRef.id
+          source = shapes.find { |shape| shape.id == "Shape_#{flow.sourceRef.id}" }.bounds
+          target = shapes.find { |shape| shape.id == "Shape_#{flow.targetRef.id}" }.bounds
 
-        # shapes = [sshape.new(1, "bla", bbounds.new(1,2,3,4))]
-        diagram = Struct.new(:plane).new(pplane.new(shapes))
+          edges << Edge.new("SequenceFlow_#{flow.id}", flow.id, [Waypoint.new(source.x, source.y), Waypoint.new(target.x, target.y), ])
+        end
+
+        diagram = Struct.new(:plane).new(Plane.new(shapes, edges))
 
         # render XML.
         Representer::Definitions.new(Definitions.new(model, diagram)).to_xml
@@ -149,7 +168,25 @@ module Trailblazer
 
                 property :bounds, as: "Bounds", decorator: Bounds
               end
-              # collection :edges,  as: "BPMNEdge"
+
+              collection :edges,  as: "BPMNEdge" do
+                self.representation_wrap = :BPMNEdge
+                namespace "http://www.omg.org/spec/BPMN/20100524/DI"
+
+                property :id,                        attribute: true
+                property :element, as: :bpmnElement, attribute: true
+
+                # <di:waypoint xsi:type="dc:Point" x="136" y="118" />
+                collection :waypoints, as: :waypoint do
+                  namespace "http://www.omg.org/spec/DD/20100524/DI"
+
+                  property :type, as: "xsi:type", exec_context: :decorator, attribute: true
+                  property :x, attribute: true
+                  property :y, attribute: true
+
+                  def type; "dc:Point" end
+                end
+              end
             end
 
             # namespace "http://www.w3.org/2001/XMLSchema-instance" # xsi
@@ -166,8 +203,10 @@ module Trailblazer
           namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
           namespace_def bpmn: "http://www.omg.org/spec/BPMN/20100524/MODEL"
           namespace_def bpmndi: "http://www.omg.org/spec/BPMN/20100524/DI"
+          namespace_def di: "http://www.omg.org/spec/DD/20100524/DI"
 
-          namespace_def dc: "http://www.omg.org/spec/DD/20100524/DC"
+          namespace_def dc: "http://www.omg.org/spec/DD/20100524/DC" # <cd:Bounds>
+          namespace_def xsi: "http://www.w3.org/2001/XMLSchema-instance" # used in waypoint.
 
           property :process, decorator: Process
           property :diagram, decorator: Diagram::Diagram, as: :BPMNDiagram

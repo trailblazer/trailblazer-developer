@@ -26,7 +26,6 @@ module Trailblazer
 
         map.each do |task, connections|
           id    = debug[task] || task.to_s
-          puts "@@@@@ #{id.inspect}"
           _task = task_map[task, id]
 
           # Outgoing
