@@ -24,6 +24,17 @@ class DiagramXMLTest < Minitest::Spec
     Comment = ->(*) { snippet }
   end
 
+  require "trailblazer/operation"
+  class Create < Trailblazer::Operation
+    step :a
+    step :b
+    step :bb
+    failure :c
+    step :d
+    failure :e
+    failure :f
+  end
+
   let(:blog) do
     Circuit::Activity(id: "blog.read/next", Blog::Read=>:Read, Blog::Next=>:Next, Blog::Comment=>:Comment) { |evt|
       {
@@ -33,6 +44,12 @@ class DiagramXMLTest < Minitest::Spec
         Blog::Comment => { Circuit::Right => evt[:End] }
       }
     }
+  end
+
+  it do
+    puts xml = Trailblazer::Diagram::BPMN.to_xml(Create["pipetree"], Create["railway"], id_generator: Id.new)
+    File.write("/home/nick/projects/wushi/app/berry.bpmn", xml)
+    xml.must_equal %{}
   end
 
   it do
