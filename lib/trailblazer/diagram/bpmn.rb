@@ -22,7 +22,7 @@ module Trailblazer
         class Task < Representable::Decorator
           include Representable::XML
           include Representable::XML::Namespace
-          # namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
+          namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
           self.representation_wrap = :task # overridden via :as.
 
@@ -45,13 +45,12 @@ module Trailblazer
           include Representable::XML
           include Representable::XML::Namespace
           self.representation_wrap = :sequenceFlow
+          namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
           property :id,   attribute: true
           property :sourceRef, attribute: true, exec_context: :decorator
           property :targetRef, attribute: true, exec_context: :decorator
           property :direction, as: :conditionExpression
-
-          namespace "bla"
 
           def sourceRef
             represented.sourceRef.id
@@ -69,10 +68,10 @@ module Trailblazer
 
           namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
-          collection :start_events, as: :startEvent, decorator: Task, namespace: "bpmn"
-          collection :end_events, as: :endEvent, decorator: Task,     namespace: "bpmn"
-          collection :task, decorator: Task,                          namespace: "bpmn"
-          collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow, namespace: "bpmn"
+          collection :start_events, as: :startEvent, decorator: Task
+          collection :end_events, as: :endEvent, decorator: Task
+          collection :task, decorator: Task
+          collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow
         end
 
         class Diagram < Representable::Decorator
@@ -81,16 +80,49 @@ module Trailblazer
           self.representation_wrap = :diagram
 
           namespace "http://www.omg.org/spec/BPMN/20100524/DI"
+
+          namespace "http://www.omg.org/spec/DD/20100524/DC" # dc
+          namespace "http://www.omg.org/spec/DD/20100524/DI" # di
+          namespace "http://www.w3.org/2001/XMLSchema-instance" # xsi
         end
 
         class Definitions < Representable::Decorator
           include Representable::XML
           include Representable::XML::Namespace
-          self.representation_wrap = :"bpmn:definitions" # TODO: how to add a "self" namespace as if someone called to_xml(namespace: :bmpn) on us?
+          self.representation_wrap = :definitions
 
-          property :process, decorator: Process, namespace: "bpmn"
-          property :diagram, decorator: Diagram, namespace: "bpmndi"
+          namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
+          namespace_def bpmn: "http://www.omg.org/spec/BPMN/20100524/MODEL"
+          namespace_def bpmndi: "http://www.omg.org/spec/BPMN/20100524/DI"
+
+          property :process, decorator: Process
+          # property :diagram, decorator: Diagram
         end
+
+        # <bpmndi:BPMNShape id="_BPMNShape_Task_3" bpmnElement="Task_3">
+        #   <dc:Bounds x="236" y="78" width="100" height="80" />
+        # </bpmndi:BPMNShape>
+
+        # module Diagram
+        #   class Shape < Representable::Decorator
+        #     include Representable::XML
+        #     include Representable::XML::Namespace
+        #     self.representation_wrap = :"BPMNShape"
+
+        #     property :id
+        #     property :bpmnElement
+        #     property :bounds do
+        #       self.representation_wrap = :"Bounds"
+        #       namespace "http://www.omg.org/spec/DD/20100524/DC" # namespace_uri / uri_reference
+
+        #       property :x,      attribute: true
+        #       property :y,      attribute: true
+        #       property :width,  attribute: true
+        #       property :height, attribute: true
+        #     end
+        #   end
+        # end
+
       end
     end
   end
