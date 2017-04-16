@@ -18,7 +18,6 @@ module Trailblazer
         model = Trailblazer::Developer::Circuit.bla(activity, *args)
 
         raise "something wrong!" if model.task.size != railway.size
-        # raise railway[0].last[:name].inspect
 
         linear_tasks = railway.collect { |row| row.last[:name] } # [:a, :b, :bb, :c, :d, :e, :f]
 
@@ -28,8 +27,6 @@ module Trailblazer
 
         shape_width = 33
         shape_to_shape = 18
-
-        # steps_total_width = railway.size * (shape_width + shape_to_shape)
 
         current = start_x
         shapes = []
@@ -60,17 +57,40 @@ module Trailblazer
 
         edges = []
         model.sequence_flow.each do |flow|
-          # puts flow.sourceRef.id
           source = shapes.find { |shape| shape.id == "Shape_#{flow.sourceRef.id}" }.bounds
           target = shapes.find { |shape| shape.id == "Shape_#{flow.targetRef.id}" }.bounds
 
-          edges << Edge.new("SequenceFlow_#{flow.id}", flow.id, [Waypoint.new(source.x, source.y), Waypoint.new(target.x, target.y), ])
+          edges << Edge.new("SequenceFlow_#{flow.id}", flow.id, Path(source, target))
         end
 
         diagram = Struct.new(:plane).new(Plane.new(shapes, edges))
 
         # render XML.
         Representer::Definitions.new(Definitions.new(model, diagram)).to_xml
+      end
+
+      def self.Path(source, target)
+        if source.y == target.y # --->
+          [ Waypoint.new(*fromRight(source)), Waypoint.new(*toLeft(target))]
+        else
+          if target.y > source.y # target below source.
+            [ l = Waypoint.new(*fromBottom(source)), r=Waypoint.new(l.x, target.y+target.height/2), Waypoint.new(target.x, r.y) ]
+          else # target above source.
+            [ l = Waypoint.new(*fromTop(source)), r=Waypoint.new(l.x, target.y+target.height/2), Waypoint.new(target.x, r.y) ]
+          end
+        end
+      end
+      def self.fromRight(left)
+        [ left.x + left.width, left.y + left.height/2 ]
+      end
+      def self.toLeft(bounds)
+        [ bounds.x, bounds.y + bounds.height/2 ]
+      end
+      def self.fromBottom(bounds)
+        [ bounds.x + bounds.width/2, bounds.y+bounds.height ]
+      end
+      def self.fromTop(bounds)
+        [ bounds.x + bounds.width/2, bounds.y ]
       end
 
       Definitions = Struct.new(:process, :diagram)
