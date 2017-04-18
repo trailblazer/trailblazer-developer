@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "test_xml"
 
-  spec.add_dependency "representable", ">= 3.0.0"
+  spec.add_dependency "representable", ">= 3.0.4"
   spec.add_dependency "nokogiri"
 
   spec.add_dependency "trailblazer-circuit"
