@@ -13,13 +13,13 @@ module Trailblazer
         Waypoint = Struct.new(:x, :y)
 
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
-      def self.to_xml(activity, railway, *args)
+      def self.to_xml(activity, sequence, *args)
         # convert circuit to representable data structure.
         model = Trailblazer::Developer::Circuit.bla(activity, *args)
 
-        raise "something wrong!" if model.task.size != railway.size
+        raise "something wrong!" if model.task.size != sequence.size
 
-        linear_tasks = railway.collect { |row| row.last[:name] } # [:a, :b, :bb, :c, :d, :e, :f]
+        linear_tasks = sequence.collect { |row| row.options[:name] } # [:a, :b, :bb, :c, :d, :e, :f]
 
         start_x = 200
         y_right = 200
