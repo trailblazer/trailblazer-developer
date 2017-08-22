@@ -12,57 +12,16 @@ module Trailblazer
 
       module_function
       def bla(activity, id_generator: Id)
-        circuit  = activity.circuit
-        flow_map = FlowMap.new(id_generator)
-        task_map = TaskMap.new(id_generator)
+        graph  = activity.graph
 
-        map, stop_events, debug = circuit.to_fields
+        start_events = graph.find_all([:Start, :default]) # FIXME.
+        end_events   = graph.find_all { |node| graph.successors(node).size == 0 }
+        tasks = graph.find_all { |node| true }
+        tasks -= start_events
+        tasks -= end_events
+        edges        = graph.find_all { |node| true }.collect { |node| graph.successors(node).collect { |edge, node| edge } }.flatten(1)
 
-        # Register all end events.
-        end_events = stop_events.collect { |evt| task_map[evt, debug[evt] || evt] }
-
-        # make End events show up, too.
-        map = map.merge( stop_events.collect { |evt| [evt, {}] }.to_h)
-
-        map.each do |task, connections|
-          id    = debug[task] || task.to_s
-          _task = task_map[task, id]
-
-          # Outgoing
-          _task.outgoing = map[task].collect { |direction, target| flow_map[_task, direction, task_map[target, debug[target]]] }
-
-          # Incoming. Feel free to improve this!
-          _task.incoming = map.collect { |source, hsh| hsh.find_all { |direction, target| target==task }
-            .collect { |direction, target| [direction, source] } }.flatten.each_slice(2)
-            .collect { |direction, source| flow_map[task_map[source, debug[source]], direction, _task] }
-        end
-
-        start_events = [task_map[activity[:Start], nil]] # horrible API.
-
-        model = Model.new(start_events, end_events, task_map.values-start_events-end_events, flow_map.values)
-      end
-
-      class Map < Hash
-        def initialize(id_generator=Id)
-          @id_generator = id_generator
-        end
-      end
-
-      # TODO: make those two one.
-      class FlowMap < Map
-        def [](source, direction, target)
-          key = [source.id, direction, target.id]
-
-          super(key) or self[key] = Flow.new(@id_generator.("Flow"), source, target, direction)
-        end
-      end
-
-      class TaskMap < Map
-        def [](step, name)
-          key = step
-
-          super(key) or self[key] = Task.new(@id_generator.("Task"), name, [], [])
-        end
+        model = Model.new(start_events, end_events, tasks, edges)
       end
 
       Id = ->(prefix) { "#{prefix}_#{SecureRandom.hex[0..8]}" }
