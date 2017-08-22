@@ -5,7 +5,9 @@ module Trailblazer
     # Transforms a circuit into a debugging data structure that can be passed into
     # a representer to render the bpmn:Diagram XML.
     module Circuit
-      Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
+      Model = Struct.new(:id, :start_events, :end_events, :task, :sequence_flow)
+      Task  = Struct.new(:id, :name, :outgoing, :incoming)
+      Flow  = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
 
       module_function
       def bla(activity, id_generator: Id)
@@ -25,13 +27,10 @@ module Trailblazer
 
         edges        = edges.collect { |edge| Flow.new( edge[:id], edge[:source][:id], edge[:target][:id], edge[:_wrapped] ) }
 
-        return Model.new(start_events, end_events, tasks, edges), graph
+        return Model.new("process-fixme", start_events, end_events, tasks, edges), graph
       end
 
-      Task = Struct.new(:id, :name, :outgoing, :incoming)
-      Flow = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
 
-      Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
       Id = ->(prefix) { "#{prefix}_#{SecureRandom.hex[0..8]}" }
     end

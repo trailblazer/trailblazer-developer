@@ -6,7 +6,7 @@ require "trailblazer/developer/circuit"
 module Trailblazer
   module Diagram
     module BPMN
-        Plane  = Struct.new(:shapes, :edges)
+        Plane  = Struct.new(:element, :shapes, :edges)
         Shape  = Struct.new(:id, :element, :bounds)
         Edge   = Struct.new(:id, :element, :waypoints)
         Bounds = Struct.new(:x, :y, :width, :height)
@@ -66,7 +66,7 @@ module Trailblazer
           edges << Edge.new("SequenceFlow_#{flow[:id]}", flow[:id], Path(source, target, target.x != current))
         end
 
-        diagram = Struct.new(:plane).new(Plane.new(shapes, edges))
+        diagram = Struct.new(:plane).new(Plane.new(model.id, shapes, edges))
 
         # start_events = model.start_events.collect { |evt| Task.new(  ) }
 
@@ -159,6 +159,8 @@ module Trailblazer
 
           namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
+          property :id, attribute: true
+
           collection :start_events, as: :startEvent, decorator: Task
           collection :end_events, as: :endEvent, decorator: Task
           collection :task, decorator: Task
@@ -189,6 +191,8 @@ module Trailblazer
 
             property :plane, as: "BPMNPlane" do
               self.representation_wrap = :plane
+
+              property :element, as: :bpmnElement, attribute: true
 
               namespace "http://www.omg.org/spec/BPMN/20100524/DI"
 

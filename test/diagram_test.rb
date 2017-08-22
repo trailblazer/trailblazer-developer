@@ -48,7 +48,9 @@ class DiagramXMLTest < Minitest::Spec
 
   it do
     puts xml = Trailblazer::Diagram::BPMN.to_xml(Create["__activity__"], Create["__sequence__"], id_generator: Id.new)
-    # File.write("/home/nick/projects/wushi/app/berry.bpmn", xml)
+
+    File.write("berry.bpmn", xml)
+
     xml.must_equal File.read(File.dirname(__FILE__) + "/xml/operation.bpmn").chomp
   end
 end
