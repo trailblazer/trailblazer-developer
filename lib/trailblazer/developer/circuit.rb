@@ -5,9 +5,6 @@ module Trailblazer
     # Transforms a circuit into a debugging data structure that can be passed into
     # a representer to render the bpmn:Diagram XML.
     module Circuit
-      Task = Struct.new(:id, :name, :outgoing, :incoming)
-      Flow = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
-
       Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
       module_function
@@ -21,8 +18,20 @@ module Trailblazer
         tasks -= end_events
         edges        = graph.find_all { |node| true }.collect { |node| graph.successors(node).collect { |edge, node| edge } }.flatten(1)
 
-        model = Model.new(start_events, end_events, tasks, edges)
+
+        start_events = start_events.collect { |evt| Task.new( evt[:id], evt[:id], graph.successors(evt).collect(&:first), graph.predecessors(evt).collect(&:last) ) }
+        end_events   =   end_events.collect { |evt| Task.new( evt[:id], evt[:id], graph.successors(evt).collect(&:first), graph.predecessors(evt).collect(&:last) ) }
+        tasks        =        tasks.collect { |evt| Task.new( evt[:id], evt[:id], graph.successors(evt).collect(&:first), graph.predecessors(evt).collect(&:last) ) }
+
+        edges        = edges.collect { |edge| Flow.new( edge[:id], edge[:source][:id], edge[:target][:id], edge[:_wrapped] ) }
+
+        return Model.new(start_events, end_events, tasks, edges), graph
       end
+
+      Task = Struct.new(:id, :name, :outgoing, :incoming)
+      Flow = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
+
+      Model = Struct.new(:start_events, :end_events, :task, :sequence_flow)
 
       Id = ->(prefix) { "#{prefix}_#{SecureRandom.hex[0..8]}" }
     end

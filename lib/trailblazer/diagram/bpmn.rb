@@ -15,11 +15,14 @@ module Trailblazer
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
       def self.to_xml(activity, sequence, *args)
         # convert circuit to representable data structure.
-        model = Trailblazer::Developer::Circuit.bla(activity, *args)
+        model, graph = Trailblazer::Developer::Circuit.bla(activity, *args)
+
+        # require "pp"
+        # pp model
 
         raise "something wrong!" if model.task.size != sequence.size
 
-        linear_tasks = sequence.collect { |row| row.options[:name] } # [:a, :b, :bb, :c, :d, :e, :f]
+        linear_tasks = sequence.collect { |row| row.data[:id] } # [:a, :b, :bb, :c, :d, :e, :f], in correct order.
 
         start_x = 200
         y_right = 200
@@ -32,42 +35,50 @@ module Trailblazer
         shapes = []
 
         # add start.
-        shapes << Shape.new("Shape_#{model.start_events[0].id}", model.start_events[0].id, Bounds.new(current, y_right, shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.start_events[0][:id]}", model.start_events[0][:id], Bounds.new(current, y_right, shape_width, shape_width))
         current += shape_width+shape_to_shape
 
         # add tasks.
         linear_tasks.each do |name| # DISCUSS: assuming that task is in correct linear order.
-          task = model.task.find { |t| t.name == name } or raise "unfixable"
+          task = model.task.find { |t| t[:id] == name } or raise "unfixable"
 
-          is_right = task.incoming[0].direction == Trailblazer::Circuit::Right
+          is_right = task.incoming[0][:_wrapped] == Trailblazer::Circuit::Right
 
-          shapes << Shape.new("Shape_#{task.id}", task.id, Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_width))
+          shapes << Shape.new("Shape_#{task[:id]}", task[:id], Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_width))
           current += shape_width+shape_to_shape
         end
 
         # add ends.
         raise "custom end events are not handled, yet" if model.end_events.size != 4
         # raise "@@@@@ #{model.end_events.last.name.inspect}"
-        shapes << Shape.new("Shape_#{model.end_events[0].id}", model.end_events[0].id, Bounds.new(current, y_right, shape_width, shape_width))
-        shapes << Shape.new("Shape_#{model.end_events[1].id}", model.end_events[1].id, Bounds.new(current, y_left,  shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.end_events[0][:id]}", model.end_events[0][:id], Bounds.new(current, y_right, shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.end_events[1][:id]}", model.end_events[1][:id], Bounds.new(current, y_left,  shape_width, shape_width))
 
-        shapes << Shape.new("Shape_#{model.end_events[2].id}", model.end_events[2].id, Bounds.new(current, y_right-90, shape_width, shape_width))
-        shapes << Shape.new("Shape_#{model.end_events[3].id}", model.end_events[3].id, Bounds.new(current, y_left+90,  shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.end_events[2][:id]}", model.end_events[2][:id], Bounds.new(current, y_right-90, shape_width, shape_width))
+        shapes << Shape.new("Shape_#{model.end_events[3][:id]}", model.end_events[3][:id], Bounds.new(current, y_left+90,  shape_width, shape_width))
 
 
         edges = []
         model.sequence_flow.each do |flow|
-          source = shapes.find { |shape| shape.id == "Shape_#{flow.sourceRef.id}" }.bounds
-          target = shapes.find { |shape| shape.id == "Shape_#{flow.targetRef.id}" }.bounds
+          source = shapes.find { |shape| shape.id == "Shape_#{flow.sourceRef}" }.bounds
+          target = shapes.find { |shape| shape.id == "Shape_#{flow.targetRef}" }.bounds
 
-          edges << Edge.new("SequenceFlow_#{flow.id}", flow.id, Path(source, target, target.x!=current))
+          edges << Edge.new("SequenceFlow_#{flow[:id]}", flow[:id], Path(source, target, target.x != current))
         end
 
         diagram = Struct.new(:plane).new(Plane.new(shapes, edges))
 
+        # start_events = model.start_events.collect { |evt| Task.new(  ) }
+
+        # model = Model.new()
+
+
         # render XML.
         Representer::Definitions.new(Definitions.new(model, diagram)).to_xml
       end
+
+
+
 
       def self.Path(source, target, do_straight_line)
         if source.y == target.y # --->
@@ -113,11 +124,11 @@ module Trailblazer
           collection :incoming, exec_context: :decorator
 
           def outgoing
-            represented.outgoing.map(&:id)
+            represented.outgoing.collect { |edge| edge[:id] }
           end
 
           def incoming
-            represented.incoming.map(&:id)
+            represented.incoming.collect { |edge| edge[:id] }
           end
         end
 
@@ -133,11 +144,11 @@ module Trailblazer
           property :direction, as: :conditionExpression
 
           def sourceRef
-            represented.sourceRef.id
+            represented.sourceRef
           end
 
           def targetRef
-            represented.targetRef.id
+            represented.targetRef
           end
         end
 
