@@ -17,7 +17,7 @@ module Trailblazer
       def to_model(activity, *)
         graph  = activity.graph
 
-        start_events = graph.find_all([:Start, :default]) # FIXME.
+        start_events = graph.find_all("Start.default") # FIXME.
         end_events   = graph.find_all { |node| graph.successors(node).size == 0 }
         tasks        = graph.find_all { |node| true }
         tasks       -= start_events
