@@ -42,7 +42,7 @@ module Trailblazer
         linear_tasks.each do |name| # DISCUSS: assuming that task is in correct linear order.
           task = model.task.find { |t| t[:id] == name } or raise "unfixable"
 
-          is_right = task.incoming[0][:_wrapped] == Trailblazer::Circuit::Right
+          is_right = [:pass, :step].include?( task.options[:created_by] )
 
           shapes << Shape.new("Shape_#{task[:id]}", task[:id], Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_width))
           current += shape_width+shape_to_shape

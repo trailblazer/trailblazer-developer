@@ -35,6 +35,16 @@ class DiagramXMLTest < Minitest::Spec
     failure :f
   end
 
+  graph = Create["__activity__"].graph
+  # require "pp"
+  # pp graph#.to_h
+
+  # a = graph.find_all(:a)
+  # puts graph.predecessors(a).inspect
+
+
+  # # raise
+
   let(:blog) do
     Circuit::Activity(id: "blog.read/next", Blog::Read=>:Read, Blog::Next=>:Next, Blog::Comment=>:Comment) { |evt|
       {
