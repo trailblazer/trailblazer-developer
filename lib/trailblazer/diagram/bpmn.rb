@@ -1,7 +1,7 @@
 require "representable"
 require "representable/xml"
 
-require "trailblazer/developer/circuit"
+require "trailblazer/developer/activity"
 
 module Trailblazer
   module Diagram
@@ -15,7 +15,7 @@ module Trailblazer
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
       def self.to_xml(activity, sequence, *args)
         # convert circuit to representable data structure.
-        model, graph = Trailblazer::Developer::Circuit.bla(activity, *args)
+        model, graph = Trailblazer::Developer::Activity.to_model(activity, *args)
 
         # require "pp"
         # pp model

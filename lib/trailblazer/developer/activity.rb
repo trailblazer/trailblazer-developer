@@ -14,7 +14,7 @@ module Trailblazer
       Flow  = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
 
       module_function
-      def model_from(activity)
+      def to_model(activity, *)
         graph  = activity.graph
 
         start_events = graph.find_all([:Start, :default]) # FIXME.
