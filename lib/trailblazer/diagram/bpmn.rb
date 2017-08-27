@@ -22,7 +22,7 @@ module Trailblazer
 
         raise "something wrong!" if model.task.size != sequence.size
 
-        linear_tasks = sequence.collect { |row| row.data[:id] } # [:a, :b, :bb, :c, :d, :e, :f], in correct order.
+        linear_tasks = sequence.collect { |row| row[:id] } # [:a, :b, :bb, :c, :d, :e, :f], in correct order.
 
         start_x = 200
         y_right = 200
