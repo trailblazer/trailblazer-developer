@@ -5,3 +5,5 @@ module Trailblazer
     # Your code goes here...
   end
 end
+
+require "trailblazer/diagram/bpmn"

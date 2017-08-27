@@ -20,9 +20,11 @@ module Trailblazer
         # require "pp"
         # pp model
 
-        raise "something wrong!" if model.task.size != sequence.size
+        # raise "something wrong!" if model.task.size != sequence.size
 
         linear_tasks = sequence.collect { |row| row[:id] } # [:a, :b, :bb, :c, :d, :e, :f], in correct order.
+
+        linear_tasks -= model.end_events.collect { |row| row[:id] } # FIXME: we should simply traverse the graph.
 
         start_x = 200
         y_right = 200
@@ -40,7 +42,7 @@ module Trailblazer
 
         # add tasks.
         linear_tasks.each do |name| # DISCUSS: assuming that task is in correct linear order.
-          task = model.task.find { |t| t[:id] == name } or raise "unfixable"
+          task = model.task.find { |t| t[:id] == name }
 
           is_right = [:pass, :step].include?( task.options[:created_by] )
 
@@ -49,13 +51,32 @@ module Trailblazer
         end
 
         # add ends.
-        raise "custom end events are not handled, yet" if model.end_events.size != 4
-        # raise "@@@@@ #{model.end_events.last.name.inspect}"
-        shapes << Shape.new("Shape_#{model.end_events[0][:id]}", model.end_events[0][:id], Bounds.new(current, y_right, shape_width, shape_width))
-        shapes << Shape.new("Shape_#{model.end_events[1][:id]}", model.end_events[1][:id], Bounds.new(current, y_left,  shape_width, shape_width))
+        horizontal_end_offset = 90
 
-        shapes << Shape.new("Shape_#{model.end_events[2][:id]}", model.end_events[2][:id], Bounds.new(current, y_right-90, shape_width, shape_width))
-        shapes << Shape.new("Shape_#{model.end_events[3][:id]}", model.end_events[3][:id], Bounds.new(current, y_left+90,  shape_width, shape_width))
+        defaults = {
+          "End.success" => { y: y_right },
+          "End.failure" => { y: y_left },
+          "End.pass_fast" => { y: y_right-90 },
+          "End.fail_fast" => { y: y_left+90 },
+        }
+
+
+        # raise "@@@@@ #{model.end_events.last.name.inspect}"
+        success_end_events = []
+        failure_end_events = []
+
+        model.end_events.each do |evt|
+          id = evt[:id]
+          y  = defaults[id] ? defaults[id][:y] : success_end_events.last + horizontal_end_offset
+
+          success_end_events << y
+
+          shapes << Shape.new( "Shape_#{id}", id, Bounds.new(current, y, shape_width, shape_width) )
+        end
+        # shapes << Shape.new("Shape_#{model.end_events[1][:id]}", model.end_events[1][:id], Bounds.new(current, y_left,  shape_width, shape_width))
+
+        # shapes << Shape.new("Shape_#{model.end_events[2][:id]}", model.end_events[2][:id], Bounds.new(current, y_right-90, shape_width, shape_width))
+        # shapes << Shape.new("Shape_#{model.end_events[3][:id]}", model.end_events[3][:id], Bounds.new(current, y_left+90,  shape_width, shape_width))
 
 
         edges = []
