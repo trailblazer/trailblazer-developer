@@ -43,6 +43,7 @@ module Trailblazer
         # add tasks.
         linear_tasks.each do |name| # DISCUSS: assuming that task is in correct linear order.
           task = model.task.find { |t| t[:id] == name }
+          warn "ignoring #{name}" && next if task.nil? # edges in sequence, not cool.
 
           is_right = [:pass, :step].include?( task.options[:created_by] )
 
