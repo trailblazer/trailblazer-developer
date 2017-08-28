@@ -59,7 +59,21 @@ class DiagramXMLTest < Minitest::Spec
   it do
     puts xml = Trailblazer::Diagram::BPMN.to_xml(Create["__activity__"], Create["__sequence__"], id_generator: Id.new)
 
-    # File.write("berry.bpmn", xml)
+    File.write("berry.bpmn", xml)
+
+    token = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJpZCI6NiwidXNlcm5hbWUiOiJkdWJlbCIsImVtYWlsIjoiZHViZWxAZHViZWwuZHViZWwifQ."
+    require "faraday"
+    conn = Faraday.new(:url => 'http://localhost:3477')
+    response = conn.post do |req|
+      req.url '/dev/v1/import'
+      req.headers['Content-Type'] = 'application/json'
+      req.headers["Authorization"] = token
+      require "base64"
+
+      req.body = %{{ "name": "Unagi", "xml":"#{Base64.strict_encode64(xml)}" }}
+    end
+
+    puts response.status.inspect
 
     xml.must_equal File.read(File.dirname(__FILE__) + "/xml/operation.bpmn").chomp
   end
