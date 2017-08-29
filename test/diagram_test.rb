@@ -62,6 +62,8 @@ class DiagramXMLTest < Minitest::Spec
     File.write("berry.bpmn", xml)
 
     token = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJpZCI6NiwidXNlcm5hbWUiOiJkdWJlbCIsImVtYWlsIjoiZHViZWxAZHViZWwuZHViZWwifQ."
+    token = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJpZCI6MywidXNlcm5hbWUiOiJhcG90b25pY2siLCJlbWFpbCI6Im5pY2tAdHJhaWxibGF6ZXIudG8ifQ."
+
     require "faraday"
     conn = Faraday.new(:url => 'http://localhost:3477')
     response = conn.post do |req|

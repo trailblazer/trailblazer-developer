@@ -30,15 +30,19 @@ module Trailblazer
         y_right = 200
         y_left  = 300
 
-        shape_width = 33
+
+        event_width = 54
+
+        shape_width  = 81
+        shape_height = 54
         shape_to_shape = 45
 
         current = start_x
         shapes = []
 
         # add start.
-        shapes << Shape.new("Shape_#{model.start_events[0][:id]}", model.start_events[0][:id], Bounds.new(current, y_right, shape_width, shape_width))
-        current += shape_width+shape_to_shape
+        shapes << Shape.new("Shape_#{model.start_events[0][:id]}", model.start_events[0][:id], Bounds.new(current, y_right, event_width, event_width))
+        current += event_width+shape_to_shape
 
         # add tasks.
         linear_tasks.each do |name| # DISCUSS: assuming that task is in correct linear order.
@@ -47,7 +51,7 @@ module Trailblazer
 
           is_right = [:pass, :step].include?( task.options[:created_by] )
 
-          shapes << Shape.new("Shape_#{task[:id]}", task[:id], Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_width))
+          shapes << Shape.new("Shape_#{task[:id]}", task[:id], Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_height))
           current += shape_width+shape_to_shape
         end
 
@@ -72,7 +76,7 @@ module Trailblazer
 
           success_end_events << y
 
-          shapes << Shape.new( "Shape_#{id}", id, Bounds.new(current, y, shape_width, shape_width) )
+          shapes << Shape.new( "Shape_#{id}", id, Bounds.new(current, y, event_width, event_width) )
         end
         # shapes << Shape.new("Shape_#{model.end_events[1][:id]}", model.end_events[1][:id], Bounds.new(current, y_left,  shape_width, shape_width))
 
