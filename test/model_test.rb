@@ -59,10 +59,8 @@ class ActivityModelTest < Minitest::Spec
 
     model = Developer::Activity::Graph.to_model(graph)
 
-
     # expected = File.read(File.dirname(__FILE__) + "/xml/operation.bpmn").chomp
 
-    Model.new(model).to_hash.must_equal __a()
-
+    Model.new(model).to_hash.must_equal __a() # test/hash/bla.rb
   end
 end

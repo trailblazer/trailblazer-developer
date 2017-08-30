@@ -38,7 +38,6 @@ module Trailblazer
         graph = activity.graph
         model = Trailblazer::Developer::Activity::Graph.to_model(activity.graph)
 
-        puts model.task.first.outgoing.first[:target].inspect
 
         linear_tasks = sequence.collect { |row| row[:id] } # [:a, :b, :bb, :c, :d, :e, :f], in correct order.
 

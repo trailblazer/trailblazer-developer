@@ -72,6 +72,15 @@
     <bpmn:sequenceFlow id="Start.default-Trailblazer::Circuit::Left-c" sourceRef="Start.default" targetRef="c">
       <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="d-Trailblazer::Circuit::Right-End.success" sourceRef="d" targetRef="End.success">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f-Trailblazer::Circuit::Right-End.failure" sourceRef="f" targetRef="End.failure">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f-Trailblazer::Circuit::Left-End.failure" sourceRef="f" targetRef="End.failure">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="a-Trailblazer::Circuit::Right-b" sourceRef="a" targetRef="b">
       <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
@@ -96,9 +105,6 @@
     <bpmn:sequenceFlow id="c-Trailblazer::Circuit::Left-e" sourceRef="c" targetRef="e">
       <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="d-Trailblazer::Circuit::Right-End.success" sourceRef="d" targetRef="End.success">
-      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="d-Trailblazer::Circuit::Left-e" sourceRef="d" targetRef="e">
       <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
@@ -106,12 +112,6 @@
       <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="e-Trailblazer::Circuit::Left-f" sourceRef="e" targetRef="f">
-      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="f-Trailblazer::Circuit::Right-End.failure" sourceRef="f" targetRef="End.failure">
-      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="f-Trailblazer::Circuit::Left-End.failure" sourceRef="f" targetRef="End.failure">
       <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
   </bpmn:process>
@@ -171,6 +171,18 @@
         <di:waypoint x="227" y="254" xsi:type="dc:Point"/>
         <di:waypoint x="677" y="327" xsi:type="dc:Point"/>
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_d-Trailblazer::Circuit::Right-End.success" bpmnElement="d-Trailblazer::Circuit::Right-End.success">
+        <di:waypoint x="884" y="227" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="227" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_f-Trailblazer::Circuit::Right-End.failure" bpmnElement="f-Trailblazer::Circuit::Right-End.failure">
+        <di:waypoint x="1136" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_f-Trailblazer::Circuit::Left-End.failure" bpmnElement="f-Trailblazer::Circuit::Left-End.failure">
+        <di:waypoint x="1136" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_a-Trailblazer::Circuit::Right-b" bpmnElement="a-Trailblazer::Circuit::Right-b">
         <di:waypoint x="380" y="227" xsi:type="dc:Point"/>
         <di:waypoint x="425" y="227" xsi:type="dc:Point"/>
@@ -203,10 +215,6 @@
         <di:waypoint x="758" y="327" xsi:type="dc:Point"/>
         <di:waypoint x="929" y="327" xsi:type="dc:Point"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_d-Trailblazer::Circuit::Right-End.success" bpmnElement="d-Trailblazer::Circuit::Right-End.success">
-        <di:waypoint x="884" y="227" xsi:type="dc:Point"/>
-        <di:waypoint x="1181" y="227" xsi:type="dc:Point"/>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_d-Trailblazer::Circuit::Left-e" bpmnElement="d-Trailblazer::Circuit::Left-e">
         <di:waypoint x="843" y="254" xsi:type="dc:Point"/>
         <di:waypoint x="929" y="327" xsi:type="dc:Point"/>
@@ -218,14 +226,6 @@
       <bpmndi:BPMNEdge id="SequenceFlow_e-Trailblazer::Circuit::Left-f" bpmnElement="e-Trailblazer::Circuit::Left-f">
         <di:waypoint x="1010" y="327" xsi:type="dc:Point"/>
         <di:waypoint x="1055" y="327" xsi:type="dc:Point"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_f-Trailblazer::Circuit::Right-End.failure" bpmnElement="f-Trailblazer::Circuit::Right-End.failure">
-        <di:waypoint x="1136" y="327" xsi:type="dc:Point"/>
-        <di:waypoint x="1181" y="327" xsi:type="dc:Point"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_f-Trailblazer::Circuit::Left-End.failure" bpmnElement="f-Trailblazer::Circuit::Left-End.failure">
-        <di:waypoint x="1136" y="327" xsi:type="dc:Point"/>
-        <di:waypoint x="1181" y="327" xsi:type="dc:Point"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
