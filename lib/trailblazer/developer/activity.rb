@@ -8,7 +8,7 @@ module Trailblazer
     module Activity
       module Graph
         Model = Struct.new(:id, :start_events, :end_events, :task, :sequence_flow)
-        Task  = Struct.new(:id, :name, :options, :outgoing, :incoming)
+        Task  = Struct.new(:id, :name, :options, :incoming, :outgoing)
         Flow  = Struct.new(:id, :sourceRef, :targetRef, :direction) # DISCUSS: direction ATM is the "condition" for the BPMN rendering.
 
         # @param Graph an object implementing the Activity::Graph interface
@@ -19,15 +19,24 @@ module Trailblazer
           tasks        = graph.find_all { |node| true }
           tasks       -= start_events
           tasks       -= end_events
-          edges        = graph.find_all { |node| true }.collect { |node| graph.successors(node).collect { |node, edge| edge } }.flatten(1)
 
           # transform nodes into BPMN elements.
-          start_events = start_events.collect { |evt| Task.new( evt[:id], evt[:id], evt, graph.successors(evt).collect(&:last), graph.predecessors(evt).collect(&:last) ) }
-          end_events   =   end_events.collect { |evt| Task.new( evt[:id], evt[:id], evt, graph.successors(evt).collect(&:last), graph.predecessors(evt).collect(&:last) ) }
-          tasks        =        tasks.collect { |evt| Task.new( evt[:id], evt[:id], evt, graph.successors(evt).collect(&:last), graph.predecessors(evt).collect(&:last) ) }
-          edges        = edges.collect { |edge| Flow.new( edge[:id], edge[:source][:id], edge[:target][:id], edge[:_wrapped] ) }
+          start_events = start_events.collect { |evt| Task.new( evt[:id], evt[:id], evt, Incomings(graph, evt), Outgoings(graph, evt) ) }
+          end_events   =   end_events.collect { |evt| Task.new( evt[:id], evt[:id], evt, Incomings(graph, evt), Outgoings(graph, evt) ) }
+          tasks        =        tasks.collect { |evt| Task.new( evt[:id], evt[:id], evt, Incomings(graph, evt), Outgoings(graph, evt) ) }
+          edges        = (start_events + end_events + tasks).collect { |task| [task.incoming, task.outgoing] }.flatten(2).uniq
 
           Model.new(id, start_events, end_events, tasks, edges)
+        end
+
+        private
+
+        def self.Outgoings(graph, source)
+          graph.successors(source).collect { |target, edge| Flow.new(edge[:id], source[:id], target[:id], edge[:_wrapped]) }
+        end
+
+        def self.Incomings(graph, target)
+          graph.predecessors(target).collect { |source, edge| Flow.new(edge[:id], source[:id], target[:id], edge[:_wrapped]) }
         end
       end
     end

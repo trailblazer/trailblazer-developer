@@ -24,7 +24,6 @@ class DiagramXMLTest < Minitest::Spec
     Comment = ->(*) { snippet }
   end
 
-  require "trailblazer/operation"
   class Create < Trailblazer::Operation
     step :a
     step :b
