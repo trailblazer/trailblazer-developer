@@ -57,7 +57,7 @@ class DiagramXMLTest < Minitest::Spec
   end
 
   it do
-    puts xml = Trailblazer::Diagram::BPMN.to_xml(Create["__activity__"], Create["__sequence__"], id_generator: Id.new)
+    xml = Trailblazer::Diagram::BPMN.to_xml(Create["__activity__"], Create["__sequence__"], id_generator: Id.new)
 
     File.write("berry.bpmn", xml)
 

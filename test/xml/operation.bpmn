@@ -1,5 +1,5 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <bpmn:process id="process-fixme">
+  <bpmn:process id="some-process">
     <bpmn:startEvent id="Start.default" name="Start.default">
       <bpmn:outgoing>Start.default-Trailblazer::Operation::Railway::PassFast-End.pass_fast</bpmn:outgoing>
       <bpmn:outgoing>Start.default-Trailblazer::Operation::Railway::FailFast-End.fail_fast</bpmn:outgoing>
@@ -116,7 +116,7 @@
     </bpmn:sequenceFlow>
   </bpmn:process>
   <bpmndi:BPMNDiagram>
-    <bpmndi:BPMNPlane bpmnElement="process-fixme">
+    <bpmndi:BPMNPlane bpmnElement="some-process">
       <bpmndi:BPMNShape id="Shape_Start.default" bpmnElement="Start.default">
         <dc:Bounds x="200" y="200" width="54" height="54"/>
       </bpmndi:BPMNShape>
