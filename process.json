@@ -1,0 +1,13 @@
+process
+  startEvent
+  endEvent
+  intermediateCatchEvent
+    outgoing: <edge id>
+    incoming: <edge id>
+  task
+    outgoing: <edge id>
+    incoming: <edge id>
+
+  sequenceFlow
+    sourceRef: <task id>
+    targetRef: <task id>
