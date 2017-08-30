@@ -1,0 +1,232 @@
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <bpmn:process id="some-process">
+    <bpmn:startEvent id="Start.default" name="Start.default">
+      <bpmn:outgoing>Start.default-Trailblazer::Operation::Railway::PassFast-End.pass_fast</bpmn:outgoing>
+      <bpmn:outgoing>Start.default-Trailblazer::Operation::Railway::FailFast-End.fail_fast</bpmn:outgoing>
+      <bpmn:outgoing>Start.default-Trailblazer::Circuit::Right-a</bpmn:outgoing>
+      <bpmn:outgoing>Start.default-Trailblazer::Circuit::Left-c</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="End.success" name="End.success">
+      <bpmn:incoming>d-Trailblazer::Circuit::Right-End.success</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End.failure" name="End.failure">
+      <bpmn:incoming>f-Trailblazer::Circuit::Right-End.failure</bpmn:incoming>
+      <bpmn:incoming>f-Trailblazer::Circuit::Left-End.failure</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End.pass_fast" name="End.pass_fast">
+      <bpmn:incoming>Start.default-Trailblazer::Operation::Railway::PassFast-End.pass_fast</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End.fail_fast" name="End.fail_fast">
+      <bpmn:incoming>Start.default-Trailblazer::Operation::Railway::FailFast-End.fail_fast</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="a" name="a">
+      <bpmn:outgoing>a-Trailblazer::Circuit::Right-b</bpmn:outgoing>
+      <bpmn:outgoing>a-Trailblazer::Circuit::Left-c</bpmn:outgoing>
+      <bpmn:incoming>Start.default-Trailblazer::Circuit::Right-a</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="b" name="b">
+      <bpmn:outgoing>b-Trailblazer::Circuit::Right-bb</bpmn:outgoing>
+      <bpmn:outgoing>b-Trailblazer::Circuit::Left-c</bpmn:outgoing>
+      <bpmn:incoming>a-Trailblazer::Circuit::Right-b</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="bb" name="bb">
+      <bpmn:outgoing>bb-Trailblazer::Circuit::Left-c</bpmn:outgoing>
+      <bpmn:outgoing>bb-Trailblazer::Circuit::Right-d</bpmn:outgoing>
+      <bpmn:incoming>b-Trailblazer::Circuit::Right-bb</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="c" name="c">
+      <bpmn:outgoing>c-Trailblazer::Circuit::Right-e</bpmn:outgoing>
+      <bpmn:outgoing>c-Trailblazer::Circuit::Left-e</bpmn:outgoing>
+      <bpmn:incoming>Start.default-Trailblazer::Circuit::Left-c</bpmn:incoming>
+      <bpmn:incoming>a-Trailblazer::Circuit::Left-c</bpmn:incoming>
+      <bpmn:incoming>b-Trailblazer::Circuit::Left-c</bpmn:incoming>
+      <bpmn:incoming>bb-Trailblazer::Circuit::Left-c</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="d" name="d">
+      <bpmn:outgoing>d-Trailblazer::Circuit::Right-End.success</bpmn:outgoing>
+      <bpmn:outgoing>d-Trailblazer::Circuit::Left-e</bpmn:outgoing>
+      <bpmn:incoming>bb-Trailblazer::Circuit::Right-d</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="e" name="e">
+      <bpmn:outgoing>e-Trailblazer::Circuit::Right-f</bpmn:outgoing>
+      <bpmn:outgoing>e-Trailblazer::Circuit::Left-f</bpmn:outgoing>
+      <bpmn:incoming>c-Trailblazer::Circuit::Right-e</bpmn:incoming>
+      <bpmn:incoming>c-Trailblazer::Circuit::Left-e</bpmn:incoming>
+      <bpmn:incoming>d-Trailblazer::Circuit::Left-e</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="f" name="f">
+      <bpmn:outgoing>f-Trailblazer::Circuit::Right-End.failure</bpmn:outgoing>
+      <bpmn:outgoing>f-Trailblazer::Circuit::Left-End.failure</bpmn:outgoing>
+      <bpmn:incoming>e-Trailblazer::Circuit::Right-f</bpmn:incoming>
+      <bpmn:incoming>e-Trailblazer::Circuit::Left-f</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Start.default-Trailblazer::Operation::Railway::PassFast-End.pass_fast" sourceRef="Start.default" targetRef="End.pass_fast">
+      <bpmn:conditionExpression>Trailblazer::Operation::Railway::PassFast</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Start.default-Trailblazer::Operation::Railway::FailFast-End.fail_fast" sourceRef="Start.default" targetRef="End.fail_fast">
+      <bpmn:conditionExpression>Trailblazer::Operation::Railway::FailFast</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Start.default-Trailblazer::Circuit::Right-a" sourceRef="Start.default" targetRef="a">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Start.default-Trailblazer::Circuit::Left-c" sourceRef="Start.default" targetRef="c">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="d-Trailblazer::Circuit::Right-End.success" sourceRef="d" targetRef="End.success">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f-Trailblazer::Circuit::Right-End.failure" sourceRef="f" targetRef="End.failure">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="f-Trailblazer::Circuit::Left-End.failure" sourceRef="f" targetRef="End.failure">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="a-Trailblazer::Circuit::Right-b" sourceRef="a" targetRef="b">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="a-Trailblazer::Circuit::Left-c" sourceRef="a" targetRef="c">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="b-Trailblazer::Circuit::Right-bb" sourceRef="b" targetRef="bb">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="b-Trailblazer::Circuit::Left-c" sourceRef="b" targetRef="c">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="bb-Trailblazer::Circuit::Left-c" sourceRef="bb" targetRef="c">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="bb-Trailblazer::Circuit::Right-d" sourceRef="bb" targetRef="d">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="c-Trailblazer::Circuit::Right-e" sourceRef="c" targetRef="e">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="c-Trailblazer::Circuit::Left-e" sourceRef="c" targetRef="e">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="d-Trailblazer::Circuit::Left-e" sourceRef="d" targetRef="e">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="e-Trailblazer::Circuit::Right-f" sourceRef="e" targetRef="f">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Right</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="e-Trailblazer::Circuit::Left-f" sourceRef="e" targetRef="f">
+      <bpmn:conditionExpression>Trailblazer::Circuit::Left</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane bpmnElement="some-process">
+      <bpmndi:BPMNShape id="Shape_Start.default" bpmnElement="Start.default">
+        <dc:Bounds x="200" y="200" width="54" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_a" bpmnElement="a">
+        <dc:Bounds x="299" y="200" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_b" bpmnElement="b">
+        <dc:Bounds x="425" y="200" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_bb" bpmnElement="bb">
+        <dc:Bounds x="551" y="200" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_d" bpmnElement="d">
+        <dc:Bounds x="677" y="200" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_c" bpmnElement="c">
+        <dc:Bounds x="803" y="300" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_e" bpmnElement="e">
+        <dc:Bounds x="929" y="300" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_f" bpmnElement="f">
+        <dc:Bounds x="1055" y="300" width="81" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End.success" bpmnElement="End.success">
+        <dc:Bounds x="1181" y="200" width="54" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End.failure" bpmnElement="End.failure">
+        <dc:Bounds x="1181" y="300" width="54" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End.pass_fast" bpmnElement="End.pass_fast">
+        <dc:Bounds x="1181" y="110" width="54" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End.fail_fast" bpmnElement="End.fail_fast">
+        <dc:Bounds x="1181" y="390" width="54" height="54"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_Start.default-Trailblazer::Operation::Railway::PassFast-End.pass_fast" bpmnElement="Start.default-Trailblazer::Operation::Railway::PassFast-End.pass_fast">
+        <di:waypoint x="227" y="200" xsi:type="dc:Point"/>
+        <di:waypoint x="227" y="137" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="137" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_Start.default-Trailblazer::Operation::Railway::FailFast-End.fail_fast" bpmnElement="Start.default-Trailblazer::Operation::Railway::FailFast-End.fail_fast">
+        <di:waypoint x="227" y="254" xsi:type="dc:Point"/>
+        <di:waypoint x="227" y="417" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="417" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_Start.default-Trailblazer::Circuit::Right-a" bpmnElement="Start.default-Trailblazer::Circuit::Right-a">
+        <di:waypoint x="254" y="227" xsi:type="dc:Point"/>
+        <di:waypoint x="299" y="227" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_Start.default-Trailblazer::Circuit::Left-c" bpmnElement="Start.default-Trailblazer::Circuit::Left-c">
+        <di:waypoint x="227" y="254" xsi:type="dc:Point"/>
+        <di:waypoint x="803" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_d-Trailblazer::Circuit::Right-End.success" bpmnElement="d-Trailblazer::Circuit::Right-End.success">
+        <di:waypoint x="758" y="227" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="227" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_f-Trailblazer::Circuit::Right-End.failure" bpmnElement="f-Trailblazer::Circuit::Right-End.failure">
+        <di:waypoint x="1136" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_f-Trailblazer::Circuit::Left-End.failure" bpmnElement="f-Trailblazer::Circuit::Left-End.failure">
+        <di:waypoint x="1136" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="1181" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_a-Trailblazer::Circuit::Right-b" bpmnElement="a-Trailblazer::Circuit::Right-b">
+        <di:waypoint x="380" y="227" xsi:type="dc:Point"/>
+        <di:waypoint x="425" y="227" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_a-Trailblazer::Circuit::Left-c" bpmnElement="a-Trailblazer::Circuit::Left-c">
+        <di:waypoint x="339" y="254" xsi:type="dc:Point"/>
+        <di:waypoint x="803" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_b-Trailblazer::Circuit::Right-bb" bpmnElement="b-Trailblazer::Circuit::Right-bb">
+        <di:waypoint x="506" y="227" xsi:type="dc:Point"/>
+        <di:waypoint x="551" y="227" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_b-Trailblazer::Circuit::Left-c" bpmnElement="b-Trailblazer::Circuit::Left-c">
+        <di:waypoint x="465" y="254" xsi:type="dc:Point"/>
+        <di:waypoint x="803" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_bb-Trailblazer::Circuit::Left-c" bpmnElement="bb-Trailblazer::Circuit::Left-c">
+        <di:waypoint x="591" y="254" xsi:type="dc:Point"/>
+        <di:waypoint x="803" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_bb-Trailblazer::Circuit::Right-d" bpmnElement="bb-Trailblazer::Circuit::Right-d">
+        <di:waypoint x="632" y="227" xsi:type="dc:Point"/>
+        <di:waypoint x="677" y="227" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_c-Trailblazer::Circuit::Right-e" bpmnElement="c-Trailblazer::Circuit::Right-e">
+        <di:waypoint x="884" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="929" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_c-Trailblazer::Circuit::Left-e" bpmnElement="c-Trailblazer::Circuit::Left-e">
+        <di:waypoint x="884" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="929" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_d-Trailblazer::Circuit::Left-e" bpmnElement="d-Trailblazer::Circuit::Left-e">
+        <di:waypoint x="717" y="254" xsi:type="dc:Point"/>
+        <di:waypoint x="929" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_e-Trailblazer::Circuit::Right-f" bpmnElement="e-Trailblazer::Circuit::Right-f">
+        <di:waypoint x="1010" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="1055" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_e-Trailblazer::Circuit::Left-f" bpmnElement="e-Trailblazer::Circuit::Left-f">
+        <di:waypoint x="1010" y="327" xsi:type="dc:Point"/>
+        <di:waypoint x="1055" y="327" xsi:type="dc:Point"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
