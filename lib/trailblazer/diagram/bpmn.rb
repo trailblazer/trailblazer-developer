@@ -12,41 +12,38 @@ module Trailblazer
         Bounds = Struct.new(:x, :y, :width, :height)
         Waypoint = Struct.new(:x, :y)
 
-      require "tsort"
 
+      require "tsort"
       # Helps sorting the tasks in a process "topologically", which is basically what the
       # Sequence does for us, but this works for any kind of process.
-      class LinearGraph
-        include TSort
+      # DISCUSS: should we work on the Model or Graph interface?
+      def self.topological_sort(model)
+        edges = {}
+        model.end_events.each { |task| edges[task.id] = {} }
+        model.sequence_flow.each { |edge| edges[edge.sourceRef] ||= []; edges[edge.sourceRef] << edge.targetRef }
 
-        def initialize(graph)
-          @graph = graph
-        end
-
-        def tsort_each_node(&block)
-          @graph.find_all(&block)
-        end
-
-        def tsort_each_child(node)
-          @graph.successors(node)
-        end
+        # g = {1=>[2, 3], 2=>[4], 3=>[2, 4], 4=>[]}
+        each_node = lambda {|&b| edges.each_key(&b) }
+        each_child = lambda {|n, &b| edges[n].each(&b) }
+        TSort.tsort(each_node, each_child).reverse #=> [4, 2, 3, 1]
       end
 
     # FIXME: this should be called "linear layouter or something"
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
-      def self.to_xml(activity, sequence, *args)
+      # @param activity Activity
+      # @param linear_task_ids [String] A list of task IDs that should be layouted sequentially in the provided order.
+      def self.to_xml(activity, linear_task_ids=nil)
         graph = activity.graph
         model = Trailblazer::Developer::Activity::Graph.to_model(activity.graph)
 
+        linear_task_ids ||= topological_sort(model)
 
-        linear_tasks = sequence.collect { |row| row[:id] } # [:a, :b, :bb, :c, :d, :e, :f], in correct order.
 
-        linear_tasks -= model.end_events.collect { |row| row[:id] } # FIXME: we should simply traverse the graph.
+        # this layouter doesn't want End events in the linear part, we arrange them manually.
+        linear_task_ids -= model.end_events.map(&:id)
+        linear_task_ids -= model.start_events.map(&:id)
+        linear_tasks = linear_task_ids.collect { |id| model.task.find { |task| task.id == id } || raise("task #{id} is not in model!") }
 
-        topological_sorted = LinearGraph.new(graph).tsort.collect { |node| node[:id] }
-        puts topological_sorted.inspect
-
-        puts "@@@@@original linear #{linear_tasks.inspect}"
 
         start_x = 200
         y_right = 200
@@ -67,10 +64,7 @@ module Trailblazer
         current += event_width+shape_to_shape
 
         # add tasks.
-        linear_tasks.each do |name|
-          task = model.task.find { |t| t[:id] == name }
-          warn "ignoring #{name}" && next if task.nil? # edges in sequence, not cool.
-
+        linear_tasks.each do |task|
           is_right = [:pass, :step].include?( task.options[:created_by] )
 
           shapes << Shape.new("Shape_#{task[:id]}", task[:id], Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_height))
