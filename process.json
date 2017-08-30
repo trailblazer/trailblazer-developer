@@ -1,15 +1,23 @@
-process
-  id:
-  startEvent
-  endEvent
-  intermediateCatchEvent
-    id:
-    outgoing: <edge id>
-    incoming: <edge id>
-  task
-    outgoing: <edge id>
-    incoming: <edge id>
+"process": {
+  "id": 1,
+  ["start_events" | "end_events", "task" | "intermediate_catch_events" | "intermediate_throw_events" ]: [
+    {
+      "id": "start",
+      "name": "My start event",
+      "outgoings": [
+        { "id": "start-to-a"} // id of the edge
+      ],
+      "incomings": [
+        { "id": "a-to-end"} // id of the edge
+      ],
+    }
+  ],
 
-  sequenceFlow
-    sourceRef: <task id>
-    targetRef: <task id>
+  "sequence flows": [
+    {
+      "sourceRef": "start",
+      "targetRef": "a",
+      "name": "this could be the label of the edge",
+    }
+  ],
+}
