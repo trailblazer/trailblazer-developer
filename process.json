@@ -1,7 +1,9 @@
 process
+  id:
   startEvent
   endEvent
   intermediateCatchEvent
+    id:
     outgoing: <edge id>
     incoming: <edge id>
   task
