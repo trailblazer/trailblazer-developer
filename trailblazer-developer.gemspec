@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "representable", ">= 3.0.4"
   spec.add_dependency "nokogiri"
+  spec.add_dependency "faraday"
 
   spec.add_dependency "trailblazer-activity"
 end
