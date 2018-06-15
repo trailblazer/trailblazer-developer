@@ -115,5 +115,4 @@ def __a
    {"id"=>"d-Trailblazer::Circuit::Left-e", "sourceRef"=>:d, "targetRef"=>:e},
    {"id"=>"e-Trailblazer::Circuit::Right-f", "sourceRef"=>:e, "targetRef"=>:f},
    {"id"=>"e-Trailblazer::Circuit::Left-f", "sourceRef"=>:e, "targetRef"=>:f}]}
-
 end

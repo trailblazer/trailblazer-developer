@@ -3,8 +3,6 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in trailblazer-developer.gemspec
 gemspec
 
-gem "faraday"
-gem "minitest-line"
 # gem "rgl"
 
 case ENV["GEMS_SOURCE"]
@@ -18,5 +16,6 @@ case ENV["GEMS_SOURCE"]
     gem "trailblazer-operation", github: "trailblazer/trailblazer-operation"
   when "custom"
     eval_gemfile("GemfileCustom")
-  else # use rubygems releases
+  else
+    gem "trailblazer-operation"
 end

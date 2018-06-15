@@ -3,7 +3,6 @@ require "test_helper"
 # require 'rgl/adjacency'
 # require 'rgl/topsort'
 
-
 # dg=RGL::DirectedAdjacencyGraph[:a,:b, :a,:d, :b,:c, :b,:d, :c,:e, :c,:d, :d,:e, :e,:f, :e,:h, :f,:g, :f,:h, :g,:i, :g,:h, :h,:j,
 #   :c,:l
 # ]
@@ -61,6 +60,6 @@ class ActivityModelTest < Minitest::Spec
 
     # expected = File.read(File.dirname(__FILE__) + "/xml/operation.bpmn").chomp
 
-    Model.new(model).to_hash.must_equal __a() # test/hash/bla.rb
+    Model.new(model).to_hash.must_equal __a # test/hash/bla.rb
   end
 end

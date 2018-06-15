@@ -1,6 +1,5 @@
 require "test_helper"
 
-
 require "trailblazer/developer"
 require "trailblazer/diagram/bpmn"
 require "trailblazer/circuit"
@@ -34,25 +33,24 @@ class DiagramXMLTest < Minitest::Spec
     failure :f
   end
 
-  graph = Create["__activity__"].graph
+  # graph = Create["__activity__"].graph
   # require "pp"
   # pp graph#.to_h
 
   # a = graph.find_all(:a)
   # puts graph.predecessors(a).inspect
 
-
   # # raise
 
   let(:blog) do
-    Circuit::Activity(id: "blog.read/next", Blog::Read=>:Read, Blog::Next=>:Next, Blog::Comment=>:Comment) { |evt|
+    Circuit::Activity(id: "blog.read/next", Blog::Read => :Read, Blog::Next => :Next, Blog::Comment => :Comment) do |evt|
       {
-        evt[:Start]  => { Circuit::Right => Blog::Read },
-        Blog::Read => { Circuit::Right => Blog::Next },
-        Blog::Next => { Circuit::Right => evt[:End], Circuit::Left => Blog::Comment },
-        Blog::Comment => { Circuit::Right => evt[:End] }
+        evt[:Start] => {Circuit::Right => Blog::Read},
+        Blog::Read => {Circuit::Right => Blog::Next},
+        Blog::Next => {Circuit::Right => evt[:End], Circuit::Left => Blog::Comment},
+        Blog::Comment => {Circuit::Right => evt[:End]}
       }
-    }
+    end
   end
 
   it do
@@ -81,7 +79,7 @@ class DiagramXMLTest < Minitest::Spec
 
   # with topological sorting
   it do
-    xml = Trailblazer::Diagram::BPMN.to_xml(Create["__activity__"])
+    xml = Trailblazer::Diagram::BPMN.to_xml(Create.to_h[:circuit])
 
     File.write("topo.bpmn", xml)
 
