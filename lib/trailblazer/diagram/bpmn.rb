@@ -5,13 +5,12 @@ require "trailblazer/developer/activity"
 
 module Trailblazer
   module Diagram
-    module BPMN
-        Plane  = Struct.new(:element, :shapes, :edges)
-        Shape  = Struct.new(:id, :element, :bounds)
-        Edge   = Struct.new(:id, :element, :waypoints)
-        Bounds = Struct.new(:x, :y, :width, :height)
-        Waypoint = Struct.new(:x, :y)
-
+    module BPMN # rubocop:disable Metrics/ModuleLength
+      Plane  = Struct.new(:element, :shapes, :edges)
+      Shape  = Struct.new(:id, :element, :bounds)
+      Edge   = Struct.new(:id, :element, :waypoints)
+      Bounds = Struct.new(:x, :y, :width, :height)
+      Waypoint = Struct.new(:x, :y)
 
       require "tsort"
       # Helps sorting the tasks in a process "topologically", which is basically what the
@@ -20,35 +19,36 @@ module Trailblazer
       def self.topological_sort(model)
         edges = {}
         model.end_events.each { |task| edges[task.id] = {} }
-        model.sequence_flow.each { |edge| edges[edge.sourceRef] ||= []; edges[edge.sourceRef] << edge.targetRef }
+        model.sequence_flow.each do |edge|
+          edges[edge.sourceRef] ||= []
+          edges[edge.sourceRef] << edge.targetRef
+        end
 
         # g = {1=>[2, 3], 2=>[4], 3=>[2, 4], 4=>[]}
-        each_node = lambda {|&b| edges.each_key(&b) }
-        each_child = lambda {|n, &b| edges[n].each(&b) }
+        each_node = ->(&b) { edges.each_key(&b) }
+        each_child = ->(n, &b) { edges[n].each(&b) }
         TSort.tsort(each_node, each_child).reverse #=> [4, 2, 3, 1]
       end
 
-    # FIXME: this should be called "linear layouter or something"
+      # FIXME: this should be called "linear layouter or something"
       # Render an `Activity`'s circuit to a BPMN 2.0 XML `<process>` structure.
       # @param activity Activity
       # @param linear_task_ids [String] A list of task IDs that should be layouted sequentially in the provided order.
-      def self.to_xml(activity, linear_task_ids=nil)
-        graph = activity.graph
+      def self.to_xml(activity, linear_task_ids = nil) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         model = Trailblazer::Developer::Activity::Graph.to_model(activity.graph)
 
         linear_task_ids ||= topological_sort(model)
 
-
         # this layouter doesn't want End events in the linear part, we arrange them manually.
         linear_task_ids -= model.end_events.map(&:id)
         linear_task_ids -= model.start_events.map(&:id)
-        linear_tasks = linear_task_ids.collect { |id| model.task.find { |task| task.id == id } || raise("task #{id} is not in model!") }
-
+        linear_tasks = linear_task_ids.collect do |id|
+          model.task.find { |task| task.id == id } || raise("task #{id} is not in model!")
+        end
 
         start_x = 200
         y_right = 200
         y_left  = 300
-
 
         event_width = 54
 
@@ -60,30 +60,37 @@ module Trailblazer
         shapes = []
 
         # add start.
-        shapes << Shape.new("Shape_#{model.start_events[0][:id]}", model.start_events[0][:id], Bounds.new(current, y_right, event_width, event_width))
-        current += event_width+shape_to_shape
+        shapes << Shape.new(
+          "Shape_#{model.start_events[0][:id]}",
+          model.start_events[0][:id],
+          Bounds.new(current, y_right, event_width, event_width)
+        )
+        current += event_width + shape_to_shape
 
         # add tasks.
         linear_tasks.each do |task|
-          is_right = [:pass, :step].include?( task.options[:created_by] )
+          is_right = %i[pass step].include?(task.options[:created_by])
 
-          shapes << Shape.new("Shape_#{task[:id]}", task[:id], Bounds.new(current, is_right ? y_right : y_left , shape_width, shape_height))
-          current += shape_width+shape_to_shape
+          shapes << Shape.new(
+            "Shape_#{task[:id]}",
+            task[:id],
+            Bounds.new(current, is_right ? y_right : y_left, shape_width, shape_height)
+          )
+          current += shape_width + shape_to_shape
         end
 
         # add ends.
         horizontal_end_offset = 90
 
         defaults = {
-          "End.success" => { y: y_right },
-          "End.failure" => { y: y_left },
-          "End.pass_fast" => { y: y_right-90 },
-          "End.fail_fast" => { y: y_left+90 },
+          "End.success" => {y: y_right},
+          "End.failure" => {y: y_left},
+          "End.pass_fast" => {y: y_right - 90},
+          "End.fail_fast" => {y: y_left + 90}
         }
 
-
         success_end_events = []
-        failure_end_events = []
+        failure_end_events = [] # rubocop:disable Lint/UselessAssignment
 
         model.end_events.each do |evt|
           id = evt[:id]
@@ -91,7 +98,7 @@ module Trailblazer
 
           success_end_events << y
 
-          shapes << Shape.new( "Shape_#{id}", id, Bounds.new(current, y, event_width, event_width) )
+          shapes << Shape.new("Shape_#{id}", id, Bounds.new(current, y, event_width, event_width))
         end
 
         edges = []
@@ -104,38 +111,40 @@ module Trailblazer
 
         diagram = Struct.new(:plane).new(Plane.new(model.id, shapes, edges))
 
-
         # render XML.
         Representer::Definitions.new(Definitions.new(model, diagram)).to_xml
       end
 
-
-
-
-      def self.Path(source, target, do_straight_line)
+      def self.Path(source, target, do_straight_line) # rubocop:disable Metrics/AbcSize
         if source.y == target.y # --->
-          [ Waypoint.new(*fromRight(source)), Waypoint.new(*toLeft(target))]
-        else
-          if do_straight_line
-            [ Waypoint.new(*fromBottom(source)), Waypoint.new(*toLeft(target)) ]
-          elsif target.y > source.y # target below source.
-            [ l = Waypoint.new(*fromBottom(source)), r=Waypoint.new(l.x, target.y+target.height/2), Waypoint.new(target.x, r.y) ]
-          else # target above source.
-            [ l = Waypoint.new(*fromTop(source)), r=Waypoint.new(l.x, target.y+target.height/2), Waypoint.new(target.x, r.y) ]
-          end
+          [Waypoint.new(*fromRight(source)), Waypoint.new(*toLeft(target))]
+        elsif do_straight_line
+          [Waypoint.new(*fromBottom(source)), Waypoint.new(*toLeft(target))]
+        elsif target.y > source.y # target below source.
+          [
+            l = Waypoint.new(*fromBottom(source)),
+            r = Waypoint.new(l.x, target.y + target.height / 2),
+            Waypoint.new(target.x, r.y)
+          ]
+        else # target above source.
+          [l = Waypoint.new(*fromTop(source)), r = Waypoint.new(l.x, target.y + target.height / 2), Waypoint.new(target.x, r.y)]
         end
       end
+
       def self.fromRight(left)
-        [ left.x + left.width, left.y + left.height/2 ]
+        [left.x + left.width, left.y + left.height / 2]
       end
+
       def self.toLeft(bounds)
-        [ bounds.x, bounds.y + bounds.height/2 ]
+        [bounds.x, bounds.y + bounds.height / 2]
       end
+
       def self.fromBottom(bounds)
-        [ bounds.x + bounds.width/2, bounds.y+bounds.height ]
+        [bounds.x + bounds.width / 2, bounds.y + bounds.height]
       end
+
       def self.fromTop(bounds)
-        [ bounds.x + bounds.width/2, bounds.y ]
+        [bounds.x + bounds.width / 2, bounds.y]
       end
 
       Definitions = Struct.new(:process, :diagram)
@@ -170,7 +179,7 @@ module Trailblazer
           self.representation_wrap = :sequenceFlow
           namespace "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
-          property :id,   attribute: true
+          property :id, attribute: true
           property :sourceRef, attribute: true, exec_context: :decorator
           property :targetRef, attribute: true, exec_context: :decorator
           property :direction, as: :conditionExpression
@@ -198,7 +207,6 @@ module Trailblazer
           collection :task, decorator: Task
           collection :sequence_flow, decorator: SequenceFlow, as: :sequenceFlow
         end
-
 
         module Diagram
           class Bounds < Representable::Decorator
@@ -238,7 +246,7 @@ module Trailblazer
                 property :bounds, as: "Bounds", decorator: Bounds
               end
 
-              collection :edges,  as: "BPMNEdge" do
+              collection :edges, as: "BPMNEdge" do
                 self.representation_wrap = :BPMNEdge
                 namespace "http://www.omg.org/spec/BPMN/20100524/DI"
 
@@ -253,7 +261,9 @@ module Trailblazer
                   property :x, attribute: true
                   property :y, attribute: true
 
-                  def type; "dc:Point" end
+                  def type
+                    "dc:Point"
+                  end
                 end
               end
             end
@@ -261,8 +271,6 @@ module Trailblazer
             # namespace "http://www.w3.org/2001/XMLSchema-instance" # xsi
           end
         end
-
-
 
         class Definitions < Representable::Decorator
           include Representable::XML
@@ -284,7 +292,6 @@ module Trailblazer
     end
   end
 end
-
 
 # <bpmndi:BPMNDiagram id="BPMNDiagram_1">
 #   <bpmndi:BPMNPlane id="BPMNPlane_1">
