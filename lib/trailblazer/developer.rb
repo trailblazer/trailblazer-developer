@@ -7,4 +7,5 @@ module Trailblazer
 end
 
 require "trailblazer/diagram/bpmn"
+require "trailblazer/diagram/json"
 require "trailblazer/developer/client"
