@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["apotonick@gmail.com"]
 
   spec.summary       = "Developer tools for Trailblazer."
-  spec.description   = "Developer tools for Trailblazer, such as a BPMN exporter."
+  spec.description   = "Developer tools for Trailblazer: debugger, tracing, visual editor integration."
   spec.homepage      = "http://trailblazer.to/gems/trailblazer/developer.html"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -30,12 +30,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rubocop"
-  spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "test_xml"
-
-  spec.add_dependency "faraday"
-  spec.add_dependency "nokogiri"
-  spec.add_dependency "representable", ">= 3.0.4"
 
   spec.add_dependency "trailblazer-activity"
 end
