@@ -1,5 +1,6 @@
 require "test_helper"
 
+require "trailblazer/developer/wtf"
 
 class TraceWtfTest < Minitest::Spec
   let(:alpha) do
@@ -37,13 +38,20 @@ class TraceWtfTest < Minitest::Spec
     end
 
     def <<(value)
-      raise if value == @raise_in
+      raise RuntimeError.new("hello from #{value}!") if value == @raise_in
       super
     end
   end
 
   it "traces until charlie, 3-level" do
-    signal, (ctx, _) = alpha.([{seq: Raiser.new(raise_in: :c)}])
+    # signal, (ctx, _) = alpha.([{seq: Raiser.new(raise_in: :c)}])
+    # signal, (ctx, _) = Trailblazer::Activity::Trace.invoke(alpha, [{seq: Raiser.new(raise_in: :c)}])
+
+    # signal, (ctx, _) = Developer.wtf?(alpha, [{seq: Raiser.new(raise_in: :c)}])
+    signal, (ctx, _) = Developer::Wtf.invoke(alpha, [{seq: Raiser.new(raise_in: :c)}])
+
+
+
     pp ctx
   end
 end

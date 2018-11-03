@@ -8,3 +8,5 @@ require "trailblazer/activity"
 require "trailblazer/activity/testing"
 
 T = Trailblazer::Activity::Testing
+
+Developer = Trailblazer::Developer
