@@ -19,18 +19,34 @@ module Trailblazer::Developer
           ]
         )
       rescue
-        handle(stack, $!, activity, [ctx, flow_options])
+
+        # DISCUSS: we shouldn't use internal knowledge of the Stack/Level API here.
+        closest = stack.to_a
+        while closest.is_a?(Trailblazer::Activity::Trace::Level) && closest = closest.last do # FIXME: deep-dive via Stack API.
+        end
+
+        # pp closest.task # this was the last executed task
+
+        handle(stack, $!, closest.task, activity, [ctx, flow_options])
       end
     end
 
-    def handle(stack, exception, activity, *args)
+    def exception_renderer(stack:, level:, input:, name:, closest_task:)
+      return [ level, %{#{fmt(fmt(name, :red), :bold)}} ] if input.task == closest_task
+      [ level, %{#{name}} ]
+    end
+
+    # TODO: make this injectable
+    def handle(stack, exception, closest_task, activity, *args)
       puts "[Trailblazer] Exception tracing"
       puts "#{fmt(exception.inspect, :bold)}"
       puts "    #{exception.backtrace[0]}"
       puts "    #{exception.backtrace[1]}"
       puts
-      puts Trailblazer::Activity::Trace::Present.(stack)
+      puts Trailblazer::Activity::Trace::Present.(stack, closest_task: closest_task, renderer: method(:exception_renderer))
     end
+
+
 
     def fmt(line, style)
       String.send(style, line)

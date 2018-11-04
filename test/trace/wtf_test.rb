@@ -48,6 +48,7 @@ class TraceWtfTest < Minitest::Spec
     # signal, (ctx, _) = Trailblazer::Activity::Trace.invoke(alpha, [{seq: Raiser.new(raise_in: :c)}])
 
     # signal, (ctx, _) = Developer.wtf?(alpha, [{seq: Raiser.new(raise_in: :c)}])
+    puts
     signal, (ctx, _) = Developer::Wtf.invoke(alpha, [{seq: Raiser.new(raise_in: :c)}])
 
 
