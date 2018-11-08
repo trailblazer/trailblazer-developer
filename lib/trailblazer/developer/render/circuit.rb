@@ -6,16 +6,18 @@ module Trailblazer
 
         # Render an {Activity}'s circuit as a simple hash.
         def call(activity, **options)
-          circuit_hash( activity.to_h[:circuit].to_h[:map], **options )
+          graph = Activity::Introspect::Graph(activity)
+
+          circuit_hash(graph, **options)
         end
 
-        def circuit_hash(circuit_hash, **options)
-          content = circuit_hash.collect do |task, connections|
-            conns = connections.collect do |signal, target|
-              " {#{signal}} => #{inspect_with_matcher(target, **options)}"
+        def circuit_hash(graph, **options)
+          content = graph.collect do |node|
+            conns = node.outgoings.collect do |outgoing|
+              " {#{outgoing.output.signal}} => #{inspect_with_matcher(outgoing.task, **options)}"
             end
 
-            [ inspect_with_matcher(task, **options), conns.join("\n") ]
+            [ inspect_with_matcher(node.task, **options), conns.join("\n") ]
           end
 
           content = content.join("\n")
