@@ -4,16 +4,14 @@ require "trailblazer/developer/wtf"
 
 class TraceWtfTest < Minitest::Spec
   let(:alpha) do
-    charlie = Module.new do
-      extend Trailblazer::Activity::Railway(name: :charlie)
+    charlie = Class.new(Trailblazer::Activity::Railway) do
       extend T.def_steps(:c, :cc)
 
       step method(:c)
       step method(:cc)
     end
 
-    beta = Module.new do
-      extend Trailblazer::Activity::Railway(name: :beta)
+    beta = Class.new(Trailblazer::Activity::Railway) do
       extend T.def_steps(:b, :bb)
 
       step method(:b)
@@ -21,8 +19,7 @@ class TraceWtfTest < Minitest::Spec
       step method(:bb)
     end
 
-    Module.new do
-      extend Trailblazer::Activity::Railway(name: :alpha)
+    Class.new(Trailblazer::Activity::Railway) do
       extend T.def_steps(:a, :aa)
 
       step method(:a)
@@ -49,7 +46,7 @@ class TraceWtfTest < Minitest::Spec
 
     # signal, (ctx, _) = Developer.wtf?(alpha, [{seq: Raiser.new(raise_in: :c)}])
     puts
-    signal, (ctx, _) = Developer::Wtf.invoke(alpha, [{seq: Raiser.new(raise_in: :c)}])
+    signal, (ctx, _) = Dev.wtf(alpha, [{seq: Raiser.new(raise_in: :c)}])
 
 
 

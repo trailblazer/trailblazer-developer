@@ -1,4 +1,11 @@
 module Trailblazer::Developer
+  module_function
+
+  def wtf(activity, args)
+    Wtf.invoke(activity, args)
+  end
+  alias_method :wtf?, :wtf
+
   module Wtf
     module_function
 

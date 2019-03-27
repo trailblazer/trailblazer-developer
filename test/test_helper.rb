@@ -6,7 +6,10 @@ require "minitest/autorun"
 
 require "trailblazer/activity"
 require "trailblazer/activity/testing"
+require "trailblazer/activity/dsl/linear"
 
 T = Trailblazer::Activity::Testing
 
-Developer = Trailblazer::Developer
+Minitest::Spec.class_eval do
+  Dev = Trailblazer::Developer
+end
