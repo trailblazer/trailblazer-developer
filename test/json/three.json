@@ -241,7 +241,7 @@
       "siblings":[
 
       ],
-      "data": {"stop_event": true}, // FIXME
+      "data": {"stop_event": true},
       "label": ":success"
    }
 ]

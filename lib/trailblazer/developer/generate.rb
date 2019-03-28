@@ -41,8 +41,6 @@ module Trailblazer
           end_events.collect do |_end|
             ref, outputs = wiring.find { |ref, _| ref.id == _end.id }
 
-            # ref.data = {stop_event: true} # FIXME: this really sucks
-
             [ref, [inter.Out(semantic_for(_end.to_h), nil)]]
           end
         ])
