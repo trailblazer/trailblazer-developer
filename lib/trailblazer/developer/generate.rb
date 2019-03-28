@@ -2,6 +2,7 @@ require "representable/hash"
 
 module Trailblazer
   module Developer
+    # Computes an {Intermediate} data structure from a TRB-editor.js file.
     module Generate
       module_function
 
