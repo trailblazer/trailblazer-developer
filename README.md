@@ -12,4 +12,6 @@ The `developer` gem provides the following neat tools.
 
 * Quick rendering of activities, including their taskWraps.
 * `wtf?` mode™: Run a broken activity and trace where an exception happened.
-* Connect to the visual editor: load, store, organize and render your app's activities.
+* Connect to the visual TRB-editor: load, store, organize and render your app's activities.
+* Generate {Intermediate} data structures from TRB-editor.js files.
+* Debugging mode: run and debug workflows in the TRB-editor.
