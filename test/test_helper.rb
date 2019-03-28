@@ -12,4 +12,5 @@ T = Trailblazer::Activity::Testing
 
 Minitest::Spec.class_eval do
   Dev = Trailblazer::Developer
+  include Trailblazer::Activity::Testing::Assertions
 end

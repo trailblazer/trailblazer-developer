@@ -7,4 +7,6 @@ module Trailblazer
 end
 
 require "trailblazer/developer/generate"
+require "trailblazer/developer/render/circuit"
+
 # require "trailblazer/developer/client"

@@ -8,7 +8,66 @@ class GenerateTest < Minitest::Spec
 
     intermediate = Trailblazer::Developer::Generate.("elements" => JSON[json])
 
-    intermediate.inspect.must_equal %{
+    require "pp"
+    out = PP.pp(intermediate, "")
+    out.must_equal %{#<struct Trailblazer::Activity::Schema::Intermediate
+ wiring=
+  {#<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id="Event-jtq9oxsj",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target="a">],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id="a",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target="b">],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id="b",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target="c">],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id="c",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target="d">],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id="d",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target="EndEventTerminate-jtq9phpw">,
+     #<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target="a">],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id="EndEventTerminate-jtq9phpw",
+    data={"stop_event"=>true}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target=nil>]},
+ stop_task_ids=["EndEventTerminate-jtq9phpw"],
+ start_task_ids=["Event-jtq9oxsj"]>
+}
+
+    implementing = T.def_tasks(:a, :b, :c, :d)
+
+    implementation = Class.new(Trailblazer::Activity::Implementation) do
+      implement intermediate,
+        # start: false,
+        "a" => implementing.method(:a),
+        "b" => implementing.method(:b),
+        "c" => implementing.method(:c),
+        "d" => implementing.method(:d),
+        "EndEventTerminate-jtq9phpw" => {task: _end=Trailblazer::Activity.End(:success), outputs: {success: Trailblazer::Activity.Output(_end, :success)}, extensions: {}}
+    end
+
+    assert_process_for implementation.to_h, :success, %{
 }
   end
 end
@@ -27,6 +86,7 @@ end
           {
             target: "..",
             semantic: "success",
+            label: "this is a link with :new semantic" // :symbol_style is matched as semantic
           }
         ]
       }

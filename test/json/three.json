@@ -14,7 +14,7 @@
       ],
       "linksTo":[
          {
-            "target":"Task-jtq9oyvv",
+            "target":"a",
             "edited":false,
             "sibling":false,
             "points":[
@@ -39,7 +39,7 @@
       ]
    },
    {
-      "id":"Task-jtq9oyvv",
+      "id":"a",
       "type":"Task",
       "width":100,
       "height":60,
@@ -54,7 +54,8 @@
       ],
       "linksTo":[
          {
-            "target":"Task-jtq9p4d0",
+            "target":"b",
+            "label":":success",
             "edited":false,
             "sibling":false,
             "points":[
@@ -79,7 +80,7 @@
       ]
    },
    {
-      "id":"Task-jtq9p4d0",
+      "id":"b",
       "type":"Task",
       "width":100,
       "height":60,
@@ -94,7 +95,8 @@
       ],
       "linksTo":[
          {
-            "target":"IntermediateEventCatchTimer-jtq9pd0s",
+            "target":"c",
+            "label":":success",
             "edited":false,
             "sibling":false,
             "points":[
@@ -119,7 +121,7 @@
       ]
    },
    {
-      "id":"IntermediateEventCatchTimer-jtq9pd0s",
+      "id":"c",
       "type":"IntermediateEventCatchTimer",
       "width":40,
       "height":40,
@@ -133,7 +135,8 @@
       ],
       "linksTo":[
          {
-            "target":"Task-jtq9peds",
+            "target":"d",
+            "label":":success",
             "edited":false,
             "sibling":false,
             "points":[
@@ -158,7 +161,7 @@
       ]
    },
    {
-      "id":"Task-jtq9peds",
+      "id":"d",
       "type":"Task",
       "width":100,
       "height":60,
@@ -173,6 +176,7 @@
       "linksTo":[
          {
             "target":"EndEventTerminate-jtq9phpw",
+            "label":":success",
             "edited":false,
             "sibling":false,
             "points":[
@@ -195,7 +199,8 @@
             ]
          },
          {
-            "target":"Task-jtq9oyvv",
+            "target":"a",
+            "label":":new",
             "edited":true,
             "sibling":null,
             "points":[
@@ -235,6 +240,8 @@
       "parent":null,
       "siblings":[
 
-      ]
+      ],
+      "data": {"stop_event": true}, // FIXME
+      "label": ":success"
    }
 ]
