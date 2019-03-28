@@ -6,7 +6,7 @@ module Trailblazer
       module_function
 
       Element = Struct.new(:id, :type, :linksTo, :data, :label)
-      Arrow   = Struct.new(:target)
+      Arrow   = Struct.new(:target, :label)
 
       module Representer
         class Activity < Representable::Decorator
@@ -17,6 +17,7 @@ module Trailblazer
             property :type
             collection :linksTo, class: Arrow, default: [] do
               property :target
+              property :label
             end
             property :data, default: {}
             property :label
@@ -45,6 +46,7 @@ module Trailblazer
             [ref, [inter.Out(semantic_for(_end.to_h), nil)]]
           end
         ])
+        # pp wiring
 
         inter.new(wiring, end_events.collect(&:id), start_events.collect(&:id))
       end
