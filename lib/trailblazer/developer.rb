@@ -6,6 +6,7 @@ module Trailblazer
   end
 end
 
+require "trailblazer/developer/wtf"
 require "trailblazer/developer/generate"
 require "trailblazer/developer/render/circuit"
 
