@@ -1,7 +1,5 @@
 require "test_helper"
 
-require "trailblazer/developer/wtf"
-
 class TraceWtfTest < Minitest::Spec
   let(:alpha) do
     charlie = Class.new(Trailblazer::Activity::Railway) do
