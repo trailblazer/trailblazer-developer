@@ -29,6 +29,10 @@ module Trailblazer
       def call(hash)
         elements = Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
 
+        compute_intermediate(elements)
+      end
+
+      def compute_intermediate(elements)
         start_events = elements.find_all { |el| el.type == "Event" }
         end_events   = elements.find_all { |el| el.type == "EndEventTerminate" }# DISCUSS: TERMINATE?
 
