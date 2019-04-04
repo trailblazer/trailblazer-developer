@@ -1,8 +1,8 @@
 module Trailblazer::Developer
   module_function
 
-  def wtf(activity, args)
-    Wtf.invoke(activity, args)
+  def wtf(activity, *args)
+    Wtf.invoke(activity, *args)
   end
 
   singleton_class.alias_method :wtf?, :wtf
@@ -12,7 +12,7 @@ module Trailblazer::Developer
 
     # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
     # This allows to display the trace even when an exception happened
-    def invoke(activity, (ctx, flow_options))
+    def invoke(activity, (ctx, flow_options), *args)
       flow_options ||= {} # Ruby sucks.
 
       # this instance gets mutated with every step. unfortunately, there is
@@ -20,11 +20,12 @@ module Trailblazer::Developer
       stack = Trailblazer::Activity::Trace::Stack.new
 
       begin
-        returned_stack, _ = Trailblazer::Activity::Trace.invoke( activity,
+        returned_stack, *returned = Trailblazer::Activity::Trace.invoke( activity,
           [
             ctx,
             flow_options.merge(stack: stack)
-          ]
+          ],
+          *args
         )
       rescue
 
@@ -37,6 +38,8 @@ module Trailblazer::Developer
 
         handle(stack, $!, closest.task, activity, [ctx, flow_options])
       end
+
+      returned # FIXME: test me
     end
 
     def exception_renderer(stack:, level:, input:, name:, closest_task:)
