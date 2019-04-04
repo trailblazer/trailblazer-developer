@@ -50,4 +50,8 @@ class TraceWtfTest < Minitest::Spec
 
     pp ctx
   end
+
+  it "has alias to `wtf` as `wtf?`" do
+    assert_equal Dev.method(:wtf), Dev.method(:wtf?)
+  end
 end

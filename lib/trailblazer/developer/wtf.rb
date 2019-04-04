@@ -4,7 +4,8 @@ module Trailblazer::Developer
   def wtf(activity, args)
     Wtf.invoke(activity, args)
   end
-  alias_method :wtf?, :wtf
+
+  singleton_class.alias_method :wtf?, :wtf
 
   module Wtf
     module_function
