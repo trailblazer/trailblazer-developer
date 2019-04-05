@@ -21,6 +21,7 @@ module Trailblazer
               property :label
             end
             property :data, default: {}
+
             property :label
           end
         end
@@ -34,7 +35,7 @@ module Trailblazer
 
       def compute_intermediate(elements)
         start_events = elements.find_all { |el| el.type == "Event" }
-        end_events   = elements.find_all { |el| el.type == "EndEventTerminate" }# DISCUSS: TERMINATE?
+        end_events   = elements.find_all { |el| el.type == "EndEventTerminate" } # DISCUSS: is it really called TERMINATE?
 
         inter = Activity::Schema::Intermediate
 
@@ -61,6 +62,10 @@ module Trailblazer
       def semantic_for(label:nil, **)
         return :success unless label
 
+        extract_semantic(label)
+      end
+
+      def extract_semantic(label)
         m = label.match(/:(\w+)/)
         return m[1].to_sym
       end
