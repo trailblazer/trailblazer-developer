@@ -3,6 +3,8 @@ require "test_helper"
 require "json"
 
 class GenerateTest < Minitest::Spec
+  # a and b have {label} fields which are to be the ID in the generated structure.
+  # End has label:"\"String\""
   it "what" do
     json = File.read("./test/json/three.json")
 
@@ -17,15 +19,15 @@ class GenerateTest < Minitest::Spec
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target="a">],
+      target=:one>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="a",
+    id=:one,
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target="b">],
+      target=:no_two?>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="b",
+    id=:no_two?,
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
@@ -41,17 +43,17 @@ class GenerateTest < Minitest::Spec
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target="EndEventTerminate-jtq9phpw">,
+      target="End.success">,
      #<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:new,
-      target="a">],
+      target=:one>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="EndEventTerminate-jtq9phpw",
+    id="End.success",
     data={"stop_event"=>true}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=nil>]},
- stop_task_ids=["EndEventTerminate-jtq9phpw"],
+ stop_task_ids=["End.success"],
  start_task_ids=["Event-jtq9oxsj"]>
 }
 
