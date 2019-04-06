@@ -34,13 +34,18 @@ module Trailblazer
         compute_intermediate(elements)
       end
 
-      def compute_intermediate(elements)
+      def compute_intermediate(elements) # rubocop:disable Metrics/AbcSize
         start_events = elements.find_all { |el| el.type == "Event" }
         end_events   = elements.find_all { |el| el.type == "EndEventTerminate" } # DISCUSS: is it really called TERMINATE?
 
         inter = Activity::Schema::Intermediate
 
-        wiring = elements.collect { |el| [inter.TaskRef(el.id, el.data), el.linksTo.collect { |arrow| inter.Out(semantic_for(arrow.to_h), arrow.target) } ] }
+        wiring = elements.collect do |el|
+          [
+            inter.TaskRef(el.id, el.data),
+            el.linksTo.collect { |arrow| inter.Out(semantic_for(arrow.to_h), arrow.target) }
+          ]
+        end
         wiring = Hash[wiring]
 
         # end events need this stupid special handling

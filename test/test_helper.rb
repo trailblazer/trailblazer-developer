@@ -3,7 +3,6 @@ require "trailblazer/developer"
 
 require "minitest/autorun"
 
-
 require "trailblazer/activity"
 require "trailblazer/activity/testing"
 require "trailblazer/activity/dsl/linear"

@@ -9,5 +9,6 @@ end
 require "trailblazer/developer/wtf"
 require "trailblazer/developer/generate"
 require "trailblazer/developer/render/circuit"
+require "trailblazer/developer/operation"
 
 # require "trailblazer/developer/client"

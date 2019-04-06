@@ -1,4 +1,4 @@
-def __a
+def __a # rubocop:disable Metrics/MethodLength
 {"id"=>"some-process",
  "start_events"=>
   [{"id"=>"Start.default",
