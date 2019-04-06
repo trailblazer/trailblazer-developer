@@ -15,7 +15,7 @@ class GenerateTest < Minitest::Spec
     out.must_equal %{#<struct Trailblazer::Activity::Schema::Intermediate
  wiring=
   {#<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="Event-jtq9oxsj",
+    id=:"Event-jtq9oxsj",
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
@@ -31,30 +31,30 @@ class GenerateTest < Minitest::Spec
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target="c">],
+      target=:c>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="c",
+    id=:c,
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target="d">],
+      target=:d>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="d",
+    id=:d,
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target="End.success">,
+      target=:"End.success">,
      #<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:new,
       target=:one>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id="End.success",
+    id=:"End.success",
     data={"stop_event"=>true}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=nil>]},
- stop_task_ids=["End.success"],
- start_task_ids=["Event-jtq9oxsj"]>
+ stop_task_ids=[:"End.success"],
+ start_task_ids=[:"Event-jtq9oxsj"]>
 }
 
   end

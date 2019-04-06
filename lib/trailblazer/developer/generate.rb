@@ -30,12 +30,11 @@ module Trailblazer
       def call(hash)
         elements = Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
 
+        elements = remap_ids(elements)
         compute_intermediate(elements)
       end
 
       def compute_intermediate(elements)
-        elements = remap_ids(elements)
-
         start_events = elements.find_all { |el| el.type == "Event" }
         end_events   = elements.find_all { |el| el.type == "EndEventTerminate" } # DISCUSS: is it really called TERMINATE?
 
@@ -74,7 +73,7 @@ module Trailblazer
 
       def extract_string_id(label)
         m = label.match(/"(.+)"/) or return
-        return m[1].to_s
+        return m[1].to_sym
       end
 
       def extract_id(label)
@@ -86,7 +85,7 @@ module Trailblazer
         map = {}
 
         elements.collect do |el|
-          id = (el.label && semantic = extract_id(el.label)) ? semantic : el.id
+          id = (el.label && semantic = extract_id(el.label)) ? semantic : el.id.to_sym
 
           map[el.id] = id
 
