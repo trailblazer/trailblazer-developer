@@ -11,3 +11,7 @@ gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity
 # gem "json"
 
 gem "representable"
+
+group :test do
+  gem "trailblazer-operation"
+end
