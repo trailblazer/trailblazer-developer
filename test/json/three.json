@@ -45,7 +45,7 @@
       "height":60,
       "x":330,
       "y":250,
-      "name":"one",
+      "label":":one",
       "layer":"10",
       "container":false,
       "parent":null,
@@ -86,7 +86,7 @@
       "height":60,
       "x":490,
       "y":250,
-      "name":"two",
+      "label":"number :no_two?",
       "layer":"10",
       "container":false,
       "parent":null,
@@ -163,6 +163,7 @@
    {
       "id":"d",
       "type":"Task",
+      "label": "some random string",
       "width":100,
       "height":60,
       "x":730,
@@ -242,6 +243,6 @@
 
       ],
       "data": {"stop_event": true},
-      "label": ":success"
+      "label": "\"End.success\" :success"
    }
 ]

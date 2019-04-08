@@ -21,6 +21,7 @@ module Trailblazer
               property :label
             end
             property :data, default: {}
+
             property :label
           end
         end
@@ -29,12 +30,13 @@ module Trailblazer
       def call(hash)
         elements = Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
 
+        elements = remap_ids(elements)
         compute_intermediate(elements)
       end
 
       def compute_intermediate(elements)
         start_events = elements.find_all { |el| el.type == "Event" }
-        end_events   = elements.find_all { |el| el.type == "EndEventTerminate" }# DISCUSS: TERMINATE?
+        end_events   = elements.find_all { |el| el.type == "EndEventTerminate" } # DISCUSS: is it really called TERMINATE?
 
         inter = Activity::Schema::Intermediate
 
@@ -61,8 +63,43 @@ module Trailblazer
       def semantic_for(label:nil, **)
         return :success unless label
 
-        m = label.match(/:(\w+)/)
+        extract_semantic(label)
+      end
+
+      def extract_semantic(label)
+        m = label.match(/:([^\s][\w\?!]+)/) or return
         return m[1].to_sym
+      end
+
+      def extract_string_id(label)
+        m = label.match(/"(.+)"/) or return
+        return m[1].to_sym
+      end
+
+      def extract_id(label)
+        extract_string_id(label) || extract_semantic(label)
+      end
+
+      # remap {id}
+      def remap_ids(elements)
+        map = {}
+
+        elements.collect do |el|
+          id = (el.label && semantic = extract_id(el.label)) ? semantic : el.id.to_sym
+
+          map[el.id] = id
+
+          el.id = id
+        end
+
+        # remap {linksTo}
+        elements.collect do |el|
+          el.linksTo.collect do |link|
+            link.target = map[link.target]
+          end
+        end
+
+        elements
       end
     end
   end
