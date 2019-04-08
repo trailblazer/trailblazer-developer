@@ -34,8 +34,12 @@ module Trailblazer
         compute_intermediate(elements)
       end
 
-      def compute_intermediate(elements)
-        start_events = elements.find_all { |el| el.type == "Event" }
+      def find_start_events(elements)
+        elements.find_all { |el| el.type == "Event" }
+      end
+
+      def compute_intermediate(elements, find_start_events: method(:find_start_events))
+        start_events = find_start_events.(elements)
         end_events   = elements.find_all { |el| el.type == "EndEventTerminate" } # DISCUSS: is it really called TERMINATE?
 
         inter = Activity::Schema::Intermediate
@@ -57,6 +61,8 @@ module Trailblazer
       end
 
       # private
+
+
 
       # We currently use the {:label} field of an arrow to encode an output semantic.
       # The {:symbol_style} part will be filtered out as semantic. Defaults to {:success}.
