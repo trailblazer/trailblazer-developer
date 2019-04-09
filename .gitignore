@@ -1,9 +1,14 @@
+.idea
+.rakeTasks
+.tool-versions
 /.bundle/
 /.yardoc
 /Gemfile.lock
+/gems.local.rb.lock
 /_yardoc/
 /coverage/
 /doc/
 /pkg/
 /spec/reports/
 /tmp/
+.rubocop-https---raw-githubusercontent-com-trailblazer-meta-master-rubocop-yml

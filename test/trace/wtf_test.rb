@@ -33,7 +33,7 @@ class TraceWtfTest < Minitest::Spec
     end
 
     def <<(value)
-      raise RuntimeError.new("hello from #{value}!") if value == @raise_in
+      raise "hello from #{value}!" if value == @raise_in
       super
     end
   end
@@ -43,12 +43,9 @@ class TraceWtfTest < Minitest::Spec
     # signal, (ctx, _) = Trailblazer::Activity::Trace.invoke(alpha, [{seq: Raiser.new(raise_in: :c)}])
 
     # signal, (ctx, _) = Developer.wtf?(alpha, [{seq: Raiser.new(raise_in: :c)}])
-    puts
-    signal, (ctx, _) = Dev.wtf(alpha, [{seq: Raiser.new(raise_in: :c)}])
-
-
-
-    pp ctx
+    assert_output(/`-- \e\[1m\e\[31m#<Method: #<Class:(\(#<Module:)?0x([0-f]+)>(\))?(\.|#)c>/) do
+      Dev.wtf(alpha, [{seq: Raiser.new(raise_in: :c)}])
+    end
   end
 
   it "has alias to `wtf` as `wtf?`" do
