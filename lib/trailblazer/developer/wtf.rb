@@ -1,3 +1,5 @@
+require 'trailblazer/activity'
+
 module Trailblazer::Developer
   module_function
 
@@ -12,6 +14,8 @@ module Trailblazer::Developer
   module Wtf
     module_function
 
+    COLOR_MAP = Trailblazer::Developer.config.trace_color_map
+
     # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
     # This allows to display the trace even when an exception happened
     def invoke(activity, (ctx, flow_options), *args)
@@ -22,43 +26,35 @@ module Trailblazer::Developer
       stack = Trailblazer::Activity::Trace::Stack.new
 
       begin
-        _returned_stack, *returned = Trailblazer::Activity::Trace.invoke( activity,
+        _returned_stack, *returned = Trailblazer::Activity::Trace.invoke(
+          activity,
           [
             ctx,
             flow_options.merge(stack: stack)
           ],
           *args
         )
-      rescue
-        # DISCUSS: we shouldn't use internal knowledge of the Stack/Level API here.
-        closest = stack.to_a
-        while closest.is_a?(Trailblazer::Activity::Trace::Level) && closest = closest.last do # FIXME: deep-dive via Stack API.
-        end
+        puts Trailblazer::Activity::Trace::Present.(stack, renderer: method(:renderer))
 
-        # pp closest.task # this was the last executed task
-
-        handle(stack, $!, closest.task, activity, [ctx, flow_options])
+      rescue => exception
+        puts Trailblazer::Activity::Trace::Present.(stack, renderer: method(:renderer))
+        raise(exception)
       end
 
-      returned # FIXME: test me
+      returned
     end
 
-    def exception_renderer(stack:, level:, input:, name:, closest_task:)
-      return [ level, %{#{fmt(fmt(name, :red), :bold)}} ] if input.task == closest_task
-      [ level, %{#{name}} ]
+    def renderer(task_node:, position:, tree:)
+      if task_node[:output].nil? && tree[position.next].nil? # i.e. when exception raised
+        return [ task_node[:level], %{#{fmt(fmt(task_node[:name], :red), :bold)}} ]
+      end
+
+      if task_node[:output].nil? # i.e. on entry/exit point of activity
+        return [ task_node[:level], %{#{fmt(task_node[:name], COLOR_MAP.default)}} ]
+      end
+
+      [ task_node[:level], %{#{fmt(task_node[:name], COLOR_MAP[task_node[:output].data])}} ]
     end
-
-    # TODO: make this injectable
-    def handle(stack, exception, closest_task, activity, *args)
-      puts "[Trailblazer] Exception tracing"
-      puts "#{fmt(exception.inspect, :bold)}"
-      puts "    #{exception.backtrace[0]}"
-      puts "    #{exception.backtrace[1]}"
-      puts
-      puts Trailblazer::Activity::Trace::Present.(stack, closest_task: closest_task, renderer: method(:exception_renderer))
-    end
-
-
 
     def fmt(line, style)
       String.send(style, line)
