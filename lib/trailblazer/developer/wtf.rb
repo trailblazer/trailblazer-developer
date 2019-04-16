@@ -5,7 +5,9 @@ module Trailblazer::Developer
     Wtf.invoke(activity, *args)
   end
 
-  singleton_class.alias_method :wtf?, :wtf
+  class << self
+    alias wtf? wtf
+  end
 
   module Wtf
     module_function
@@ -20,7 +22,7 @@ module Trailblazer::Developer
       stack = Trailblazer::Activity::Trace::Stack.new
 
       begin
-        returned_stack, *returned = Trailblazer::Activity::Trace.invoke( activity,
+        _returned_stack, *returned = Trailblazer::Activity::Trace.invoke( activity,
           [
             ctx,
             flow_options.merge(stack: stack)

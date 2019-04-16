@@ -2,7 +2,7 @@ inherit_from:
   - https://raw.githubusercontent.com/trailblazer/meta/master/rubocop.yml
 
 AllCops:
-  TargetRubyVersion: 2.1
+  TargetRubyVersion: 2.5
   Exclude:
     - 'test/hash/bla.rb'
 
