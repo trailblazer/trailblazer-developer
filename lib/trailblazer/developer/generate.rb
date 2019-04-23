@@ -7,7 +7,7 @@ module Trailblazer
       module_function
 
       Element = Struct.new(:id, :type, :linksTo, :data, :label)
-      Arrow   = Struct.new(:target, :label)
+      Arrow   = Struct.new(:target, :label, :message)
 
       module Representer
         class Activity < Representable::Decorator
@@ -19,6 +19,7 @@ module Trailblazer
             collection :linksTo, class: Arrow, default: [] do
               property :target
               property :label
+              property :message
             end
             property :data, default: {}
 
@@ -28,10 +29,14 @@ module Trailblazer
       end
 
       def call(hash)
-        elements = Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
-
+        elements = transform_from_hash(hash)
         elements = remap_ids(elements)
+
         compute_intermediate(elements)
+      end
+
+      def transform_from_hash(hash)
+        Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
       end
 
       def find_start_events(elements)
