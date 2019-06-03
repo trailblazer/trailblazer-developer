@@ -1,5 +1,11 @@
 module Trailblazer
   module Developer
+    module_function
+
+    def render(activity)
+      Render::Circuit.(activity)
+    end
+
     module Render
       module Circuit
         module_function
