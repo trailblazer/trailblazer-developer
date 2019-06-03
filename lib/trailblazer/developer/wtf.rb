@@ -30,7 +30,6 @@ module Trailblazer::Developer
           *args
         )
       rescue
-
         # DISCUSS: we shouldn't use internal knowledge of the Stack/Level API here.
         closest = stack.to_a
         while closest.is_a?(Trailblazer::Activity::Trace::Level) && closest = closest.last do # FIXME: deep-dive via Stack API.
