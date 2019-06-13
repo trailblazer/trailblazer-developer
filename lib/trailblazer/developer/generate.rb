@@ -57,7 +57,7 @@ module Trailblazer
           end_events.collect do |_end|
             ref, outputs = wiring.find { |ref, _| ref.id == _end.id }
 
-            [ref, [inter.Out(semantic_for(_end.to_h), nil)]]
+            [ref, [inter.Out(semantic_for(_end.to_h), nil)]] # TODO: don't extract semantic from :label but from :data.
           end
         ])
         # pp wiring
