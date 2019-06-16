@@ -4,7 +4,7 @@ require "trailblazer/developer/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "trailblazer-developer"
-  spec.version       = Trailblazer::Developer::VERSION
+  spec.version       = Trailblazer::Version::Developer::VERSION
   spec.authors       = ["Nick Sutterer"]
   spec.email         = ["apotonick@gmail.com"]
 

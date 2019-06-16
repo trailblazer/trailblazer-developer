@@ -1,5 +1,7 @@
 module Trailblazer
-  module Developer
-    VERSION = "0.0.1".freeze
+  module Version
+    module Developer
+      VERSION = "0.0.2".freeze
+    end
   end
 end
