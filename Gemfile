@@ -6,6 +6,6 @@ gemspec
 # gem "trailblazer-activity", ">= 0.7.1"
 # gem "trailblazer-activity", path: "../trailblazer-activity"
 # gem "trailblazer-activity-dsl-linear", path: "../trailblazer-activity-dsl-linear"
-gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
+# gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
 
 gem "representable"
