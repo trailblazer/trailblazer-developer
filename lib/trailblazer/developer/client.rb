@@ -1,10 +1,23 @@
 require "faraday"
 require "base64"
 require "json"
+require "representable/json"
 
 module Trailblazer::Developer
   module Client
+    Diagram = Struct.new(:id, :body)
+
+    class Diagram::Representer < Representable::Decorator
+      include Representable::JSON
+      property :id
+      property :body, as: :diagram
+    end
+
     module_function
+
+    def Diagram(id, body)
+      Diagram.new(id, body).freeze
+    end
 
     def import(id:, **options)
       token = retrieve_token(**options)
@@ -24,12 +37,17 @@ module Trailblazer::Developer
     def export_diagram(id:, **options)
       response = request(body: nil, url: "/api/v1/diagrams/#{id}/export", method: :get, **options)
 
-      raise response.body
+#      parse_response(response)
+      response.body
     end
 
     # DISCUSS: do we need that?
     def new_diagram(token:, **options)
       response = request(body: nil, url: "/api/v1/diagrams/new", method: :get, token: token, **options)
+
+      # TODO: use Dry::Struct
+      # TODO: handle unauthorized/errors
+      parse_response(response)
     end
 
     def request(host:, url:, method:, token:, body:, **)
@@ -41,6 +59,13 @@ module Trailblazer::Developer
         req.body = body
         req.headers["Authorization"] = token
       end
+    end
+
+    def parse_response(response)
+      diagram = Diagram.new
+      Diagram::Representer.new(diagram).from_json(response.body) # a parsed hash would be cooler?
+
+      diagram
     end
 
     # TODO: remove me!
