@@ -6,7 +6,7 @@ module Trailblazer
     module Generate
       module_function
 
-      Element = Struct.new(:id, :type, :linksTo, :data, :label)
+      Element = Struct.new(:id, :type, :linksTo, :data, :label, :parent)
       Arrow   = Struct.new(:target, :label, :message)
 
       module Representer
@@ -24,6 +24,7 @@ module Trailblazer
             property :data, default: {}
 
             property :label
+            property :parent
           end
         end
       end
@@ -79,8 +80,7 @@ module Trailblazer
       end
 
       def extract_semantic(label)
-        m = label.match(/:([^\s][\w\?!]+)/) or return
-        return m[1].to_sym
+        label.to_sym
       end
 
       def extract_string_id(label)
