@@ -1,3 +1,7 @@
+# 0.0.4
+
+* Allow injecting `:parser` into `Generate.transform_from_hash`.
+
 # 0.0.3
 
 * Add `Developer.railway`.
