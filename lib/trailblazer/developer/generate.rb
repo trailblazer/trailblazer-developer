@@ -35,8 +35,8 @@ module Trailblazer
         compute_intermediate(elements)
       end
 
-      def transform_from_hash(hash)
-        Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
+      def transform_from_hash(hash, parser: Representer::Activity)
+        parser.new(OpenStruct.new).from_hash(hash).elements
       end
 
       def find_start_events(elements)
