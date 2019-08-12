@@ -19,9 +19,9 @@ module Trailblazer::Developer
       Diagram.new(id, body).freeze
     end
 
-    def import(id:, **options)
+    def import(id:, query:"", **options)
       token = retrieve_token(**options)
-      export_diagram(id: id, token: token, **options)
+      export_diagram(id: id, token: token, query: query, **options)
     end
 
     def retrieve_token(email:, password:, url: "/login", **options)
@@ -34,8 +34,8 @@ module Trailblazer::Developer
       token = CGI::Cookie.parse(response.headers["set-cookie"])["token"][0]
     end
 
-    def export_diagram(id:, **options)
-      response = request(body: nil, url: "/api/v1/diagrams/#{id}/export", method: :get, **options)
+    def export_diagram(id:, query:, **options)
+      response = request(body: nil, url: "/api/v1/diagrams/#{id}/export#{query}", method: :get, **options)
 
 #      parse_response(response)
       response.body
