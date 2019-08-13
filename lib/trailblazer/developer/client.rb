@@ -41,6 +41,13 @@ module Trailblazer::Developer
       response.body
     end
 
+    def duplicate(id:, **options)
+      token = retrieve_token(**options)
+
+      response = request(body: nil, token: token, url: "/api/v1/diagrams/#{id}/duplicate", method: :get, **options)
+      parse_response(response)
+    end
+
     # DISCUSS: do we need that?
     def new_diagram(token:, **options)
       response = request(body: nil, url: "/api/v1/diagrams/new", method: :get, token: token, **options)
