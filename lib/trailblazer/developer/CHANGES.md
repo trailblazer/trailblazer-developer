@@ -1,6 +1,8 @@
 # 0.0.5
 
 * Introduce `:query` option for `Client.import`.
+* In `Generate`, added `Element.parent` field.
+* No more magic is applied when extracting the ID/semantic. We just use the plain string.
 
 # 0.0.4
 

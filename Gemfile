@@ -9,3 +9,5 @@ gemspec
 # gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
 
 gem "representable"
+gem "faraday"
+gem "multi_json"
