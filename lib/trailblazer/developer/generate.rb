@@ -31,7 +31,6 @@ module Trailblazer
 
       def call(hash)
         elements = transform_from_hash(hash)
-        elements = remap_ids(elements)
 
         compute_intermediate(elements)
       end
@@ -81,37 +80,6 @@ module Trailblazer
 
       def extract_semantic(label)
         label.to_sym
-      end
-
-      def extract_string_id(label)
-        m = label.match(/"(.+)"/) or return
-        return m[1].to_sym
-      end
-
-      def extract_id(label)
-        extract_string_id(label) || extract_semantic(label)
-      end
-
-      # remap {id}
-      def remap_ids(elements)
-        map = {}
-
-        elements.collect do |el|
-          id = (el.label && semantic = extract_id(el.label)) ? semantic : el.id.to_sym
-
-          map[el.id] = id
-
-          el.id = id
-        end
-
-        # remap {linksTo}
-        elements.collect do |el|
-          el.linksTo.collect do |link|
-            link.target = map[link.target]
-          end
-        end
-
-        elements
       end
     end
   end

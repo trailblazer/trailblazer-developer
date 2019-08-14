@@ -1,62 +1,63 @@
 require "test_helper"
-
 require "json"
+require "trailblazer/developer/client"
 
 class GenerateTest < Minitest::Spec
-  # a and b have {label} fields which are to be the ID in the generated structure.
-  # End has label:"\"String\""
+
   it "what" do
-    json = File.read("./test/json/three.json")
+    # json = Dev::Client.import(id: 11, email: "apotonick@gmail.com", password: , host: "https://api.trailblazer.to", query: "?labels=save%3Ecleanup%3Efailure")
+    # File.write("./test/json/validate-save-cleanup.json", json)
 
-    intermediate = Trailblazer::Developer::Generate.("elements" => JSON[json])
+    # {id: "validate\n"} gets chomped on server
+    json = File.read("./test/json/validate-save-cleanup.json")
 
-    require "pp"
+    intermediate = Trailblazer::Developer::Generate.(JSON[json])
+
     out = PP.pp(intermediate, "")
     out.must_equal %{#<struct Trailblazer::Activity::Schema::Intermediate
  wiring=
   {#<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id=:"Event-jtq9oxsj",
+    id=\"Start.default\",
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target=:one>],
+      target=\"validate\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id=:one,
+    id=\"validate\",
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target=:no_two?>],
+      target=\"save\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id=:no_two?,
+    id=\"save\",
     data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
-      target=:c>],
-   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id=:c,
-    data={}>=>
-    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-      semantic=:success,
-      target=:d>],
-   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id=:d,
-    data={}>=>
-    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
-      semantic=:success,
-      target=:"End.success">,
+      target=\"success\">,
      #<struct Trailblazer::Activity::Schema::Intermediate::Out
-      semantic=:new,
-      target=:one>],
+      semantic=:failure,
+      target=\"cleanup\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
-    id=:"End.success",
-    data={"stop_event"=>true}>=>
+    id=\"success\",
+    data={}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
+      target=nil>],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id=\"cleanup\",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:success,
+      target=\"failure\">],
+   #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
+    id=\"failure\",
+    data={}>=>
+    [#<struct Trailblazer::Activity::Schema::Intermediate::Out
+      semantic=:failure,
       target=nil>]},
- stop_task_ids=[:"End.success"],
- start_task_ids=[:"Event-jtq9oxsj"]>
+ stop_task_ids=[\"success\", \"failure\"],
+ start_task_ids=[\"Start.default\"]>
 }
-
   end
 end
 
