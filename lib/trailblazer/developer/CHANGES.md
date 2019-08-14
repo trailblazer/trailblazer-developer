@@ -1,3 +1,7 @@
+# 0.0.6
+
+* Remove ID extraction logic from `Generate`, this is done on the server-side.
+
 # 0.0.5
 
 * Introduce `:query` option for `Client.import`.
