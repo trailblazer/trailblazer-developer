@@ -44,7 +44,7 @@ class TraceWtfTest < Minitest::Spec
 
     signal, (ctx, _) = Trailblazer::Developer.wtf?(alpha, [{seq: Raiser.new(raise_in: :c)}])
 
-    assert_output(/`-- \e\[1m\e\[31m#<Method: #<Class:(\(#<Module:)?0x([0-f]+)>(\))?(\.|#)c>/) do
+    assert_output(/\|-- \e\[1m\e\[31m#<Method:.+(\.|#)c>/) do
       Dev.wtf(alpha, [{seq: Raiser.new(raise_in: :c)}])
     end
   end
