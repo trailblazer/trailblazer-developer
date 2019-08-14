@@ -3,6 +3,8 @@ require "trailblazer/developer/client"
 
 class ClientTest < Minitest::Spec
   it do
+    skip "we need to mock the server, first"
+
     # puts token = Dev::Client.retrieve_token(email: "apotonick@gmail.com", password: "nickitito123", host: "https://api.trailblazer.to")
     json = Dev::Client.import(id: 3, email: "apotonick@gmail.com", password: "nickitito123", host: "https://api.trailblazer.to", query: "?labels=validate%3Einvalid!%3E:failure")
 
@@ -14,6 +16,8 @@ class ClientTest < Minitest::Spec
   end
 
   it do
+    skip "we need to mock the server, first"
+
 # Client.new_diagram
     diagram = Dev::Client.new_diagram(token:"eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NjU5MzU5MjYsImlzcyI6IlRyYWlsYmxhemVyIiwiYXVkIjoicHJvIiwidXNlcl9pZCI6MX0.FngxHBgZd094o4-9wa4QXlpOl1lxOu-eyCLMVRIzHYg" , email: "apotonick@gmail.com", password: "blabla!", host: "http://localhost:3000")
 
