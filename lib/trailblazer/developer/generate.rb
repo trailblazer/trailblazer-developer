@@ -68,8 +68,6 @@ module Trailblazer
 
       # private
 
-
-
       # We currently use the {:label} field of an arrow to encode an output semantic.
       # The {:symbol_style} part will be filtered out as semantic. Defaults to {:success}.
       def semantic_for(label:nil, **)
