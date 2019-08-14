@@ -9,6 +9,7 @@ class DocsDeveloperTest < Minitest::Spec
 
   class Form
     def self.validate(input:)
+      input
     end
   end
 
@@ -26,7 +27,7 @@ class DocsDeveloperTest < Minitest::Spec
         step :create
         #~mod
         def validate(ctx, params:, **)
-          ctx[:input] = Form.validate(params)
+          ctx[:input] = Form.validate(input: params)
         end
 
         def create(ctx, input:, **)
