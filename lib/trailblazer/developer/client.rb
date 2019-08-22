@@ -24,14 +24,14 @@ module Trailblazer::Developer
       export_diagram(id: id, token: token, query: query, **options)
     end
 
-    def retrieve_token(email:, password:, url: "/login", **options)
-      body = JSON.generate({login: {email: email, password: password}})
+    def retrieve_token(email:, api_key:, url: "/signin", **options)
+      body = JSON.generate({email: email, api_key: api_key})
 
-      response = request(token: nil, method: :post, url: url, body: body, **options)
+      response = request(token: nil, method: :get, url: url, body: body, **options)
+      return false unless response.status == 200
 
-      return false unless response.status == 302
-
-      token = CGI::Cookie.parse(response.headers["set-cookie"])["token"][0]
+      # token = CGI::Cookie.parse(response.headers["set-cookie"])["token"][0]
+      token = JSON.parse(response.body)["token"]
     end
 
     def export_diagram(id:, query:, **options)
