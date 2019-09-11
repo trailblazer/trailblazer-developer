@@ -1,0 +1,529 @@
+{
+  "elements": [
+    {
+      "id": "lib.signup",
+      "type": "Lane",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "lib.signup"
+    },
+    {
+      "id": "web.signup",
+      "type": "Lane",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "web.signup"
+    },
+    {
+      "id": "Start.default",
+      "type": "Event",
+      "linksTo": [
+        {
+          "target": "enter OTP screen"
+        }
+      ],
+      "data": {
+      },
+      "label": "Start.default",
+      "parent": "web.signup"
+    },
+    {
+      "id": "enter OTP screen",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "submitted?"
+        }
+      ],
+      "data": {
+      },
+      "label": "enter OTP screen",
+      "parent": "web.signup"
+    },
+    {
+      "id": "submitted?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "validate!"
+        }
+      ],
+      "data": {
+      },
+      "label": "submitted?",
+      "parent": "web.signup"
+    },
+    {
+      "id": "validate!",
+      "type": "IntermediateEventThrowMessage",
+      "linksTo": [
+        {
+          "target": "GatewayEventbased-jw9gp83r"
+        },
+        {
+          "target": "Start.default",
+          "message": true
+        }
+      ],
+      "data": {
+      },
+      "label": "validate!",
+      "parent": "web.signup"
+    },
+    {
+      "id": "Tyrant-FirstSignin",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "valid!"
+        },
+        {
+          "target": "invalid!",
+          "label": "failure"
+        }
+      ],
+      "data": {
+      },
+      "label": "Tyrant-FirstSignin",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "valid!",
+      "type": "IntermediateEventThrowMessage",
+      "linksTo": [
+        {
+          "target": "change_pw?"
+        },
+        {
+          "target": "valid?",
+          "message": true
+        }
+      ],
+      "data": {
+      },
+      "label": "valid!",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "invalid!",
+      "type": "IntermediateEventThrowMessage",
+      "linksTo": [
+        {
+          "target": "invalid?",
+          "message": true
+        },
+        {
+          "target": "Start.default"
+        }
+      ],
+      "data": {
+      },
+      "label": "invalid!",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "valid?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "enter new PW screen"
+        }
+      ],
+      "data": {
+      },
+      "label": "valid?",
+      "parent": "web.signup"
+    },
+    {
+      "id": "invalid?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "Start.default"
+        }
+      ],
+      "data": {
+      },
+      "label": "invalid?",
+      "parent": "web.signup"
+    },
+    {
+      "id": "GatewayEventbased-jw9gp83r",
+      "type": "GatewayEventbased",
+      "linksTo": [
+        {
+          "target": "invalid?"
+        },
+        {
+          "target": "valid?"
+        }
+      ],
+      "data": {
+      },
+      "parent": "web.signup"
+    },
+    {
+      "id": "change_pw?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "Change Password"
+        }
+      ],
+      "data": {
+      },
+      "label": "change_pw?",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "enter new PW screen",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "pw_submitted?"
+        }
+      ],
+      "data": {
+      },
+      "label": "enter new PW screen",
+      "parent": "web.signup"
+    },
+    {
+      "id": "pw_submitted?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "pw_change!"
+        }
+      ],
+      "data": {
+      },
+      "label": "pw_submitted?",
+      "parent": "web.signup"
+    },
+    {
+      "id": "Change Password",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "ok!"
+        },
+        {
+          "target": "notok!",
+          "label": "failure"
+        }
+      ],
+      "data": {
+      },
+      "label": "Change Password\n",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "ok!",
+      "type": "IntermediateEventThrowMessage",
+      "linksTo": [
+        {
+          "target": "ok?",
+          "message": true
+        },
+        {
+          "target": "success"
+        }
+      ],
+      "data": {
+      },
+      "label": "ok!",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "notok!",
+      "type": "IntermediateEventThrowMessage",
+      "linksTo": [
+        {
+          "target": "not_ok?",
+          "message": true
+        },
+        {
+          "target": "change_pw?"
+        }
+      ],
+      "data": {
+      },
+      "label": "notok!",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "pw_change!",
+      "type": "IntermediateEventThrowMessage",
+      "linksTo": [
+        {
+          "target": "change_pw?",
+          "message": true
+        },
+        {
+          "target": "GatewayEventbased-jwgcckqz"
+        }
+      ],
+      "data": {
+      },
+      "label": "pw_change!",
+      "parent": "web.signup"
+    },
+    {
+      "id": "GatewayEventbased-jwgcckqz",
+      "type": "GatewayEventbased",
+      "linksTo": [
+        {
+          "target": "ok?"
+        },
+        {
+          "target": "not_ok?"
+        }
+      ],
+      "data": {
+      },
+      "parent": "web.signup"
+    },
+    {
+      "id": "ok?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "success"
+        }
+      ],
+      "data": {
+      },
+      "label": "ok?",
+      "parent": "web.signup"
+    },
+    {
+      "id": "not_ok?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "enter new PW screen"
+        }
+      ],
+      "data": {
+      },
+      "label": "not_ok?",
+      "parent": "web.signup"
+    },
+    {
+      "id": "success",
+      "type": "EndEventTerminate",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "success",
+      "parent": "web.signup"
+    },
+    {
+      "id": "success",
+      "type": "EndEventTerminate",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "success",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "Lane-jwhzx851",
+      "type": "Lane",
+      "linksTo": [
+
+      ],
+      "data": {
+      }
+    },
+    {
+      "id": "Start.default",
+      "type": "Event",
+      "linksTo": [
+        {
+          "target": "DezernatAdmin\nPrepare"
+        }
+      ],
+      "data": {
+      },
+      "label": "Start.default",
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "DezernatAdmin\nPrepare",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "Start.default"
+        },
+        {
+          "target": "IntermediateEventCatchMessage-jwkpfq0z"
+        }
+      ],
+      "data": {
+      },
+      "label": "DezernatAdmin\nPrepare",
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "signup_complete?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "GatewayEventbased-jwi03rbf"
+        }
+      ],
+      "data": {
+      },
+      "label": "signup_complete?",
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "GatewayEventbased-jwi03rbf",
+      "type": "GatewayEventbased",
+      "linksTo": [
+        {
+          "target": "reset?"
+        },
+        {
+          "target": "delete?"
+        }
+      ],
+      "data": {
+      },
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "reset?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "reset?",
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "delete?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "delete?",
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "Start.default",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "Tyrant-FirstSignin"
+        }
+      ],
+      "data": {
+      },
+      "label": "Start.default",
+      "parent": "lib.signup"
+    },
+    {
+      "id": "IntermediateEventCatchMessage-jwkpfq0z",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "parent": "Lane-jwhzx851"
+    },
+    {
+      "id": "web.signin",
+      "type": "Lane",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "web.signin"
+    },
+    {
+      "id": "Start.default",
+      "type": "Event",
+      "linksTo": [
+        {
+          "target": "enter credentials screen"
+        }
+      ],
+      "data": {
+      },
+      "label": "Start.default",
+      "parent": "web.signin"
+    },
+    {
+      "id": "enter credentials screen",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "signin?"
+        }
+      ],
+      "data": {
+      },
+      "label": "enter credentials screen",
+      "parent": "web.signin"
+    },
+    {
+      "id": "signin?",
+      "type": "IntermediateEventCatchMessage",
+      "linksTo": [
+        {
+          "target": "Signin"
+        }
+      ],
+      "data": {
+      },
+      "label": "signin?",
+      "parent": "web.signin"
+    },
+    {
+      "id": "Signin",
+      "type": "Task",
+      "linksTo": [
+        {
+          "target": "Start.default"
+        },
+        {
+          "target": "success"
+        }
+      ],
+      "data": {
+      },
+      "label": "Signin",
+      "parent": "web.signin"
+    },
+    {
+      "id": "success",
+      "type": "EndEventTerminate",
+      "linksTo": [
+
+      ],
+      "data": {
+      },
+      "label": "success",
+      "parent": "web.signin"
+    }
+  ]
+}

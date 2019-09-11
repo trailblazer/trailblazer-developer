@@ -6,7 +6,7 @@ module Trailblazer
     module Generate
       module_function
 
-      Element = Struct.new(:id, :type, :linksTo, :data, :label)
+      Element = Struct.new(:id, :type, :linksTo, :data, :label, :parent)
       Arrow   = Struct.new(:target, :label, :message)
 
       module Representer
@@ -24,19 +24,19 @@ module Trailblazer
             property :data, default: {}
 
             property :label
+            property :parent # TODO: remove?
           end
         end
       end
 
       def call(hash)
         elements = transform_from_hash(hash)
-        elements = remap_ids(elements)
 
         compute_intermediate(elements)
       end
 
-      def transform_from_hash(hash)
-        Representer::Activity.new(OpenStruct.new).from_hash(hash).elements
+      def transform_from_hash(hash, parser: Representer::Activity)
+        parser.new(OpenStruct.new).from_hash(hash).elements
       end
 
       def find_start_events(elements)
@@ -68,8 +68,6 @@ module Trailblazer
 
       # private
 
-
-
       # We currently use the {:label} field of an arrow to encode an output semantic.
       # The {:symbol_style} part will be filtered out as semantic. Defaults to {:success}.
       def semantic_for(label:nil, **)
@@ -79,39 +77,7 @@ module Trailblazer
       end
 
       def extract_semantic(label)
-        m = label.match(/:([^\s][\w\?!]+)/) or return
-        return m[1].to_sym
-      end
-
-      def extract_string_id(label)
-        m = label.match(/"(.+)"/) or return
-        return m[1].to_sym
-      end
-
-      def extract_id(label)
-        extract_string_id(label) || extract_semantic(label)
-      end
-
-      # remap {id}
-      def remap_ids(elements)
-        map = {}
-
-        elements.collect do |el|
-          id = (el.label && semantic = extract_id(el.label)) ? semantic : el.id.to_sym
-
-          map[el.id] = id
-
-          el.id = id
-        end
-
-        # remap {linksTo}
-        elements.collect do |el|
-          el.linksTo.collect do |link|
-            link.target = map[link.target]
-          end
-        end
-
-        elements
+        label.to_sym
       end
     end
   end
