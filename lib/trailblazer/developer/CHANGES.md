@@ -1,6 +1,8 @@
 # 0.0.6
 
 * Remove ID extraction logic from `Generate`, this is done on the server-side.
+* Print `wtf` trace in all cases (with or without exception)
+* Allow color configuration in `wtf` trace
 
 # 0.0.5
 
