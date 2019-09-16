@@ -10,7 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Developer tools for Trailblazer."
   spec.description   = "Developer tools for Trailblazer: debugger, tracing, visual editor integration."
-  spec.homepage      = "http://trailblazer.to/gems/trailblazer/developer.html"
+  spec.homepage      = "http://trailblazer.to"
+  spec.license       = "LGPL-3.0"
 
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test)/})
