@@ -1,3 +1,8 @@
+# 0.0.7
+
+* Add tracing and introspection modules from Activity
+* Remove global configurations and use `flow_options` to override defaults in `wtf`
+
 # 0.0.6
 
 * Remove ID extraction logic from `Generate`, this is done on the server-side.
