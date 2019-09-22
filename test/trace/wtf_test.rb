@@ -45,13 +45,13 @@ class TraceWtfTest < Minitest::Spec
       end
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- \e[32m#<Class:>\e[0m
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
    |-- \e[32mStart.default\e[0m
    |-- \e[32m#<Method: #<Class:>.a>\e[0m
-   |-- \e[32m#<Class:>\e[0m
+   |-- #<Class:>
    |   |-- \e[32mStart.default\e[0m
    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-   |   |-- \e[32m#<Class:>\e[0m
+   |   |-- #<Class:>
    |   |   |-- \e[32mStart.default\e[0m
    |   |   |-- \e[1m\e[31m#<Method: #<Class:>.c>\e[0m\e[22m
 }
@@ -63,18 +63,18 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Developer.wtf?(alpha, [{ seq: [], c: false }])
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- \e[32m#<Class:>\e[0m
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
    |-- \e[32mStart.default\e[0m
    |-- \e[32m#<Method: #<Class:>.a>\e[0m
-   |-- \e[32m#<Class:>\e[0m
+   |-- #<Class:>
    |   |-- \e[32mStart.default\e[0m
    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-   |   |-- \e[32m#<Class:>\e[0m
+   |   |-- #<Class:>
    |   |   |-- \e[32mStart.default\e[0m
    |   |   |-- \e[33m#<Method: #<Class:>.c>\e[0m
-   |   |   `-- \e[32mEnd.failure\e[0m
-   |   `-- \e[32mEnd.failure\e[0m
-   `-- \e[32mEnd.failure\e[0m
+   |   |   `-- End.failure
+   |   `-- End.failure
+   `-- End.failure
 }
   end
 
@@ -84,21 +84,47 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Developer.wtf?(alpha, [{ seq: [] }])
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- \e[32m#<Class:>\e[0m
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
    |-- \e[32mStart.default\e[0m
    |-- \e[32m#<Method: #<Class:>.a>\e[0m
-   |-- \e[32m#<Class:>\e[0m
+   |-- #<Class:>
    |   |-- \e[32mStart.default\e[0m
    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-   |   |-- \e[32m#<Class:>\e[0m
+   |   |-- #<Class:>
    |   |   |-- \e[32mStart.default\e[0m
    |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
    |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
-   |   |   `-- \e[32mEnd.success\e[0m
+   |   |   `-- End.success
    |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
-   |   `-- \e[32mEnd.success\e[0m
+   |   `-- End.success
    |-- \e[32m#<Method: #<Class:>.aa>\e[0m
-   `-- \e[32mEnd.success\e[0m
+   `-- End.success
+}
+  end
+
+  it "overrides default color map of entities" do
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [
+          { seq: [], c: false },
+          { color_map: { pass: :cyan, fail: :red } }
+        ]
+      )
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+   |-- \e[36mStart.default\e[0m
+   |-- \e[36m#<Method: #<Class:>.a>\e[0m
+   |-- #<Class:>
+   |   |-- \e[36mStart.default\e[0m
+   |   |-- \e[36m#<Method: #<Class:>.b>\e[0m
+   |   |-- #<Class:>
+   |   |   |-- \e[36mStart.default\e[0m
+   |   |   |-- \e[31m#<Method: #<Class:>.c>\e[0m
+   |   |   `-- End.failure
+   |   `-- End.failure
+   `-- End.failure
 }
   end
 
