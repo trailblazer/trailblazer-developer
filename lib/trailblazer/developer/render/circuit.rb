@@ -12,7 +12,7 @@ module Trailblazer
 
         # Render an {Activity}'s circuit as a simple hash.
         def call(activity, **options)
-          graph = Activity::Introspect::Graph(activity)
+          graph = Introspect::Graph(activity)
 
           circuit_hash(graph, **options)
         end
