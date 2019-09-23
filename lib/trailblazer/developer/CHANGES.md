@@ -1,7 +1,7 @@
 # 0.0.7
 
-* Add tracing and introspection modules from Activity
-* Remove global configurations and use `flow_options` to override defaults in `wtf`
+* Move `Activity::Introspection`, `Trace` and `Present` from `activity` to `developer`.
+* Remove global configurations and use `flow_options` to override defaults in `wtf
 
 # 0.0.6
 
