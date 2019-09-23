@@ -40,7 +40,7 @@ module Trailblazer::Developer
 
           task = input.task
 
-          graph = Introspect::Graph(input.activity)
+          graph = Trailblazer::Activity::Introspect::Graph(input.activity)
 
           name = (node = graph.find { |node| node[:task] == task }) ? node[:id] : task
           name ||= task # FIXME: bullshit
