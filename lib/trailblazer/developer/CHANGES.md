@@ -1,3 +1,7 @@
+# 0.0.8
+
+* Fix `Introspect` references.
+
 # 0.0.7
 
 * Move `Activity::Trace` and `Activity::Present` from `activity` to `developer`.
