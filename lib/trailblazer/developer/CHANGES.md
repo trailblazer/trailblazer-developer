@@ -1,3 +1,7 @@
+# 0.0.7
+
+* Move `Activity::Introspection`, `Trace` and `Present` from `activity` to `developer`.
+
 # 0.0.6
 
 * Remove ID extraction logic from `Generate`, this is done on the server-side.
