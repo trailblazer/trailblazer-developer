@@ -1,5 +1,3 @@
-require 'trailblazer/activity'
-
 module Trailblazer::Developer
   module_function
 
@@ -14,7 +12,15 @@ module Trailblazer::Developer
   module Wtf
     module_function
 
-    COLOR_MAP = Trailblazer::Developer.config.trace_color_map
+    COLOR_MAP = { pass: :green, fail: :brown }
+
+    SIGNALS_MAP = {
+      'Trailblazer::Activity::Right': :pass,
+      'Trailblazer::Activity::FastTrack::PassFast': :pass,
+
+      'Trailblazer::Activity::Left': :fail,
+      'Trailblazer::Activity::FastTrack::FailFast': :fail,
+    }
 
     # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
     # This allows to display the trace even when an exception happened
@@ -23,41 +29,48 @@ module Trailblazer::Developer
 
       # this instance gets mutated with every step. unfortunately, there is
       # no other way in Ruby to keep the trace even when an exception was thrown.
-      stack = Trailblazer::Activity::Trace::Stack.new
+      stack = Trace::Stack.new
 
-      begin
-        _returned_stack, *returned = Trailblazer::Activity::Trace.invoke(
-          activity,
-          [
-            ctx,
-            flow_options.merge(stack: stack)
-          ],
-          *args
-        )
-        puts Trailblazer::Activity::Trace::Present.(stack, renderer: method(:renderer))
-
-      rescue => exception
-        puts Trailblazer::Activity::Trace::Present.(stack, renderer: method(:renderer))
-        raise(exception)
-      end
+      _returned_stack, *returned = Trace.invoke(
+        activity,
+        [
+          ctx,
+          flow_options.merge(stack: stack)
+        ],
+        *args
+      )
 
       returned
+    ensure
+      puts Trace::Present.(
+        stack,
+        renderer: method(:renderer),
+        color_map: COLOR_MAP.merge( flow_options[:color_map] || {} )
+      )
     end
 
     def renderer(task_node:, position:, tree:)
-      if task_node[:output].nil? && tree[position.next].nil? # i.e. when exception raised
-        return [ task_node[:level], %{#{fmt(fmt(task_node[:name], :red), :bold)}} ]
+      name, level, output, color_map = task_node.values_at(:name, :level, :output, :color_map)
+
+      if output.nil? && tree[position.next].nil? # i.e. when exception raised
+        return [ level, %{#{fmt(fmt(name, :red), :bold)}} ]
       end
 
-      if task_node[:output].nil? # i.e. on entry/exit point of activity
-        return [ task_node[:level], %{#{fmt(task_node[:name], COLOR_MAP.default)}} ]
+      if output.nil? # i.e. on entry/exit point of activity
+        return [ level, %{#{name}} ]
       end
 
-      [ task_node[:level], %{#{fmt(task_node[:name], COLOR_MAP[task_node[:output].data])}} ]
+      [ level, %{#{fmt( name, color_map[ signal_of(output.data) ] )}} ]
     end
 
     def fmt(line, style)
+      return line unless style
       String.send(style, line)
+    end
+
+    def signal_of(entity_output)
+      entity_klass = entity_output.is_a?(Class) ? entity_output : entity_output.class
+      SIGNALS_MAP[entity_klass.name.to_sym]
     end
 
     # Stolen from https://stackoverflow.com/questions/1489183/colorized-ruby-output

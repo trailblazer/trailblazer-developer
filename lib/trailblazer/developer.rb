@@ -6,7 +6,6 @@ module Trailblazer
   end
 end
 
-require "trailblazer/developer/config"
 require "trailblazer/developer/wtf"
 require "trailblazer/developer/trace"
 require "trailblazer/developer/trace/present"
