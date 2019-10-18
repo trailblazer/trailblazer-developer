@@ -90,4 +90,50 @@ TypeError: wrong argument type String (expected Symbol)
     #:type-ctx end
     signal.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:success>}
   end
+
+  it do
+    module A
+    #:wire-class
+    class Update < Trailblazer::Activity::Railway
+      class CheckAttribute < Trailblazer::Activity::Railway
+        step :valid?
+      end
+
+      step :find_model
+      step Subprocess(CheckAttribute), id: :a
+      step Subprocess(CheckAttribute), id: :b # same task!
+      step :save
+    end
+    #:wire-class end
+    end
+
+=begin
+#:wire-puts
+puts Trailblazer::Developer.render(Update)
+
+#<Start/:default>
+ {Trailblazer::Activity::Right} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=find_model>
+#<Trailblazer::Activity::TaskBuilder::Task user_proc=find_model>
+ {Trailblazer::Activity::Left} => #<End/:failure>
+ {Trailblazer::Activity::Right} => DocsDeveloperTest::Update::CheckAttribute
+DocsDeveloperTest::Update::CheckAttribute
+ {#<Trailblazer::Activity::End semantic=:failure>} => #<End/:failure>
+ {#<Trailblazer::Activity::End semantic=:success>} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=save>
+#<Trailblazer::Activity::TaskBuilder::Task user_proc=save>
+#:wire-puts end
+=end
+
+    #:wire-fix
+    class class Update < Trailblazer::Activity::Railway
+      class CheckAttribute < Trailblazer::Activity::Railway
+        step :valid?
+      end
+
+      step :find_model
+      step Subprocess(CheckAttribute), id: :a
+      step Subprocess(Class.new(CheckAttribute)), id: :b # different task!
+      step :save
+    end
+    #:wire-fix end
+  end
 end
