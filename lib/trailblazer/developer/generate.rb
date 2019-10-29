@@ -16,7 +16,7 @@ module Trailblazer
           collection :elements, class: Element do
             property :id
             property :type
-            collection :linksTo, class: Arrow, default: [] do
+            collection :linksTo, class: Arrow, default: ::Declarative::Variables::Append([]) do
               property :target
               property :label
               property :message
