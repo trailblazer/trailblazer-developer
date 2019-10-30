@@ -124,7 +124,7 @@ DocsDeveloperTest::Update::CheckAttribute
 =end
 
     #:wire-fix
-    class class Update < Trailblazer::Activity::Railway
+    class Update < Trailblazer::Activity::Railway
       class CheckAttribute < Trailblazer::Activity::Railway
         step :valid?
       end
