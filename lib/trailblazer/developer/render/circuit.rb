@@ -42,13 +42,13 @@ module Trailblazer
         end
 
         def inspect_end(task)
-          class_name = strip(task.class)
+          class_name = self.class.strip(task.class)
           options    = task.to_h
 
           "#<#{class_name}/#{options[:semantic].inspect}>"
         end
 
-        def strip(string)
+        def self.strip(string)
           string.to_s.sub("Trailblazer::Activity::", "")
         end
       end
