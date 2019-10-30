@@ -42,7 +42,7 @@ module Trailblazer
         end
 
         def inspect_end(task)
-          class_name = self.class.strip(task.class)
+          class_name = Render::Circuit.strip(task.class)
           options    = task.to_h
 
           "#<#{class_name}/#{options[:semantic].inspect}>"
