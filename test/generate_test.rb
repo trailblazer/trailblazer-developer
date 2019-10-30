@@ -33,19 +33,19 @@ class GenerateTest < Minitest::Spec
  wiring=
   {#<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"Start.default\",
-    data={}>=>
+    data={:type=>\"Event\"}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=\"validate\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"validate\",
-    data={}>=>
+    data={:type=>\"Task\"}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=\"save\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"save\",
-    data={}>=>
+    data={:type=>\"Task\"}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=\"success\">,
@@ -54,19 +54,19 @@ class GenerateTest < Minitest::Spec
       target=\"cleanup\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"success\",
-    data={}>=>
+    data={:type=>\"EndEventTerminate\"}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=nil>],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"cleanup\",
-    data={}>=>
+    data={:type=>\"Task\"}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:success,
       target=\"failure\">],
    #<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"failure\",
-    data={}>=>
+    data={:type=>\"EndEventTerminate\"}>=>
     [#<struct Trailblazer::Activity::Schema::Intermediate::Out
       semantic=:failure,
       target=nil>]},

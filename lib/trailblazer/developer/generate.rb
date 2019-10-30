@@ -49,7 +49,10 @@ module Trailblazer
 
         inter = Activity::Schema::Intermediate
 
-        wiring = elements.collect { |el| [inter.TaskRef(el.id, el.data), el.linksTo.collect { |arrow| inter.Out(semantic_for(arrow.to_h), arrow.target) } ] }
+        wiring = elements.collect { |el|
+          data = data_for(el)
+
+          [inter.TaskRef(el.id, data), el.linksTo.collect { |arrow| inter.Out(semantic_for(arrow.to_h), arrow.target) } ] }
         wiring = Hash[wiring]
 
         # end events need this stupid special handling
@@ -67,6 +70,10 @@ module Trailblazer
       end
 
       # private
+
+      def data_for(element)
+        {type: element.type}.merge(element.data)
+      end
 
       # We currently use the {:label} field of an arrow to encode an output semantic.
       # The {:symbol_style} part will be filtered out as semantic. Defaults to {:success}.
