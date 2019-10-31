@@ -1,3 +1,8 @@
+# 0.0.9
+
+* `Render.strip` is now a class method.
+* Added the `.type` field to the `data` field in `Generate`.
+
 # 0.0.8
 
 * Fix `Introspect` references.
