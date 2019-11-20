@@ -1,3 +1,7 @@
+# 0.0.10
+
+* Make Generate::Pipeline an activity for better customization/extendability.
+
 # 0.0.9
 
 * `Render.strip` is now a class method.
