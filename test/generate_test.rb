@@ -7,7 +7,7 @@ class GenerateTest < Minitest::Spec
   it "Generate.transform_from_hash generates a well-defined Struct" do
     json = File.read("./test/json/sign.json")
 
-    structs = Trailblazer::Developer::Generate.transform_from_hash(JSON[json])
+    structs = Trailblazer::Developer::Generate.transform_from_hash({}, hash: JSON[json])
 
     validate = structs.find { |struct| struct.id == "validate!" }
 

@@ -1,4 +1,5 @@
 require "representable/hash"
+require "trailblazer/activity/dsl/linear" # Railway.
 
 module Trailblazer
   module Developer
@@ -30,21 +31,19 @@ module Trailblazer
       end
 
       def call(hash)
-        elements = transform_from_hash(hash)
-
-        compute_intermediate(elements)
+        signal, (ctx, _) = Activity::TaskWrap.invoke(Pipeline, hash: hash)
+        ctx[:intermediate]
       end
 
-      def transform_from_hash(hash, parser: Representer::Activity)
-        parser.new(OpenStruct.new).from_hash(hash).elements
+      def transform_from_hash(ctx, hash:, parser: Representer::Activity, **)
+        ctx[:elements] = parser.new(OpenStruct.new).from_hash(hash).elements
       end
 
-      def find_start_events(elements)
-        elements.find_all { |el| el.type == "Event" }
+      def find_start_events(ctx, elements:, **)
+        ctx[:start_events] = elements.find_all { |el| el.type == "Event" }
       end
 
-      def compute_intermediate(elements, find_start_events: method(:find_start_events))
-        start_events = find_start_events.(elements)
+      def compute_intermediate(ctx, elements:, start_events:, **)
         end_events   = elements.find_all { |el| el.type == "EndEventTerminate" } # DISCUSS: is it really called TERMINATE?
 
         inter = Activity::Schema::Intermediate
@@ -66,7 +65,7 @@ module Trailblazer
         ])
         # pp wiring
 
-        inter.new(wiring, end_events.collect(&:id), start_events.collect(&:id))
+        ctx[:intermediate] = inter.new(wiring, end_events.collect(&:id), start_events.collect(&:id))
       end
 
       # private
@@ -85,6 +84,12 @@ module Trailblazer
 
       def extract_semantic(label)
         label.to_sym
+      end
+
+      class Pipeline < Trailblazer::Activity::Railway
+        step Generate.method(:transform_from_hash),   id: :transform_from_hash
+        step Generate.method(:find_start_events),     id: :find_start_events
+        step Generate.method(:compute_intermediate),  id: :compute_intermediate
       end
     end
   end
