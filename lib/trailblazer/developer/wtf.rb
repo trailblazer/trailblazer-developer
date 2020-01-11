@@ -12,7 +12,7 @@ module Trailblazer::Developer
   module Wtf
     module_function
 
-    COLOR_MAP = { pass: :green, fail: :brown }
+    DEFAULT_COLOR_MAP = { pass: :green, fail: :brown }
 
     SIGNALS_MAP = {
       'Trailblazer::Activity::Right': :pass,
@@ -24,43 +24,80 @@ module Trailblazer::Developer
 
     # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
     # This allows to display the trace even when an exception happened
-    def invoke(activity, (ctx, flow_options), *args)
-      flow_options ||= {} # Ruby sucks.
-
-      # this instance gets mutated with every step. unfortunately, there is
-      # no other way in Ruby to keep the trace even when an exception was thrown.
-      stack = Trace::Stack.new
-
-      _returned_stack, *returned = Trace.invoke(
-        activity,
-        [
-          ctx,
-          flow_options.merge(stack: stack)
-        ],
-        *args
+    def invoke(activity, (ctx, flow_options), *circuit_options)
+      activity, (ctx, flow_options), circuit_options = Wtf.arguments_for_trace(
+        activity, [ctx, flow_options], *circuit_options
       )
 
-      returned
+      _returned_stack, signal, (ctx, flow_options) = Trace.invoke(
+        activity, [ctx, flow_options], *circuit_options
+      )
+
+      return signal, [ctx, flow_options], circuit_options
     ensure
       puts Trace::Present.(
-        stack,
+        flow_options[:stack],
         renderer: method(:renderer),
-        color_map: COLOR_MAP.merge( flow_options[:color_map] || {} )
+        color_map: DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
       )
     end
 
+    def arguments_for_trace(activity, (ctx, original_flow_options), **circuit_options)
+      default_flow_options = {
+        # this instance gets mutated with every step. unfortunately, there is
+        # no other way in Ruby to keep the trace even when an exception was thrown.
+        stack: Trace::Stack.new,
+
+        input_data_collector: method(:trace_input_data_collector),
+        output_data_collector: method(:trace_output_data_collector),
+      }
+
+      # Merge default options with flow_options as an order of precedence
+      flow_options = { **default_flow_options, **Hash( original_flow_options ) }
+
+      # Normalize `focus_on` param to
+      #   1. Wrap step and variable names into an array if not already
+      flow_options[:focus_on] = {
+        steps: Array( flow_options.dig(:focus_on, :steps) ),
+        variables: Array( flow_options.dig(:focus_on, :variables) ),
+      }
+
+      return activity, [ ctx, flow_options ], circuit_options
+    end
+
+    # Overring default input and output data collectors to collect/capture
+    #   1. inspect of focusable variables for given focusable step
+    def trace_input_data_collector(wrap_config, (ctx, flow_options), circuit_options)
+      data = Trace.default_input_data_collector(wrap_config, [ctx, flow_options], circuit_options)
+
+      if flow_options[:focus_on][:steps].include?(data[:task_name])
+        data[:focused_variables] = Trace::Focusable.capture_variables_from(ctx, **flow_options)
+      end
+
+      data
+    end
+
+    def trace_output_data_collector(wrap_config, (ctx, flow_options), circuit_options)
+      data = Trace.default_output_data_collector(wrap_config, [ctx, flow_options], circuit_options)
+
+      input = flow_options[:stack].top
+      if flow_options[:focus_on][:steps].include?(input.data[:task_name])
+        data[:focused_variables] = Trace::Focusable.capture_variables_from(ctx, **flow_options)
+      end
+
+      data
+    end
+
     def renderer(task_node:, position:, tree:)
-      name, level, output, color_map = task_node.values_at(:name, :level, :output, :color_map)
-
-      if output.nil? && tree[position.next].nil? # i.e. when exception raised
-        return [ level, %{#{fmt(fmt(name, :red), :bold)}} ]
+      if task_node.output.nil? && tree[position.next].nil? # i.e. when exception raised
+        return [ task_node.level, %{#{fmt(fmt(task_node.value, :red), :bold)}} ]
       end
 
-      if output.nil? # i.e. on entry/exit point of activity
-        return [ level, %{#{name}} ]
+      if task_node.output.nil? # i.e. on entry/exit point of activity
+        return [ task_node.level, %{#{task_node.value}} ]
       end
 
-      [ level, %{#{fmt( name, color_map[ signal_of(output.data) ] )}} ]
+      [ task_node.level, %{#{fmt(task_node.value, task_node.color_map[ signal_of(task_node) ])}} ]
     end
 
     def fmt(line, style)
@@ -68,8 +105,10 @@ module Trailblazer::Developer
       String.send(style, line)
     end
 
-    def signal_of(entity_output)
-      entity_klass = entity_output.is_a?(Class) ? entity_output : entity_output.class
+    def signal_of(task_node)
+      entity_signal = task_node.output.data[:signal]
+      entity_klass = entity_signal.is_a?(Class) ? entity_signal : entity_signal.class
+
       SIGNALS_MAP[entity_klass.name.to_sym]
     end
 

@@ -46,14 +46,14 @@ class TraceWtfTest < Minitest::Spec
     end
 
     output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
-   |-- \e[32mStart.default\e[0m
-   |-- \e[32m#<Method: #<Class:>.a>\e[0m
-   |-- #<Class:>
-   |   |-- \e[32mStart.default\e[0m
-   |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-   |   |-- #<Class:>
-   |   |   |-- \e[32mStart.default\e[0m
-   |   |   |-- \e[1m\e[31m#<Method: #<Class:>.c>\e[0m\e[22m
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    `-- #<Class:>
+        |-- \e[32mStart.default\e[0m
+        |-- \e[32m#<Method: #<Class:>.b>\e[0m
+        `-- #<Class:>
+            |-- \e[32mStart.default\e[0m
+            `-- \e[1m\e[31m#<Method: #<Class:>.c>\e[0m\e[22m
 }
   end
 
@@ -64,17 +64,17 @@ class TraceWtfTest < Minitest::Spec
     end
 
     output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
-   |-- \e[32mStart.default\e[0m
-   |-- \e[32m#<Method: #<Class:>.a>\e[0m
-   |-- #<Class:>
-   |   |-- \e[32mStart.default\e[0m
-   |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-   |   |-- #<Class:>
-   |   |   |-- \e[32mStart.default\e[0m
-   |   |   |-- \e[33m#<Method: #<Class:>.c>\e[0m
-   |   |   `-- End.failure
-   |   `-- End.failure
-   `-- End.failure
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |-- #<Class:>
+    |   |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[32mStart.default\e[0m
+    |   |   |-- \e[33m#<Method: #<Class:>.c>\e[0m
+    |   |   `-- End.failure
+    |   `-- End.failure
+    `-- End.failure
 }
   end
 
@@ -85,20 +85,20 @@ class TraceWtfTest < Minitest::Spec
     end
 
     output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
-   |-- \e[32mStart.default\e[0m
-   |-- \e[32m#<Method: #<Class:>.a>\e[0m
-   |-- #<Class:>
-   |   |-- \e[32mStart.default\e[0m
-   |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-   |   |-- #<Class:>
-   |   |   |-- \e[32mStart.default\e[0m
-   |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
-   |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
-   |   |   `-- End.success
-   |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
-   |   `-- End.success
-   |-- \e[32m#<Method: #<Class:>.aa>\e[0m
-   `-- End.success
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |-- #<Class:>
+    |   |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[32mStart.default\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
+    |   |   `-- End.success
+    |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
+    |   `-- End.success
+    |-- \e[32m#<Method: #<Class:>.aa>\e[0m
+    `-- End.success
 }
   end
 
@@ -114,17 +114,164 @@ class TraceWtfTest < Minitest::Spec
     end
 
     output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
-   |-- \e[36mStart.default\e[0m
-   |-- \e[36m#<Method: #<Class:>.a>\e[0m
-   |-- #<Class:>
-   |   |-- \e[36mStart.default\e[0m
-   |   |-- \e[36m#<Method: #<Class:>.b>\e[0m
-   |   |-- #<Class:>
-   |   |   |-- \e[36mStart.default\e[0m
-   |   |   |-- \e[31m#<Method: #<Class:>.c>\e[0m
-   |   |   `-- End.failure
-   |   `-- End.failure
-   `-- End.failure
+    |-- \e[36mStart.default\e[0m
+    |-- \e[36m#<Method: #<Class:>.a>\e[0m
+    |-- #<Class:>
+    |   |-- \e[36mStart.default\e[0m
+    |   |-- \e[36m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[36mStart.default\e[0m
+    |   |   |-- \e[31m#<Method: #<Class:>.c>\e[0m
+    |   |   `-- End.failure
+    |   `-- End.failure
+    `-- End.failure
+}
+  end
+
+  it "captures input & output for only given step and not others" do
+    _, (_, flow_options), _ = Trailblazer::Developer.wtf?(
+      alpha,
+      [
+        { seq: [], message: 'WTF!' },
+        { focus_on: { steps: alpha.method(:a) } }
+      ],
+    )
+
+    nested = flow_options[:stack].to_a.last
+    tasks = nested.select{ |e| e.is_a?(Dev::Trace::Level) } # exclude ends
+
+    # Trace::Entity::Input & Trace::Entity::Output for
+    # task `:a` must contain {focused_variables} and not others
+    tasks.each do |(input, *remainings)|
+      if input.task.inspect.gsub(/0x\w+/, "").include?('#<Method: #<Class:>.a>>')
+        input.data.keys.must_include(:focused_variables)
+      else
+        input.data.keys.wont_include(:focused_variables)
+      end
+
+      output = remainings.last
+
+      if output.task.inspect.gsub(/0x\w+/, "").include?('#<Method: #<Class:>.a>>')
+        output.data.keys.must_include(:focused_variables)
+      else
+        output.data.keys.wont_include(:focused_variables)
+      end
+    end
+  end
+
+  it "captures input & output for given step and ctx (captures whole ctx by default)" do
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [
+          { seq: [], message: 'WTF!' },
+          { focus_on: { steps: alpha.method(:a) } }
+        ],
+      )
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |   |-- \e[32m********** Input **********
+            message: \"WTF!\"
+                seq: []\e[0m
+    |   `-- \e[32m********** Output **********
+            message: \"WTF!\"
+                seq: [:a]\e[0m
+    |-- #<Class:>
+    |   |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[32mStart.default\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
+    |   |   `-- End.success
+    |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
+    |   `-- End.success
+    |-- \e[32m#<Method: #<Class:>.aa>\e[0m
+    `-- End.success
+}
+  end
+
+  it "captures input & output inspect for given step and variable within ctx" do
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [
+          { seq: [], message: 'WTF!', nested: { message: 'Dude!' } },
+          {
+            focus_on: {
+              steps: alpha.method(:a),
+              variables: :message
+            },
+          }
+        ],
+      )
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |   |-- \e[32m********** Input **********
+            message: \"WTF!\"\e[0m
+    |   `-- \e[32m********** Output **********
+            message: \"WTF!\"\e[0m
+    |-- #<Class:>
+    |   |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[32mStart.default\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
+    |   |   `-- End.success
+    |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
+    |   `-- End.success
+    |-- \e[32m#<Method: #<Class:>.aa>\e[0m
+    `-- End.success
+}
+  end
+
+  it "captures input & output for given 1/more steps and selected variables witin ctx" do
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [
+          { seq: [], message: 'WTF!', nested: { message: 'Dude!' } },
+          {
+            focus_on: {
+              steps: [alpha.method(:a)],
+              variables: [
+                :message, # symbol for top level key access
+                ->(ctx) { ctx[:nested][:message] }, # procs can be used for deep access
+              ]
+            },
+          }
+        ],
+      )
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |   |-- \e[32m********** Input **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |   `-- \e[32m********** Output **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |-- #<Class:>
+    |   |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[32mStart.default\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
+    |   |   `-- End.success
+    |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
+    |   `-- End.success
+    |-- \e[32m#<Method: #<Class:>.aa>\e[0m
+    `-- End.success
 }
   end
 

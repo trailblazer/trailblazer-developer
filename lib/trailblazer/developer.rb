@@ -9,6 +9,7 @@ end
 require "trailblazer/developer/wtf"
 require "trailblazer/developer/trace"
 require "trailblazer/developer/trace/present"
+require "trailblazer/developer/trace/focusable"
 require "trailblazer/developer/generate"
 require "trailblazer/developer/render/circuit"
 require "trailblazer/developer/render/linear"
