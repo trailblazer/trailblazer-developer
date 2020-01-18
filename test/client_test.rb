@@ -19,6 +19,8 @@ class ClientTest < Minitest::Spec
   let(:api_key) { ENV["API_KEY"] }
 
   it do
+    skip "we need to mock the server, first"
+
     puts token = Dev::Client.retrieve_token(email: "apotonick@gmail.com", api_key: api_key, host: "http://localhost:3000")
 
     assert token =~ /\w+/
