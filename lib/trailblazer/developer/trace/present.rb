@@ -1,15 +1,12 @@
-require 'trailblazer/activity'
+require 'hirb'
 
 module Trailblazer::Developer
   module Trace
     module Present
       module_function
 
-      INDENTATION = "   |".freeze
-      STEP_PREFIX = "-- ".freeze
-
       def default_renderer(task_node:, **)
-        [ task_node[:level], %{#{task_node[:name]}} ]
+        [ task_node.level, %{#{task_node.value}} ]
       end
 
       def call(stack, level: 1, tree: [], renderer: method(:default_renderer), **options)
@@ -23,35 +20,40 @@ module Trailblazer::Developer
           renderer.(task_node: task_node, position: position, tree: tree)
         end
 
-        render_tree_for(nodes)
-      end
-
-      def render_tree_for(nodes)
-        nodes.map { |level, node|
-          indentation = INDENTATION * (level -1)
-          indentation = indentation[0...-1] + "`" if level == 1 || /End./.match(node) # start or end step
-          indentation + STEP_PREFIX + node
-        }.join("\n")
+        Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
       end
 
       def tree_for(stack, level, tree:, **options)
         stack.each do |lvl| # always a Stack::Task[input, ..., output]
           input, output, nested = Trace::Level.input_output_nested_for_level(lvl)
 
-          task = input.task
-
-          graph = Trailblazer::Activity::Introspect::Graph(input.activity)
-
-          name = (node = graph.find { |node| node[:task] == task }) ? node[:id] : task
-          name ||= task # FIXME: bullshit
-
-          tree << { level: level, input: input, output: output, name: name, **options }
+          tree.push(*TreeNodes.for(level, options.merge(input: input, output: output)))
 
           if nested.any? # nesting
             tree_for(nested, level + 1, options.merge(tree: tree))
           end
 
           tree
+        end
+      end
+
+      module TreeNodes
+        Node = Struct.new(:level, :value, :input, :output, :options) do
+          # Allow access to any custom key from options, eg. color_map
+          def method_missing(name, *)
+            options[name]
+          end
+        end
+
+        module_function
+
+        def for(level, input:, output:, **options)
+          nodes = Array[ Node.new(level, input.data[:task_name], input, output, options).freeze ]
+
+          focused_nodes = Trace::Focusable.tree_nodes_for(level, input: input, output: output, **options)
+          nodes += focused_nodes if focused_nodes.length > 0
+
+          nodes
         end
       end
     end

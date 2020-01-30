@@ -17,16 +17,23 @@ module Trailblazer::Developer
 
       alias_method :invoke, :call
 
-      def arguments_for_call(activity, (options, flow_options), **circuit_options)
-        tracing_flow_options = {
+      def arguments_for_call(activity, (options, original_flow_options), **original_circuit_options)
+        default_flow_options = {
           stack: Trace::Stack.new,
+
+          input_data_collector: Trace.method(:default_input_data_collector),
+          output_data_collector: Trace.method(:default_output_data_collector),
         }
 
-        tracing_circuit_options = {
+        flow_options = { **default_flow_options, **Hash( original_flow_options ) }
+
+        default_circuit_options = {
           wrap_runtime:  ::Hash.new(Trace.merge_plan), # DISCUSS: this overrides existing {:wrap_runtime}.
         }
 
-        return activity, [ options, tracing_flow_options.merge(flow_options) ], circuit_options.merge(tracing_circuit_options)
+        circuit_options = { **original_circuit_options, **default_circuit_options }
+
+        return activity, [ options, flow_options ], circuit_options
       end
     end
 
@@ -42,38 +49,45 @@ module Trailblazer::Developer
       )
     end
 
-    # taskWrap step to capture incoming arguments of a step.
-    def capture_args(wrap_config, original_args)
-      original_args = capture_for(wrap_config[:task], *original_args)
-
-      return wrap_config, original_args
-    end
-
-    # taskWrap step to capture outgoing arguments from a step.
-    def capture_return(wrap_config, original_args)
-      (original_options, original_flow_options, _) = original_args[0]
-
-      original_flow_options[:stack] << Entity::Output.new(
-        wrap_config[:task], {}, wrap_config[:return_signal]
-      ).freeze
-
-      original_flow_options[:stack].unindent!
-
-
-      return wrap_config, original_args
-    end
-
     # It's important to understand that {flow[:stack]} is mutated by design. This is needed so
     # in case of exceptions we still have a "global" trace - unfortunately Ruby doesn't allow
     # us a better way.
-    def capture_for(task, (ctx, flow), activity:, **circuit_options)
+    # taskWrap step to capture incoming arguments of a step.
+    def capture_args(wrap_config, ((ctx, flow), circuit_options))
       flow[:stack].indent!
 
       flow[:stack] << Entity::Input.new(
-        task, activity, [ctx, ctx.inspect]
+        wrap_config[:task],
+        circuit_options[:activity],
+        flow[:input_data_collector].call(wrap_config, [ctx, flow], circuit_options)
       ).freeze
 
-      return [ctx, flow], circuit_options.merge(activity: activity)
+      return wrap_config, [[ctx, flow], circuit_options]
+    end
+
+    # taskWrap step to capture outgoing arguments from a step.
+    def capture_return(wrap_config, ((ctx, flow), circuit_options))
+      flow[:stack] << Entity::Output.new(
+        wrap_config[:task],
+        {},
+        flow[:output_data_collector].call(wrap_config, [ctx, flow], circuit_options)
+      ).freeze
+
+      flow[:stack].unindent!
+
+      return wrap_config, [[ctx, flow], circuit_options]
+    end
+
+    def default_input_data_collector(wrap_config, (ctx, _), circuit_options)
+      graph = Trailblazer::Activity::Introspect::Graph(circuit_options[:activity])
+      task  = wrap_config[:task]
+      name  = (node = graph.find { |node| node[:task] == task }) ? node[:id] : task
+
+      { ctx: ctx, task_name: name }
+    end
+
+    def default_output_data_collector(wrap_config, (ctx, _), _)
+      { ctx: ctx, signal: wrap_config[:return_signal] }
     end
 
     # Structures used in {capture_args} and {capture_return}.
@@ -115,6 +129,8 @@ module Trailblazer::Developer
 
     # Mutable/stateful per design. We want a (global) stack!
     class Stack
+      attr_reader :top
+
       def initialize
         @nested  = Level.new
         @stack   = [ @nested ]
@@ -129,8 +145,10 @@ module Trailblazer::Developer
         @stack.pop
       end
 
-      def <<(args)
-        current << args
+      def <<(entity)
+        @top = entity
+
+        current << entity
       end
 
       def to_a
