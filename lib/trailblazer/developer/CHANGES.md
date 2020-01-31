@@ -1,3 +1,7 @@
+# 0.0.11
+* Allow injecting custom data collector in Trace API, to collect custom input/output ctx of task nodes.
+* Allow focusing on specfic steps and ctx variables in Dev.wtf?
+
 # 0.0.10
 
 * Make Generate::Pipeline an activity for better customization/extendability.
