@@ -19,46 +19,59 @@ class DocsDeveloperTest < Minitest::Spec
     end
   end
 
-  it do
-    class Memo
-      #:step
-      class Create < Trailblazer::Activity::Path
-        step :validate
-        step :create
-        #~mod
-        def validate(ctx, params:, **)
-          ctx[:input] = Form.validate(input: params)
-        end
-
-        def create(ctx, input:, **)
-          Memo.create(input)
-        end
-        #~mod end
+  it 'wtf?' do
+    #:step
+    class Memo::Create < Trailblazer::Activity::Path
+      step :validate
+      step :create, id: :create_memo
+      #~mod
+      def validate(ctx, params:, **)
+        ctx[:input] = Form.validate(input: params)
       end
-      #:step end
+
+      def create(ctx, input:, **)
+        Memo.create(input)
+      end
+      #~mod end
     end
+    #:step end
 
     ctx = {params: {text: "Hydrate!"}}
-
-    #:wtf
     signal, (ctx, flow_options) = Dev.wtf?(Memo::Create, [ctx, {}])
-    #:wtf end
 
     signal.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:success>}
     ctx.inspect.must_equal %{{:params=>{:text=>\"Hydrate!\"}, :input=>{:text=>\"Hydrate!\"}}}
 
-=begin
-#:wtf-print
-[Trailblazer] Exception tracing
-#ArgumentError: missing keyword: input>
-    /home/nick/projects/trailblazer-developer/test/docs/developer_test.rb:9:in `validate'
-    /home/nick/projects/trailblazer-developer/test/docs/developer_test.rb:27:in `validate'
+    output, _ = capture_io do
+      #:wtf-focus-steps
+      Dev.wtf?(Memo::Create, [ctx, { focus_on: { steps: [:validate, :create_memo] } }])
+      #:wtf-focus-steps end
+    end
 
-`-- DocsDeveloperTest::Memo::Create
-    |-- Start.default
-    `-- validate
-#:wtf-print end
-=end
+    output.gsub(/0x\w+/, "").must_equal %{`-- DocsDeveloperTest::Memo::Create
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32mvalidate\e[0m
+    |   |-- \e[32m********* Input *********
+             input: {:text=>\"Hydrate!\"}
+            params: {:text=>\"Hydrate!\"}\e[0m
+    |   `-- \e[32m********* Output *********
+             input: {:text=>\"Hydrate!\"}
+            params: {:text=>\"Hydrate!\"}\e[0m
+    |-- \e[32mcreate_memo\e[0m
+    |   |-- \e[32m********* Input *********
+             input: {:text=>\"Hydrate!\"}
+            params: {:text=>\"Hydrate!\"}\e[0m
+    |   `-- \e[32m********* Output *********
+             input: {:text=>\"Hydrate!\"}
+            params: {:text=>\"Hydrate!\"}\e[0m
+    `-- End.success
+}
+
+    capture_io do
+      #:wtf-focus-steps-with-variables
+      Dev.wtf?(Memo::Create, [ctx, { focus_on: { variables: [:params], steps: :validate } }])
+      #:wtf-focus-steps-with-variables end
+    end
   end
 
   it do
