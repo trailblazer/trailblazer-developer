@@ -175,10 +175,10 @@ class TraceWtfTest < Minitest::Spec
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |   |-- \e[32m********** Input **********
             message: \"WTF!\"
-                seq: []\e[0m
+                seq: \e[0m
     |   `-- \e[32m********** Output **********
             message: \"WTF!\"
-                seq: [:a]\e[0m
+                seq: :a\e[0m
     |-- #<Class:>
     |   |-- \e[32mStart.default\e[0m
     |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
@@ -260,6 +260,42 @@ class TraceWtfTest < Minitest::Spec
     |   `-- \e[32m********** Output **********
              Custom: \"Dude!\"
             message: \"WTF!\"\e[0m
+    |-- #<Class:>
+    |   |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- #<Class:>
+    |   |   |-- \e[32mStart.default\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
+    |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
+    |   |   `-- End.success
+    |   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
+    |   `-- End.success
+    |-- \e[32m#<Method: #<Class:>.aa>\e[0m
+    `-- End.success
+}
+  end
+
+  it "allows passing custom inspector" do
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [
+          { seq: [], message: 'WTF!', nested: { message: 'Dude!' } },
+          {
+            focus_on: { steps: [alpha.method(:a)], variables: [:message] },
+            default_inspector: ->(value){ "#{value}-inspect" }
+          },
+        ],
+      )
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |   |-- \e[32m********** Input **********
+            message: WTF!-inspect\e[0m
+    |   `-- \e[32m********** Output **********
+            message: WTF!-inspect\e[0m
     |-- #<Class:>
     |   |-- \e[32mStart.default\e[0m
     |   |-- \e[32m#<Method: #<Class:>.b>\e[0m

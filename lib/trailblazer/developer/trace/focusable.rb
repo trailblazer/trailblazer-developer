@@ -8,14 +8,15 @@ module Trailblazer
         module_function
 
         # Get inspect of {focus_on.variables} or current {ctx}
-        def capture_variables_from(ctx, focus_on:, **)
+        def capture_variables_from(ctx, focus_on:, inspector: Trace::Inspector, **flow_options)
+          # ctx keys to be captured, for example [:current_user, :model, ....]
           variables = (selected = focus_on[:variables]).any? ? selected : ctx.keys
 
           variables.each_with_object({}) do |variable, result|
             if variable.is_a?(Proc) # To allow deep key access from ctx
-              result[:Custom]   = variable.call(ctx).inspect
+              result[:Custom]   = inspector.(variable.call(ctx), **flow_options)
             else
-              result[variable]  = ctx[variable].inspect
+              result[variable]  = inspector.(ctx[variable], **flow_options)
             end
           end
         end
