@@ -52,18 +52,18 @@ class DocsDeveloperTest < Minitest::Spec
     |-- \e[32mStart.default\e[0m
     |-- \e[32mvalidate\e[0m
     |   |-- \e[32m********* Input *********
-             input: {:text=>\"Hydrate!\"}
-            params: {:text=>\"Hydrate!\"}\e[0m
+             input: {:text=>\"\\\"Hydrate!\\\"\"}
+            params: {:text=>\"\\\"Hydrate!\\\"\"}\e[0m
     |   `-- \e[32m********* Output *********
-             input: {:text=>\"Hydrate!\"}
-            params: {:text=>\"Hydrate!\"}\e[0m
+             input: {:text=>\"\\\"Hydrate!\\\"\"}
+            params: {:text=>\"\\\"Hydrate!\\\"\"}\e[0m
     |-- \e[32mcreate_memo\e[0m
     |   |-- \e[32m********* Input *********
-             input: {:text=>\"Hydrate!\"}
-            params: {:text=>\"Hydrate!\"}\e[0m
+             input: {:text=>\"\\\"Hydrate!\\\"\"}
+            params: {:text=>\"\\\"Hydrate!\\\"\"}\e[0m
     |   `-- \e[32m********* Output *********
-             input: {:text=>\"Hydrate!\"}
-            params: {:text=>\"Hydrate!\"}\e[0m
+             input: {:text=>\"\\\"Hydrate!\\\"\"}
+            params: {:text=>\"\\\"Hydrate!\\\"\"}\e[0m
     `-- End.success
 }
 
