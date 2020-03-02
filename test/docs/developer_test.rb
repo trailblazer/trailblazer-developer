@@ -67,11 +67,48 @@ class DocsDeveloperTest < Minitest::Spec
     `-- End.success
 }
 
-    capture_io do
+    output, _ = capture_io do
       #:wtf-focus-steps-with-variables
       Dev.wtf?(Memo::Create, [ctx, { focus_on: { variables: [:params], steps: :validate } }])
       #:wtf-focus-steps-with-variables end
     end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- DocsDeveloperTest::Memo::Create
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32mvalidate\e[0m
+    |   |-- \e[32m********* Input *********
+            params: {:text=>\"\\\"Hydrate!\\\"\"}\e[0m
+    |   `-- \e[32m********* Output *********
+            params: {:text=>\"\\\"Hydrate!\\\"\"}\e[0m
+    |-- \e[32mcreate_memo\e[0m
+    `-- End.success
+}
+
+    output, _ = capture_io do
+      #:wtf-default-inspector
+      Dev.wtf?(
+        Memo::Create,
+        [
+          { params: { text: 'Hydrate!', value: nil } },
+          {
+            focus_on: { steps: :validate, variables: :params },
+            default_inspector: ->(value){ value.nil? ? 'UNKNOWN' : value.inspect }
+          }
+        ]
+      )
+      #:wtf-default-inspector end
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- DocsDeveloperTest::Memo::Create
+    |-- \e[32mStart.default\e[0m
+    |-- \e[32mvalidate\e[0m
+    |   |-- \e[32m********* Input *********
+            params: {:text=>\"\\\"Hydrate!\\\"\", :value=>\"UNKNOWN\"}\e[0m
+    |   `-- \e[32m********* Output *********
+            params: {:text=>\"\\\"Hydrate!\\\"\", :value=>\"UNKNOWN\"}\e[0m
+    |-- \e[32mcreate_memo\e[0m
+    `-- End.success
+}
   end
 
   it do
