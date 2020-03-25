@@ -30,7 +30,12 @@ module Trailblazer
         #    message: "WTF!"
         #        seq: [:a]
         def tree_nodes_for(level, input:, output:, **options)
-          input_output_nodes = { Input: input, Output: output }.compact.collect do |table_header, entity|
+          # TODO: Reverting `Hash#compact` usage as it is not supported in Ruby <= 2.4
+          # Once the support is droped, revert actual code with below and remove entity check.
+          # input_output_nodes = { Input: input, Output: output }.compact.collect do |table_header, entity|
+
+          input_output_nodes = { Input: input, Output: output }.collect do |table_header, entity|
+            next unless entity
             next unless Array( entity.data[:focused_variables] ).any?
 
             table = vertical_table_for(entity.data[:focused_variables], table_header: table_header)
