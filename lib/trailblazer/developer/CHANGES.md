@@ -1,3 +1,7 @@
+# 0.0.12
+
+* Revert Hash#compact usage to support Rubies <= 2.4
+
 # 0.0.11
 
 * Allow injecting custom data collector in Trace API, to collect custom input/output ctx of task nodes.
