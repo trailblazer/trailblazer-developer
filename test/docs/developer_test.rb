@@ -186,4 +186,26 @@ DocsDeveloperTest::Update::CheckAttribute
     end
     #:wire-fix end
   end
+
+  it 'IllegalSignalError' do
+    assert_raises Trailblazer::Activity::Circuit::IllegalSignalError do
+      #:illegal-signal-error
+      class Create < Trailblazer::Activity::Railway
+        def self.validate((ctx, flow_options), **circuit_options)
+          return :invalid_signal, [ctx, flow_options], circuit_options
+        end
+
+        step task: method(:validate)
+      end
+
+      ctx = {"message" => "Not gonna work!"} # bare hash.
+      Create.([ctx])
+
+      # IllegalSignalError: Create:
+      # Unrecognized Signal `:invalid_signal` returned from `Method: Create.validate`. Registered signals are,
+      # - Trailblazer::Activity::Left
+      # - Trailblazer::Activity::Right
+      #:illegal-signal-error end
+    end
+  end
 end
