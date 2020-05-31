@@ -194,6 +194,69 @@ class TraceWtfTest < Minitest::Spec
 }
   end
 
+  it "captures input & output for all steps and selected variables witin ctx" do
+    alpha = Class.new(Trailblazer::Activity::Railway) do
+      extend T.def_steps(:a, :b)
+
+      step method(:a)
+      step method(:b)
+    end
+
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [
+          { seq: [], message: 'WTF!', nested: { message: 'Dude!' } },
+          {
+            focus_on: {
+              variables: [
+                :message, # symbol for top level key access
+                ->(ctx) { ctx[:nested][:message] }, # procs can be used for deep access
+              ]
+            },
+          }
+        ],
+      )
+    end
+
+    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    |-- ********** Input **********
+         Custom: \"Dude!\"
+        message: \"WTF!\"
+    |-- ********** Output **********
+         Custom: \"Dude!\"
+        message: \"WTF!\"
+    |-- \e[32mStart.default\e[0m
+    |   |-- \e[32m********** Input **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |   `-- \e[32m********** Output **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |-- \e[32m#<Method: #<Class:>.a>\e[0m
+    |   |-- \e[32m********** Input **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |   `-- \e[32m********** Output **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |-- \e[32m#<Method: #<Class:>.b>\e[0m
+    |   |-- \e[32m********** Input **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    |   `-- \e[32m********** Output **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"\e[0m
+    `-- End.success
+        |-- ********** Input **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"
+        `-- ********** Output **********
+             Custom: \"Dude!\"
+            message: \"WTF!\"
+}
+  end
+
   it "captures input & output inspect for given step and variable within ctx" do
     output, _ = capture_io do
       Trailblazer::Developer.wtf?(
