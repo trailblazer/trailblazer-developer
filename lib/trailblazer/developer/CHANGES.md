@@ -1,3 +1,8 @@
+# 0.0.13
+
+* Allow focusing on selected variables for all steps in wtf
+* Fix declarative deprecation warning
+
 # 0.0.12
 
 * Revert Hash#compact usage to support Rubies <= 2.4
