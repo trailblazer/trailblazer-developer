@@ -1,3 +1,7 @@
+# 0.0.14
+
+* Revert declarative warning changes
+
 # 0.0.13
 
 * Allow focusing on selected variables for all steps in wtf
