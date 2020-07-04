@@ -3,9 +3,6 @@
     {
       "id": "lib.signup",
       "type": "Lane",
-      "linksTo": [
-
-      ],
       "data": {
       },
       "label": "lib.signup"
