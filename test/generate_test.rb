@@ -11,12 +11,12 @@ class GenerateTest < Minitest::Spec
 
     validate = structs.find { |struct| struct.id == "validate!" }
 
-    validate.id.must_equal "validate!"
-    validate.parent.must_equal "web.signup"
-    validate.linksTo[0].target.must_equal "GatewayEventbased-jw9gp83r"
-    validate.linksTo[0].message.must_be_nil
-    validate.linksTo[1].target.must_equal "Start.default"
-    validate.linksTo[1].message.must_equal true
+    _(validate.id).must_equal "validate!"
+    _(validate.parent).must_equal "web.signup"
+    _(validate.linksTo[0].target).must_equal "GatewayEventbased-jw9gp83r"
+    _(validate.linksTo[0].message).must_be_nil
+    _(validate.linksTo[1].target).must_equal "Start.default"
+    _(validate.linksTo[1].message).must_equal true
   end
 
   it "Generate.call" do
@@ -29,7 +29,7 @@ class GenerateTest < Minitest::Spec
     intermediate = Trailblazer::Developer::Generate.(JSON[json])
 
     out = PP.pp(intermediate, "")
-    out.must_equal %{#<struct Trailblazer::Activity::Schema::Intermediate
+    _(out).must_equal %{#<struct Trailblazer::Activity::Schema::Intermediate
  wiring=
   {#<struct Trailblazer::Activity::Schema::Intermediate::TaskRef
     id=\"Start.default\",

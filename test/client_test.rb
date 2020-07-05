@@ -29,7 +29,7 @@ class ClientTest < Minitest::Spec
     diagram = Dev::Client.new_diagram(token: token, email: "apotonick@gmail.com", host: "http://localhost:3000")
 
     assert diagram.id > 0
-    diagram.body.must_equal [] # the JSON is already parsed?
+    _(diagram.body).must_equal [] # the JSON is already parsed?
 
 # Client.import (public)
     json = Dev::Client.import(id: diagram.id, email: "apotonick@gmail.com", api_key: api_key, host: "http://localhost:3000")
@@ -37,7 +37,7 @@ class ClientTest < Minitest::Spec
 
 
   # Currently, this brings you a *formatted* JSON document and additionally added data, such as labels for connections.
-    json.must_equal %{{
+    _(json).must_equal %{{
   "elements": [
 
   ]
@@ -47,6 +47,6 @@ class ClientTest < Minitest::Spec
     duplicate = Dev::Client.duplicate(id: diagram.id, email: "apotonick@gmail.com", api_key: api_key, host: "http://localhost:3000")
 
     assert duplicate.id > diagram.id
-    assert duplicate.body.must_equal([]) # FIXME: better test!
+    assert _(duplicate.body).must_equal([]) # FIXME: better test!
   end
 end
