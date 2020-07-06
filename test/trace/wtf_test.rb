@@ -45,7 +45,7 @@ class TraceWtfTest < Minitest::Spec
       end
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     `-- #<Class:>
@@ -63,7 +63,7 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Developer.wtf?(alpha, [{ seq: [], c: false }])
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |-- #<Class:>
@@ -84,7 +84,7 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Developer.wtf?(alpha, [{ seq: [] }])
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |-- #<Class:>
@@ -113,7 +113,7 @@ class TraceWtfTest < Minitest::Spec
       )
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[36mStart.default\e[0m
     |-- \e[36m#<Method: #<Class:>.a>\e[0m
     |-- #<Class:>
@@ -144,17 +144,17 @@ class TraceWtfTest < Minitest::Spec
     # task `:a` must contain {focused_variables} and not others
     tasks.each do |(input, *remainings)|
       if input.task.inspect.gsub(/0x\w+/, "").include?('#<Method: #<Class:>.a>>')
-        input.data.keys.must_include(:focused_variables)
+        _(input.data.keys).must_include(:focused_variables)
       else
-        input.data.keys.wont_include(:focused_variables)
+        _(input.data.keys).wont_include(:focused_variables)
       end
 
       output = remainings.last
 
       if output.task.inspect.gsub(/0x\w+/, "").include?('#<Method: #<Class:>.a>>')
-        output.data.keys.must_include(:focused_variables)
+        _(output.data.keys).must_include(:focused_variables)
       else
-        output.data.keys.wont_include(:focused_variables)
+        _(output.data.keys).wont_include(:focused_variables)
       end
     end
   end
@@ -170,7 +170,7 @@ class TraceWtfTest < Minitest::Spec
       )
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |   |-- \e[32m********** Input **********
@@ -219,7 +219,7 @@ class TraceWtfTest < Minitest::Spec
       )
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- ********** Input **********
          Custom: \"Dude!\"
         message: \"WTF!\"
@@ -273,7 +273,7 @@ class TraceWtfTest < Minitest::Spec
       )
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |   |-- \e[32m********** Input **********
@@ -314,7 +314,7 @@ class TraceWtfTest < Minitest::Spec
       )
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |   |-- \e[32m********** Input **********
@@ -352,7 +352,7 @@ class TraceWtfTest < Minitest::Spec
       )
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- #<Class:>
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.a>\e[0m
     |   |-- \e[32m********** Input **********

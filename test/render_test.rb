@@ -10,7 +10,7 @@ class RenderCircuitTest < Minitest::Spec
     end
 
     circuit = Trailblazer::Developer::Render::Circuit.(activity.to_h)
-    circuit.must_equal %{
+    _(circuit).must_equal %{
 #<Start/:default>
  {Trailblazer::Activity::Right} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=a>
 #<Trailblazer::Activity::TaskBuilder::Task user_proc=a>
@@ -24,6 +24,6 @@ class RenderCircuitTest < Minitest::Spec
 #<End/:failure>
 }
 
-    Trailblazer::Developer.render(activity).must_equal circuit
+    _(Trailblazer::Developer.render(activity)).must_equal circuit
   end
 end

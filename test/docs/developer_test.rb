@@ -37,10 +37,10 @@ class DocsDeveloperTest < Minitest::Spec
     #:step end
 
     ctx = {params: {text: "Hydrate!"}}
-    signal, (ctx, flow_options) = Dev.wtf?(Memo::Create, [ctx, {}])
+    signal, (ctx, ) = Dev.wtf?(Memo::Create, [ctx, {}])
 
-    signal.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:success>}
-    ctx.inspect.must_equal %{{:params=>{:text=>\"Hydrate!\"}, :input=>{:text=>\"Hydrate!\"}}}
+    _(signal.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:success>}
+    _(ctx.inspect).must_equal %{{:params=>{:text=>\"Hydrate!\"}, :input=>{:text=>\"Hydrate!\"}}}
 
     output, _ = capture_io do
       #:wtf-focus-steps
@@ -48,7 +48,7 @@ class DocsDeveloperTest < Minitest::Spec
       #:wtf-focus-steps end
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- DocsDeveloperTest::Memo::Create
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- DocsDeveloperTest::Memo::Create
     |-- \e[32mStart.default\e[0m
     |-- \e[32mvalidate\e[0m
     |   |-- \e[32m********* Input *********
@@ -73,7 +73,7 @@ class DocsDeveloperTest < Minitest::Spec
       #:wtf-focus-steps-with-variables end
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- DocsDeveloperTest::Memo::Create
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- DocsDeveloperTest::Memo::Create
     |-- \e[32mStart.default\e[0m
     |-- \e[32mvalidate\e[0m
     |   |-- \e[32m********* Input *********
@@ -99,7 +99,7 @@ class DocsDeveloperTest < Minitest::Spec
       #:wtf-default-inspector end
     end
 
-    output.gsub(/0x\w+/, "").must_equal %{`-- DocsDeveloperTest::Memo::Create
+    _(output.gsub(/0x\w+/, "")).must_equal %{`-- DocsDeveloperTest::Memo::Create
     |-- \e[32mStart.default\e[0m
     |-- \e[32mvalidate\e[0m
     |   |-- \e[32m********* Input *********
@@ -138,7 +138,7 @@ TypeError: wrong argument type String (expected Symbol)
 
     signal, (ctx, _) = Bla.([ctx])
     #:type-ctx end
-    signal.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:success>}
+    _(signal.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:success>}
   end
 
   it do

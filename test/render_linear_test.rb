@@ -11,15 +11,15 @@ class RenderLinearTest < Minitest::Spec
   end
 
   it do
-    Trailblazer::Developer::Render::Linear.(Create).must_equal %{[>decide!,>>wasnt_ok!,>>was_ok!,<<return_true!,<<return_false!,>finalize!]}
+    _(Trailblazer::Developer::Render::Linear.(Create)).must_equal %{[>decide!,>>wasnt_ok!,>>was_ok!,<<return_true!,<<return_false!,>finalize!]}
   end
 
   it "is aliased to `Developer.railway`" do
-    Trailblazer::Developer::Render::Linear.(Create).must_equal Trailblazer::Developer.railway(Create)
+    _(Trailblazer::Developer::Render::Linear.(Create)).must_equal Trailblazer::Developer.railway(Create)
   end
 
   it do
-    Trailblazer::Developer::Render::Linear.(Create, style: :rows).must_equal %{
+    _(Trailblazer::Developer::Render::Linear.(Create, style: :rows)).must_equal %{
  1 ==============================>decide!
  2 ===========================>>wasnt_ok!
  3 =============================>>was_ok!
@@ -34,7 +34,7 @@ class RenderLinearTest < Minitest::Spec
     end
 
     it do
-      Trailblazer::Developer::Render::Linear.(Present).must_equal %{[>>ok!]}
+      _(Trailblazer::Developer::Render::Linear.(Present)).must_equal %{[>>ok!]}
     end
   end
 end

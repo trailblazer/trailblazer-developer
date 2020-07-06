@@ -31,7 +31,7 @@ module Trailblazer::Developer
       return false unless response.status == 200
 
       # token = CGI::Cookie.parse(response.headers["set-cookie"])["token"][0]
-      token = JSON.parse(response.body)["token"]
+      JSON.parse(response.body)["token"]
     end
 
     def export_diagram(id:, query:, **options)
@@ -60,7 +60,7 @@ module Trailblazer::Developer
     def request(host:, url:, method:, token:, body:, **)
       conn = Faraday.new(url: host)
 
-      response = conn.send(method) do |req|
+      conn.send(method) do |req|
         req.url url
         req.headers["Content-Type"] = "application/json"
         req.body = body

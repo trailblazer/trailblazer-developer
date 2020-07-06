@@ -13,14 +13,14 @@ class TraceTest < Minitest::Spec
       ]
     )
 
-    signal.class.inspect.must_equal %{Trailblazer::Activity::End}
-    options.inspect.must_equal %{{:seq=>[:b, :c]}}
-    flow_options[:flow].inspect.must_equal %{true}
+    _(signal.class.inspect).must_equal %{Trailblazer::Activity::End}
+    _(options.inspect).must_equal %{{:seq=>[:b, :c]}}
+    _(flow_options[:flow].inspect).must_equal %{true}
 
     output = Dev::Trace::Present.(stack)
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    output.must_equal %{`-- #<Trailblazer::Activity:>
+    _(output).must_equal %{`-- #<Trailblazer::Activity:>
     |-- Start.default
     |-- B
     |-- C
@@ -39,7 +39,7 @@ class TraceTest < Minitest::Spec
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    output.must_equal %{`-- #<Trailblazer::Activity:>
+    _(output).must_equal %{`-- #<Trailblazer::Activity:>
     |-- Start.default
     |-- B
     |-- D
@@ -56,8 +56,8 @@ class TraceTest < Minitest::Spec
 
     nested = stack.to_a.first
 
-    nested.first.data.must_equal({ ctx: { seq: [:b, :c] }, task_name: bc })
-    nested.last.data.must_equal({ ctx: { seq: [:b, :c] }, signal: signal })
+    _(nested.first.data).must_equal({ ctx: { seq: [:b, :c] }, task_name: bc })
+    _(nested.last.data).must_equal({ ctx: { seq: [:b, :c] }, signal: signal })
   end
 
   it "allows to inject custom :data collector" do
@@ -76,8 +76,8 @@ class TraceTest < Minitest::Spec
     )
 
     nested = stack.to_a.first
-    nested.first.data.must_equal({ ctx: { seq: [:b, :c] }, something: :else })
-    nested.last.data.must_equal({ ctx: { seq: [:b, :c] }, signal: signal })
+    _(nested.first.data).must_equal({ ctx: { seq: [:b, :c] }, something: :else })
+    _(nested.last.data).must_equal({ ctx: { seq: [:b, :c] }, signal: signal })
   end
 
   it "Present allows to inject :renderer and pass through additional arguments to the renderer" do
@@ -89,7 +89,7 @@ class TraceTest < Minitest::Spec
     )
 
     renderer = ->(task_node:, position:, tree:) do
-      assert tree[position] == task_node
+      assert_equal tree[position], task_node
 
       [
         task_node.level,
@@ -103,7 +103,7 @@ class TraceTest < Minitest::Spec
 
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    output.must_equal %{`-- 1/#<Trailblazer::Activity:>/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity:>/pink
+    _(output).must_equal %{`-- 1/#<Trailblazer::Activity:>/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity:>/pink
     |-- 2/#<Trailblazer::Activity::Start semantic=:default>/Trailblazer::Activity::Right/Start.default/pink
     |-- 2/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.b>/Trailblazer::Activity::Right/B/pink
     |-- 2/#<Trailblazer::Activity:>/#<Trailblazer::Activity::End semantic=:success>/D/pink
@@ -131,6 +131,6 @@ class TraceTest < Minitest::Spec
       puts Dev::Trace::Present.(stack)
     end
 
-    returned_stack.must_equal stack
+    _(returned_stack).must_equal stack
   end
 end

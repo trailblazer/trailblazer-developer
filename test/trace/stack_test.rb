@@ -5,7 +5,7 @@ class StackTest < Minitest::Spec
     stack = Dev::Trace::Stack.new
     stack.indent!
     stack << 1
-    stack.top.must_equal 1
+    _(stack.top).must_equal 1
 
     stack << 2
     stack.indent!
@@ -22,8 +22,8 @@ class StackTest < Minitest::Spec
     stack << 10
     # stack.unindent!
 
-    stack.top.must_equal 10
+    _(stack.top).must_equal 10
 
-    stack.to_a.inspect.must_equal %{<Level>[<Level>[1, 2, <Level>[3, 4, <Level>[5, 6], 7, 8], 9, 10]]}
+    _(stack.to_a.inspect).must_equal %{<Level>[<Level>[1, 2, <Level>[3, 4, <Level>[5, 6], 7, 8], 9, 10]]}
   end
 end
