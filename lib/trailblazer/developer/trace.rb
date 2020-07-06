@@ -7,10 +7,10 @@ module Trailblazer::Developer
 
     class << self
       # Public entry point to activate tracing when running {activity}.
-      def call(activity, (ctx, flow_options), circuit_options={})
-        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call( activity, [ctx, flow_options], circuit_options ) # only run once for the entire circuit!
+      def call(activity, (ctx, flow_options), **circuit_options)
+        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call( activity, [ctx, flow_options], **circuit_options ) # only run once for the entire circuit!
 
-        signal, (ctx, flow_options) = Activity::TaskWrap.invoke(activity, [ctx, flow_options], circuit_options)
+        signal, (ctx, flow_options) = Activity::TaskWrap.invoke(activity, [ctx, flow_options], **circuit_options)
 
         return flow_options[:stack], signal, [ctx, flow_options]
       end

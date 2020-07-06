@@ -37,7 +37,7 @@ class DocsDeveloperTest < Minitest::Spec
     #:step end
 
     ctx = {params: {text: "Hydrate!"}}
-    signal, (ctx, flow_options) = Dev.wtf?(Memo::Create, [ctx, {}])
+    signal, (ctx, ) = Dev.wtf?(Memo::Create, [ctx, {}])
 
     _(signal.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:success>}
     _(ctx.inspect).must_equal %{{:params=>{:text=>\"Hydrate!\"}, :input=>{:text=>\"Hydrate!\"}}}

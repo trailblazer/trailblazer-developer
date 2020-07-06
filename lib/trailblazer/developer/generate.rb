@@ -31,7 +31,7 @@ module Trailblazer
       end
 
       def call(hash)
-        signal, (ctx, _) = Activity::TaskWrap.invoke(Pipeline, hash: hash)
+        _, (ctx, _) = Activity::TaskWrap.invoke(Pipeline, hash: hash)
         ctx[:intermediate]
       end
 
@@ -51,16 +51,16 @@ module Trailblazer
         wiring = elements.collect { |el|
           data = data_for(el)
 
-          [inter.TaskRef(el.id, data), el.linksTo.collect { |arrow| inter.Out(semantic_for(arrow.to_h), arrow.target) } ] }
+          [inter.TaskRef(el.id, data), el.linksTo.collect { |arrow| inter.Out(semantic_for(**arrow.to_h), arrow.target) } ] }
         wiring = Hash[wiring]
 
         # end events need this stupid special handling
         # DISCUSS: currently, the END-SEMANTIC is read from the event's label.
         wiring = wiring.merge(Hash[
           end_events.collect do |_end|
-            ref, outputs = wiring.find { |ref, _| ref.id == _end.id }
+            ref, = wiring.find { |ref, _| ref.id == _end.id }
 
-            [ref, [inter.Out(semantic_for(_end.to_h)|| raise, nil)]] # TODO: test the raise, happens when the semantic of an End can't be distinguished. # TODO: don't extract semantic from :label but from :data.
+            [ref, [inter.Out(semantic_for(**_end.to_h)|| raise, nil)]] # TODO: test the raise, happens when the semantic of an End can't be distinguished. # TODO: don't extract semantic from :label but from :data.
           end
         ])
         # pp wiring
