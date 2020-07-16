@@ -374,6 +374,24 @@ class TraceWtfTest < Minitest::Spec
 }
   end
 
+  it "supports circuit interface call definition and doesn't mutate any passed options" do
+    ctx = { seq: [] }
+    flow_options = { flow: true }
+    circuit_options = { circuit: true }
+
+    capture_io do
+      Trailblazer::Developer.wtf?(
+        alpha,
+        [ctx, flow_options],
+        circuit_options
+      )
+    end
+
+    _(ctx).must_equal({ seq: [:a, :b, :c, :cc, :bb, :aa] })
+    _(flow_options).must_equal({ flow: true })
+    _(circuit_options).must_equal({ circuit: true })
+  end
+
   it "has alias to `wtf` as `wtf?`" do
     assert_equal Dev.method(:wtf), Dev.method(:wtf?)
   end
