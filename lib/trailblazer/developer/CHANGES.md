@@ -1,3 +1,7 @@
+# 0.0.15
+
+* Fix `Dev.wtf` circuit interface definition
+
 # 0.0.14
 
 * Revert declarative warning changes
