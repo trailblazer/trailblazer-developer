@@ -1,3 +1,7 @@
+# 0.0.16
+
+* Remove Declarative warning correctly
+
 # 0.0.15
 
 * Fix `Dev.wtf` circuit interface definition
