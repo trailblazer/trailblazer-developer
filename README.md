@@ -4,7 +4,7 @@ _Developer tools for Trailblazers._
 
 ## Documentation
 
-Find the complete documentation on the project website: [http://2019.trailblazer.to/2.1/docs/developer.html]
+Find the complete documentation on the project website: [https://trailblazer.to/2.1/docs/trailblazer.html#trailblazer-developer]
 
 ## Summary
 
