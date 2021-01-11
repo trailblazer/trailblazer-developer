@@ -6,3 +6,6 @@ gemspec
 gem "trailblazer-activity", path: "../trailblazer-activity"
 gem "trailblazer-activity-dsl-linear", path: "../trailblazer-activity-dsl-linear"
 gem "representable"
+gem 'pry-byebug'
+gem "faraday"
+gem "multi_json"

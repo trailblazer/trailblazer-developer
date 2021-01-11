@@ -7,6 +7,7 @@ require "pp"
 require "trailblazer/activity"
 require "trailblazer/activity/testing"
 require "trailblazer/activity/dsl/linear"
+puts "Running in Ruby #{RUBY_VERSION}"
 
 T = Trailblazer::Activity::Testing
 

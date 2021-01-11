@@ -90,10 +90,13 @@ class TraceTest < Minitest::Spec
 
     renderer = ->(task_node:, position:, tree:) do
       assert_equal tree[position], task_node
-
+      task = task_node.input.task
+      if task.is_a? Method
+        task = "#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.#{task.name}>"
+      end
       [
         task_node.level,
-        %{#{task_node.level}/#{task_node.input.task}/#{task_node.output.data[:signal]}/#{task_node.value}/#{task_node.color}}
+        %{#{task_node.level}/#{task}/#{task_node.output.data[:signal]}/#{task_node.value}/#{task_node.color}}
       ]
     end
 

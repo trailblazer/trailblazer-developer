@@ -120,11 +120,13 @@ class DocsDeveloperTest < Minitest::Spec
       end
     end
 
-    assert_raises TypeError do
-      #:type-err
-      ctx = {"message" => "Not gonna work!"} # bare hash.
-      Bla.([ctx])
-      #:type-err end
+    if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.7')
+      assert_raises TypeError do
+        #:type-err
+        ctx = {"message" => "Not gonna work!"} # bare hash.
+        Bla.([ctx])
+        #:type-err end
+      end
     end
 
 =begin
