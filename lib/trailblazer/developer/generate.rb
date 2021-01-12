@@ -8,7 +8,7 @@ module Trailblazer
       module_function
 
       Element = Struct.new(:id, :type, :linksTo, :data, :label, :parent)
-      Arrow   = Struct.new(:target, :label, :message)
+      Arrow   = Struct.new(:target, :label, :message, :target_lane)
 
       module Representer
         class Activity < Representable::Decorator
@@ -21,6 +21,7 @@ module Trailblazer
               property :target
               property :label
               property :message
+              property :target_lane
             end
             property :data, default: {}
 

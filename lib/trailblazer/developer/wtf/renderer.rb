@@ -1,3 +1,4 @@
+
 module Trailblazer::Developer
   module Wtf
 
