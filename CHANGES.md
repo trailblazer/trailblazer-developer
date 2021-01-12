@@ -1,3 +1,7 @@
+# 0.0.17
+
+* Add `Arrow.target_lane` field in the `Generate` component.
+
 # 0.0.16
 
 * Remove Declarative warning correctly
