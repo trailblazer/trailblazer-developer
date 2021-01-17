@@ -36,6 +36,9 @@ module Trailblazer::Developer
       end
 
       def fmt(line, style)
+        if line.is_a? Method
+          line = "#<Method: #<Class:>.#{line.name}>"
+        end
         return line unless style
         String.send(style, line)
       end

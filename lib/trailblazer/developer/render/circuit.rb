@@ -28,7 +28,7 @@ module Trailblazer
 
           content = content.join("\n")
 
-          return "\n#{content}".gsub(/0x\w+/, "0x")#.gsub(/0.\d+/, "0.")
+          "\n#{content}".gsub(/0x\w+/, "0x")
         end
 
         # If Ruby had pattern matching, this function wasn't necessary.

@@ -52,7 +52,7 @@ module Trailblazer::Developer
         variables: Array( flow_options.dig(:focus_on, :variables) ),
       }
 
-      return activity, [ ctx, flow_options ], circuit_options
+      [activity, [ ctx, flow_options ], circuit_options]
     end
 
     # Overring default input and output data collectors to collect/capture
@@ -61,7 +61,7 @@ module Trailblazer::Developer
     def trace_input_data_collector(wrap_config, (ctx, flow_options), circuit_options)
       data = Trace.default_input_data_collector(wrap_config, [ctx, flow_options], circuit_options)
 
-      if Wtf.caputure_variables?(step_name: data[:task_name], **flow_options)
+      if Wtf.capture_variables?(step_name: data[:task_name], **flow_options)
         data[:focused_variables] = Trace::Focusable.capture_variables_from(ctx, **flow_options)
       end
 
@@ -72,7 +72,7 @@ module Trailblazer::Developer
       data  = Trace.default_output_data_collector(wrap_config, [ctx, flow_options], circuit_options)
       input = flow_options[:stack].top
 
-      if Wtf.caputure_variables?(step_name: input.data[:task_name], **flow_options)
+      if Wtf.capture_variables?(step_name: input.data[:task_name], **flow_options)
         data[:focused_variables] = Trace::Focusable.capture_variables_from(ctx, **flow_options)
       end
 
@@ -80,10 +80,11 @@ module Trailblazer::Developer
     end
 
     # private
-    def caputure_variables?(step_name:, focus_on:, **)
+    def capture_variables?(step_name:, focus_on:, **)
       return true if focus_on[:steps].include?(step_name)                 # For given step
       return true if focus_on[:steps].empty? && focus_on[:variables].any? # For selected vars but all steps
-      return false
+
+      false
     end
   end
 end

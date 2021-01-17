@@ -57,7 +57,6 @@ class TraceWtfTest < Minitest::Spec
 }
   end
 
-
   it "traces until charlie, 3-level and step takes left track" do
     output, _ = capture_io do
       Trailblazer::Developer.wtf?(alpha, [{ seq: [], c: false }])
@@ -77,7 +76,6 @@ class TraceWtfTest < Minitest::Spec
     `-- End.failure
 }
   end
-
 
   it "traces alpha and it's subprocesses, for successful execution" do
     output, _ = capture_io do
@@ -135,24 +133,24 @@ class TraceWtfTest < Minitest::Spec
         { seq: [], message: 'WTF!' },
         { focus_on: { steps: alpha.method(:a) } }
       ],
-    )
-
+      )
     nested = flow_options[:stack].to_a.last
+
     tasks = nested.select{ |e| e.is_a?(Dev::Trace::Level) } # exclude ends
 
     # Trace::Entity::Input & Trace::Entity::Output for
     # task `:a` must contain {focused_variables} and not others
     tasks.each do |(input, *remainings)|
-      if input.task.inspect.gsub(/0x\w+/, "").include?('#<Method: #<Class:>.a>>')
-        _(input.data.keys).must_include(:focused_variables)
+      if %r{(Method: \#<Class:)(.*)\#a\(|\.a>}.match(input.task.inspect)
+        assert_includes  input.data.keys, :focused_variables, input.task.inspect
       else
         _(input.data.keys).wont_include(:focused_variables)
       end
 
       output = remainings.last
 
-      if output.task.inspect.gsub(/0x\w+/, "").include?('#<Method: #<Class:>.a>>')
-        _(output.data.keys).must_include(:focused_variables)
+      if %r{(Method: \#<Class:)(.*)\#a\(|\.a>}.match(output.task.inspect)
+        assert_includes  output.data.keys, :focused_variables, output.task.inspect
       else
         _(output.data.keys).wont_include(:focused_variables)
       end
@@ -167,7 +165,7 @@ class TraceWtfTest < Minitest::Spec
           { seq: [], message: 'WTF!' },
           { focus_on: { steps: alpha.method(:a) } }
         ],
-      )
+        )
     end
 
     _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
@@ -216,7 +214,7 @@ class TraceWtfTest < Minitest::Spec
             },
           }
         ],
-      )
+        )
     end
 
     _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
@@ -270,7 +268,7 @@ class TraceWtfTest < Minitest::Spec
             },
           }
         ],
-      )
+        )
     end
 
     _(output.gsub(/0x\w+/, "")).must_equal %{`-- #<Class:>
