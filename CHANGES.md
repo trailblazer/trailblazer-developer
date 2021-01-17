@@ -1,3 +1,6 @@
+# 0.0.20
+* Ruby 2.7 support
+
 # 0.0.17
 
 * Add `Arrow.target_lane` field in the `Generate` component.
