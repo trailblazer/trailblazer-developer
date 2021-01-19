@@ -42,7 +42,7 @@ class DocsDeveloperTest < Minitest::Spec
     _(signal.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:success>}
     _(ctx.inspect).must_equal %{{:params=>{:text=>\"Hydrate!\"}, :input=>{:text=>\"Hydrate!\"}}}
 
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       #:wtf-focus-steps
       Dev.wtf?(Memo::Create, [ctx, { focus_on: { steps: [:validate, :create_memo] } }])
       #:wtf-focus-steps end
@@ -67,7 +67,7 @@ class DocsDeveloperTest < Minitest::Spec
     `-- End.success
 }
 
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       #:wtf-focus-steps-with-variables
       Dev.wtf?(Memo::Create, [ctx, { focus_on: { variables: [:params], steps: :validate } }])
       #:wtf-focus-steps-with-variables end
@@ -84,7 +84,7 @@ class DocsDeveloperTest < Minitest::Spec
     `-- End.success
 }
 
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       #:wtf-default-inspector
       Dev.wtf?(
         Memo::Create,

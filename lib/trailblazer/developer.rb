@@ -1,8 +1,11 @@
 require "trailblazer/developer/version"
+require "dry-configurable"
+require "logger"
 
 module Trailblazer
   module Developer
-    # Your code goes here...
+    extend Dry::Configurable
+    setting(:logger, Logger.new($stdout), reader: true )
   end
 end
 
