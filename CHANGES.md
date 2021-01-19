@@ -1,3 +1,6 @@
+# 0.0.30
+* Add Logger to Trailblazer Developer
+
 # 0.0.20
 * Ruby 2.7 support
 

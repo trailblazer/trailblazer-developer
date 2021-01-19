@@ -39,7 +39,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "traces until charlie, 3-level and exception occurs" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       assert_raises RuntimeError do
         Trailblazer::Developer.wtf?(alpha, [{ seq: Raiser.new(raise_in: :c) }])
       end
@@ -58,7 +58,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "traces until charlie, 3-level and step takes left track" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(alpha, [{ seq: [], c: false }])
     end
 
@@ -78,7 +78,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "traces alpha and it's subprocesses, for successful execution" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(alpha, [{ seq: [] }])
     end
 
@@ -101,7 +101,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "overrides default color map of entities" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [
@@ -158,7 +158,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "captures input & output for given step and ctx (captures whole ctx by default)" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [
@@ -200,7 +200,7 @@ class TraceWtfTest < Minitest::Spec
       step method(:b)
     end
 
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [
@@ -256,7 +256,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "captures input & output inspect for given step and variable within ctx" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [
@@ -294,7 +294,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "captures input & output for given 1/more steps and selected variables witin ctx" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [
@@ -337,7 +337,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "allows passing custom inspector" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [
@@ -377,7 +377,7 @@ class TraceWtfTest < Minitest::Spec
     flow_options = { flow: true }
     circuit_options = { circuit: true }
 
-    capture_io do
+    capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [ctx, flow_options],

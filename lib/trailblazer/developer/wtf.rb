@@ -25,7 +25,7 @@ module Trailblazer::Developer
 
       return signal, [ctx, flow_options], circuit_options
     ensure
-      puts Trace::Present.(
+      Trailblazer::Developer.logger.info Trace::Present.(
         flow_options[:stack],
         renderer: Wtf::Renderer,
         color_map: Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
