@@ -1,4 +1,9 @@
+# 0.0.21
+
+* Ruby 3.0 support. :sunset:
+
 # 0.0.20
+
 * Ruby 2.7 support
 
 # 0.0.17
