@@ -32,7 +32,7 @@ module Trailblazer
       end
 
       def call(hash)
-        _, (ctx, _) = Activity::TaskWrap.invoke(Pipeline, hash: hash)
+        _, (ctx, _) = Activity::TaskWrap.invoke(Pipeline, [{hash: hash}, {}])
         ctx[:intermediate]
       end
 

@@ -2,8 +2,8 @@ module Trailblazer
   module Developer
     module_function
 
-    def render(activity)
-      Render::Circuit.(activity)
+    def render(activity, **options)
+      Render::Circuit.(activity, **options)
     end
 
     module Render

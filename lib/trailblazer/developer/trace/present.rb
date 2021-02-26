@@ -28,7 +28,7 @@ module Trailblazer::Developer
         stack.each do |lvl| # always a Stack::Task[input, ..., output]
           input, output, nested = Trace::Level.input_output_nested_for_level(lvl)
 
-          tree.push(*TreeNodes.for(level, options.merge(input: input, output: output)))
+          tree.push(*TreeNodes.for(level, **options.merge(input: input, output: output)))
 
           if nested.any? # nesting
             opts = options.merge(tree: tree)

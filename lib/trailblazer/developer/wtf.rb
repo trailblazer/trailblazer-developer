@@ -1,8 +1,8 @@
 module Trailblazer::Developer
   module_function
 
-  def wtf(activity, *args)
-    Wtf.invoke(activity, *args)
+  def wtf(activity, *args, **circuit_options)
+    Wtf.invoke(activity, *args, **circuit_options)
   end
 
   class << self
@@ -16,11 +16,11 @@ module Trailblazer::Developer
     # This allows to display the trace even when an exception happened
     def invoke(activity, (ctx, flow_options), **circuit_options)
       activity, (ctx, flow_options), circuit_options = Wtf.arguments_for_trace(
-        activity, [ctx, flow_options], circuit_options
+        activity, [ctx, flow_options], **circuit_options
       )
 
       _returned_stack, signal, (ctx, flow_options) = Trace.invoke(
-        activity, [ctx, flow_options], circuit_options
+        activity, [ctx, flow_options], **circuit_options
       )
 
       return signal, [ctx, flow_options], circuit_options

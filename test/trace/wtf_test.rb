@@ -381,7 +381,7 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Developer.wtf?(
         alpha,
         [ctx, flow_options],
-        circuit_options
+        **circuit_options
       )
     end
 
