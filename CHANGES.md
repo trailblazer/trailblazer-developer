@@ -1,3 +1,7 @@
+# 0.0.22
+
+* Upgrade trb-activity, trb-activity-dsl-linear and representable versions.
+
 # 0.0.21
 
 * Ruby 3.0 support. :sunset:
