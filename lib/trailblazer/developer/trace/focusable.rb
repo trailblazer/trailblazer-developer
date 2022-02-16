@@ -1,5 +1,3 @@
-require 'hirb'
-
 module Trailblazer
   module Developer
     module Trace
