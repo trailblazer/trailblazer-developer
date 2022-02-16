@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["apotonick@gmail.com"]
 
   spec.summary       = "Developer tools for Trailblazer."
-  spec.description   = "Developer tools for Trailblazer: debugger, tracing, visual editor integration."
+  spec.description   = "Developer tools for Trailblazer: debugger, activity visualizer and tracing."
   spec.homepage      = "http://trailblazer.to"
   spec.license       = "LGPL-3.0"
 

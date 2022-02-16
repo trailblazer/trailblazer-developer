@@ -7,6 +7,3 @@ gemspec
 # gem "trailblazer-activity", path: "../trailblazer-activity"
 # gem "trailblazer-activity-dsl-linear", path: "../trailblazer-activity-dsl-linear"
 # gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
-
-# gem "faraday"
-gem "multi_json"

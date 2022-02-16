@@ -14,5 +14,3 @@ require "trailblazer/developer/trace/focusable"
 require "trailblazer/developer/trace/inspector"
 require "trailblazer/developer/render/circuit"
 require "trailblazer/developer/render/linear"
-
-# require "trailblazer/developer/client"

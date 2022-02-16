@@ -1,3 +1,8 @@
+# 0.0.23
+
+* Remove `representable` dependency.
+* Moved all editor-specific code to the `pro` gem.
+
 # 0.0.22
 
 * Upgrade trb-activity, trb-activity-dsl-linear and representable versions.
