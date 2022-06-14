@@ -43,9 +43,15 @@ module Trailblazer::Developer
     #
     # @private
     def merge_plan
-      Activity::TaskWrap::Pipeline::Merge.new(
-        [Activity::TaskWrap::Pipeline.method(:insert_before), "task_wrap.call_task", ["task_wrap.capture_args",   Trace.method(:capture_args)]],
-        [Activity::TaskWrap::Pipeline.method(:append),        nil,                   ["task_wrap.capture_return", Trace.method(:capture_return)]],
+      Activity::TaskWrap::Extension.new(
+        {
+          insert: [Activity::Adds::Insert.method(:Prepend), "task_wrap.call_task"],
+          row:    Activity::TaskWrap::Pipeline.Row("task_wrap.capture_args", Trace.method(:capture_args))
+        },
+        {
+          insert: [Activity::Adds::Insert.method(:Append)], # append to the very end of tW.
+          row:    Activity::TaskWrap::Pipeline.Row("task_wrap.capture_return", Trace.method(:capture_return))
+        },
       )
     end
 
