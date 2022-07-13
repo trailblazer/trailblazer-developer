@@ -6,8 +6,8 @@ module Trailblazer
   # NOTE: this is absolutely to be considered as prototyping and acts more like a test helper ATM as
 
   module Developer
-    def self.railway(*args)
-      Render::Linear.(*args)
+    def self.railway(*args, **kws)
+      Render::Linear.(*args, **kws)
     end
 
     module Render
