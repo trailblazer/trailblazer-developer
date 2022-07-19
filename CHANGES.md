@@ -1,8 +1,11 @@
+# 0.0.24
+
+* Use `trailblazer-activity-dsl-linear` >= 1.0.
+
 # 0.0.23
 
 * Remove `representable` dependency.
 * Moved all editor-specific code to the `pro` gem (`client.rb` and `generate.rb`).
-* Use `dsl-linear` 1.0.
 
 # 0.0.22
 
