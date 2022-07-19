@@ -1,3 +1,7 @@
+# 0.0.25
+
+* Use `trailblazer-activity-dsl-linear` >= 1.0.0.beta1. This allows using this gem for testing beta versions.
+
 # 0.0.24
 
 * Use `trailblazer-activity-dsl-linear` >= 1.0.
