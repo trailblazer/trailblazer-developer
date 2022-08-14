@@ -16,23 +16,18 @@ module Trailblazer
             Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output => method(:render_input),
           )
 
-
           nodes = []
 
           level = 2
           step_wrap.to_a.each do |row|
             renderer = renderers[row[1].class]
 
-puts "yo"
-            pp renderer.(row, level) # call the rendering component.
             nodes = nodes + renderer.(row, level) # call the rendering component.
           end
-puts
-          pp nodes
 
           nodes = [[0, activity], [1, id], *nodes]
 
-          puts Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
+          Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
         end
 
         def self.render_task_wrap_step(row, level)
@@ -46,7 +41,21 @@ puts
 
           filters = input_pipe.to_a.collect do |id, filter|
 
-            text =  "#{id.to_s.ljust(33, ".")} #{filter.is_a?(Activity::DSL::Linear::VariableMapping::AddVariables) ? filter.instance_variable_get(:@user_filter).inspect : filter.inspect.match(/VariableMapping\.\w+/) }" # we could even grab the source code for callables here!
+
+            id, class_name, info =
+              if filter.is_a?(Activity::DSL::Linear::VariableMapping::AddVariables)
+                _info = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
+
+                rendered_id = "#{id.match(/.+0\.\w\w\w/)}[...]"
+
+                [rendered_id, filter.class.to_s.match(/VariableMapping::.+/), _info]
+              else
+                _name = filter.inspect.match(/VariableMapping\.\w+/)
+
+                [id.to_s, _name, ""]
+              end
+
+            text =  "#{id.ljust(45, ".")} #{info.ljust(45, ".")} #{class_name}"
 
             [level+1, text]
           end
