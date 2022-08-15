@@ -41,15 +41,19 @@ module Trailblazer
 
           filters = input_pipe.to_a.collect do |id, filter|
 
-
             id, class_name, info =
               if filter.is_a?(Activity::DSL::Linear::VariableMapping::AddVariables)
-                _info = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
+                if id =~ /inject\./ # TODO: maybe Inject() should be encapsulated in {AddVariables::Inject}?
 
-                rendered_id = "#{id.match(/.+0\.\w\w\w/)}[...]"
+                  [id, filter.class.to_s.match(/VariableMapping::.+/), ""]
+                else
+                  _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
+                  rendered_id = "#{id.match(/.+0\.\w\w\w/)}[...]"
 
-                [rendered_id, filter.class.to_s.match(/VariableMapping::.+/), _info]
-              else
+                  [rendered_id, filter.class.to_s.match(/VariableMapping::.+/), _info]
+                end
+
+              else # generic VariableMapping::DSL step such as {VariableMapping.scope}
                 _name = filter.inspect.match(/VariableMapping\.\w+/)
 
                 [id.to_s, _name, ""]

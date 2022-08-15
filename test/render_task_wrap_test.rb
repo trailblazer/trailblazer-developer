@@ -11,9 +11,18 @@ class RenderTaskWrapTest < Minitest::Spec
       step :b,
         In() => [:model],
         In() => {:user => :current_user}
+      step :c,
+        Inject() => [:current_user],
+        Out() => [:model]
     end
 
+    #@ no special tW
     pipe = Trailblazer::Developer::Render::TaskWrap.(activity, id: :a)
+    assert_inspect pipe, %{#<Class:xxx>
+`-- a
+    `-- task_wrap.call_task..............Method}
+
+    #@ only In() set
     pipe = Trailblazer::Developer::Render::TaskWrap.(activity, id: :b)
     assert_inspect pipe, %{#<Class:xxx>
 `-- b
@@ -27,5 +36,21 @@ class RenderTaskWrapTest < Minitest::Spec
         |-- output.init_hash............................. ............................................. VariableMapping.initial_aggregate
         |-- output.default_output........................ ............................................. VariableMapping.default_output_ctx
         `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
+
+    #@ only with Inject()
+    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, id: :c)
+    assert_inspect pipe, %{#<Class:xxx>
+`-- c
+    |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
+    |   |-- input.init_hash.............................. ............................................. VariableMapping.initial_aggregate
+    |   |-- input.default_input.......................... ............................................. VariableMapping.default_input_ctx
+    |   |-- inject.add_variables.passthrough.:current_user ............................................. VariableMapping::AddVariables
+    |   `-- input.scope.................................. ............................................. VariableMapping.scope
+    |-- task_wrap.call_task..............Method
+    `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
+        |-- output.init_hash............................. ............................................. VariableMapping.initial_aggregate
+        |-- output.add_variables.xxx[...].............. [:model]..................................... VariableMapping::AddVariables::Output
+        `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
+
   end
 end
