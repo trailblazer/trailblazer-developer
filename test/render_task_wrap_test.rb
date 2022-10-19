@@ -17,13 +17,13 @@ class RenderTaskWrapTest < Minitest::Spec
     end
 
     #@ no special tW
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, id: :a)
+    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:a])
     assert_inspect pipe, %{#<Class:xxx>
 `-- a
     `-- task_wrap.call_task..............Method}
 
     #@ only In() set
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, id: :b)
+    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:b])
     assert_inspect pipe, %{#<Class:xxx>
 `-- b
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
@@ -38,7 +38,7 @@ class RenderTaskWrapTest < Minitest::Spec
         `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
 
     #@ only with Inject()
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, id: :c)
+    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:c])
     assert_inspect pipe, %{#<Class:xxx>
 `-- c
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
@@ -52,5 +52,29 @@ class RenderTaskWrapTest < Minitest::Spec
         |-- output.add_variables.xxx[...].............. [:model]..................................... VariableMapping::AddVariables::Output
         `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
 
+  end
+
+  it "allows path to step/activity" do
+    activity = Class.new(Trailblazer::Activity::Railway) do
+      sub_activity = Class.new(Trailblazer::Activity::Railway) do
+        step :b, In() => [:current_user]
+      end
+
+      step :a
+      step Subprocess(sub_activity), id: :B
+    end
+
+    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:B, :b])
+    assert_inspect pipe, %{#<Class:xxx>
+`-- b
+    |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
+    |   |-- input.init_hash.............................. ............................................. VariableMapping.initial_aggregate
+    |   |-- input.add_variables.xxx[...]............... [:current_user].............................. VariableMapping::AddVariables
+    |   `-- input.scope.................................. ............................................. VariableMapping.scope
+    |-- task_wrap.call_task..............Method
+    `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
+        |-- output.init_hash............................. ............................................. VariableMapping.initial_aggregate
+        |-- output.default_output........................ ............................................. VariableMapping.default_output_ctx
+        `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
   end
 end

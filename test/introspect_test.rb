@@ -16,6 +16,12 @@ class IntrospectTest < Minitest::Spec
       step Subprocess(sub_activity), id: :B
     end
 
+    #@ one element path
+    node = Trailblazer::Developer::Introspect.find_path(activity, [:a])
+    assert_equal node.class, Trailblazer::Activity::Introspect::Graph::Node
+    assert_equal node.task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
+
+    #@ multiple elements
     node = Trailblazer::Developer::Introspect.find_path(activity, [:B, :C, :c])
     assert_equal node.class, Trailblazer::Activity::Introspect::Graph::Node
     assert_equal node.task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}

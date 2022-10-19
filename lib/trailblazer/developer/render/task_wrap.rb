@@ -2,12 +2,12 @@ module Trailblazer
   module Developer
     module Render
       module TaskWrap
-        def self.call(activity, id:)
+        def self.call(activity, segments)
+          node      = Introspect.find_path(activity, segments)
+          activity  = node.activity
+
           task_wrap = activity.to_h[:config][:wrap_static]
-
-
-
-          task      = Activity::Introspect.Graph(activity).find(id).task
+          task      = node.task
           step_wrap = task_wrap[task] # the taskWrap for the actual step, e.g. {input,call_task,output}.
 
           renderers = Hash.new(method(:render_task_wrap_step))
@@ -25,7 +25,7 @@ module Trailblazer
             nodes = nodes + renderer.(row, level) # call the rendering component.
           end
 
-          nodes = [[0, activity], [1, id], *nodes]
+          nodes = [[0, activity], [1, node.id], *nodes]
 
           Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
         end
