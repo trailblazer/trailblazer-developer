@@ -1,5 +1,6 @@
 # 0.0.27
 
+* `Circuit.render` now accepts segments/path.
 * Add `Introspect.find_path` to retrieve steps from nested activities without having to
   traverse them.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
