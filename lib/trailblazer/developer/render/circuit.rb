@@ -11,7 +11,11 @@ module Trailblazer
         module_function
 
         # Render an {Activity}'s circuit as a simple hash.
-        def call(activity, **options)
+        def call(activity, path: nil, **options)
+          if path # TODO: move to place where all renderers can use this logic!
+            activity = Developer::Introspect.find_path(activity, path).task
+          end
+
           graph = Activity::Introspect::Graph(activity)
 
           circuit_hash(graph, **options)
