@@ -14,8 +14,7 @@ module Trailblazer::Developer
       end
 
       def tree(stack, level, tree:, renderer:, **options)
-        opts = options.merge(tree: tree)
-        tree_for(stack, level, **opts)
+        tree_for(stack, level, **options, tree: tree)
 
         nodes = tree.each_with_index.map do |task_node, position|
           renderer.(task_node: task_node, position: position, tree: tree)
@@ -28,11 +27,10 @@ module Trailblazer::Developer
         stack.each do |lvl| # always a Stack::Task[input, ..., output]
           input, output, nested = Trace::Level.input_output_nested_for_level(lvl)
 
-          tree.push(*TreeNodes.for(level, **options.merge(input: input, output: output)))
+          tree.push(*TreeNodes.for(level, **options, input: input, output: output))
 
           if nested.any? # nesting
-            opts = options.merge(tree: tree)
-            tree_for(nested, level + 1, **opts)
+            tree_for(nested, level + 1, **options, tree: tree)
           end
 
           tree
