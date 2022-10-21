@@ -60,28 +60,38 @@ module Trailblazer::Developer
     # us a better way.
     # taskWrap step to capture incoming arguments of a step.
     def capture_args(wrap_config, ((ctx, flow), circuit_options))
+      original_args = [[ctx, flow], circuit_options]
+
+      captured_input = Captured(Entity::Input, flow[:input_data_collector], wrap_config, original_args)
+
+      flow[:_stack] << captured_input
+
       flow[:stack].indent!
+      flow[:stack] << captured_input
 
-      flow[:stack] << Entity::Input.new(
-        wrap_config[:task],
-        circuit_options[:activity],
-        flow[:input_data_collector].call(wrap_config, [ctx, flow], circuit_options)
-      ).freeze
-
-      return wrap_config, [[ctx, flow], circuit_options]
+      return wrap_config, original_args
     end
 
     # taskWrap step to capture outgoing arguments from a step.
     def capture_return(wrap_config, ((ctx, flow), circuit_options))
-      flow[:stack] << Entity::Output.new(
-        wrap_config[:task],
-        {},
-        flow[:output_data_collector].call(wrap_config, [ctx, flow], circuit_options)
-      ).freeze
+      original_args = [[ctx, flow], circuit_options]
 
+      captured_output = Captured(Entity::Output, flow[:output_data_collector], wrap_config, original_args)
+
+      flow[:_stack] << captured_output
+
+      flow[:stack] << captured_output
       flow[:stack].unindent!
 
-      return wrap_config, [[ctx, flow], circuit_options]
+      return wrap_config, original_args
+    end
+
+    def Captured(captured_class, data_collector, wrap_config, ((ctx, flow), circuit_options))
+      captured_class.new( # either Input or Output
+        wrap_config[:task],
+        circuit_options[:activity],
+        data_collector.call(wrap_config, [ctx, flow], circuit_options)
+      ).freeze
     end
 
     def default_input_data_collector(wrap_config, (ctx, _), circuit_options)
@@ -96,6 +106,8 @@ module Trailblazer::Developer
       { ctx: ctx, signal: wrap_config[:return_signal] }
     end
 
+    # Each Level instance represents a task (or step) being run.
+    #
     # Structures used in {capture_args} and {capture_return}.
     # These get pushed onto one {Level} in a {Stack}.
     #
@@ -113,6 +125,8 @@ module Trailblazer::Developer
     #       Entity::Output
     #     ]
     #   ]
+
+    # TODO: rename Entity to Captured::Task
     Entity         = Struct.new(:task, :activity, :data)
     Entity::Input  = Class.new(Entity)
     Entity::Output = Class.new(Entity)
@@ -167,5 +181,19 @@ module Trailblazer::Developer
         @stack.last
       end
     end # Stack
+
+    class Stack_
+      def initialize
+        @stack = []
+      end
+
+      def <<(captured)
+        @stack << captured
+      end
+
+      def to_a
+        @stack
+      end
+    end
   end
 end

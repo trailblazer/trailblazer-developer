@@ -1,19 +1,43 @@
 require "test_helper"
 
+# TODO: test A in A in A, traced
+
 class TraceTest < Minitest::Spec
   it do
     nested_activity.([{seq: []}])
   end
 
+  require "trailblazer/developer/trace/tree"
   it "traces flat activity" do
-    stack, signal, (options, flow_options), _ = Dev::Trace.invoke( bc,
+    stack, signal, (options, flow_options), _ = Dev::Trace.invoke(
+      bc,
       [
-        { seq: [] },
-        { flow: true }
+        {seq: []},
+        {flow: true, _stack: Dev::Trace::Stack_.new}
       ]
     )
 
-    _(signal.class.inspect).must_equal %{Trailblazer::Activity::End}
+    stack = flow_options[:_stack]
+
+
+    tree, processed = Dev::Trace.Tree(stack.to_a)
+
+    # raise processed.inspect
+
+    puts "\ntree"
+    # pp tree
+    # tree = tree
+    # puts tree.captured_output.inspect
+    # puts tree.nodes[].captured_output.inspect
+
+
+    # pp Dev::Trace::Tree(stack.to_a)
+    raise
+raise stack.inspect
+
+    pp stack
+    assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
+
     _(options.inspect).must_equal %{{:seq=>[:b, :c]}}
     _(flow_options[:flow].inspect).must_equal %{true}
 
