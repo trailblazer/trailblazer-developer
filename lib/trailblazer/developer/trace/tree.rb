@@ -16,7 +16,6 @@ module Trailblazer::Developer
 
           # @private
           def self.nodes_for(node)
-            puts node.captured_input.inspect
             [node, *node.nodes.collect { |n| Node.nodes_for(n) } ].flatten
           end
 
@@ -26,15 +25,25 @@ module Trailblazer::Developer
             end
           end
         end
+      end # Enumerable
+
+      module ParentMap
+        def self.for(node)
+          children_map = []
+          node.nodes.each { |n| children_map += ParentMap.for(n) }#.flatten(1)
+
+          node.nodes.collect { |n| [n, node] } + children_map
+        end
       end
 
+      class Node < Struct.new(:level, :captured_input, :captured_output, :nodes)
+      end
     end # Tree
 
-    Node = Struct.new(:level, :nodes, :captured_input, :captured_output)
 
     # Builds a tree graph from a linear stack.
     # Consists of {Tree::Node} structures.
-    def self.Tree(stack_end, level: 0)
+    def self.Tree(stack_end, level: 0, parent: nil)
       processed = []
       nodes     = []
 
@@ -45,37 +54,31 @@ module Trailblazer::Developer
       # raise
 
           raise unless captured_input.is_a?(Entity::Input)
-# puts "#{".."*level}CAPTURED #{captured_input.task.inspect} < #{captured_input.activity.inspect}"
 
       while next_captured = remaining[0]
-# puts "#{".."*level}remaining: #{remaining.size}"
-# puts
         if next_captured.is_a?(Entity::Input)
-          puts "          >"
 
           bla, _processed = Tree(remaining, level: level+1)
           nodes += [bla]
           processed += _processed
 
 
-# puts "#{".."*level} after Tree processed:
 #{processed.collect {|n| "  #{n}" }.join("\n")}"
 
           remaining = remaining - processed
 
-# puts "#{".."*level}remaining:
 #{remaining.collect {|n| n }.join("\n")}"
 
         else # Entity::Output
 
-# puts "#{".."*level}OUTPUT #{next_captured.inspect}"
           raise unless next_captured.is_a?(Entity::Output)
           raise if next_captured.activity != captured_input.activity
 
-# puts "#{".."*level}Node processed:  #{ processed.any? ? processed.collect {|n| n.task}.join("\n") : "NONE!"}"
+          node = Tree::Node.new(level, captured_input, next_captured, nodes)
 
+          return node,
+            [captured_input, *processed, next_captured] # what nodes did we process here?
 
-          return Node.new(level, nodes, captured_input, next_captured), [captured_input, *processed, next_captured]
         end
 
       end

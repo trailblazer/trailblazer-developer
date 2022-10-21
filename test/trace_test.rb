@@ -165,29 +165,49 @@ class TraceTest < Minitest::Spec
     tree, processed = Dev::Trace.Tree(stack.to_a)
     assert_equal tree.captured_input.task, activity
 
-    # raise tree.nodes[2].nodes[3].captured_input.inspect
 
-    # breadth_search = Dev::Trace::Tree::Enumerable::Node.for(tree)
+
+    parent_map = Dev::Trace::Tree::ParentMap.for(tree)
+
+    parent_map = parent_map.to_h
+
+    assert_equal parent_map[tree], nil
+    assert_equal parent_map[tree.nodes[0]], tree
+    assert_equal parent_map[tree.nodes[1]], tree
+    assert_equal parent_map[tree.nodes[2]], tree
+    assert_equal parent_map[tree.nodes[2].nodes[0]], tree.nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[1]], tree.nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[2]], tree.nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[0]], tree.nodes[2].nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[1]], tree.nodes[2].nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[2]], tree.nodes[2].nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[3]], tree.nodes[2].nodes[2]
+    assert_equal parent_map[tree.nodes[2].nodes[3]], tree.nodes[2]
+    assert_equal parent_map[tree.nodes[3]], tree
+    assert_equal parent_map[tree.nodes[4]], tree
+    assert_equal parent_map[tree.nodes[5]], nil
+
+    # puts "@@@@@ #{.inspect}"
+
 
     assert_equal Dev::Trace::Tree.Enumerable(tree).count, 14
 
 
-    traversed_nodes = Dev::Trace::Tree.Enumerable(tree).collect do |n|
-      n
+    traversed_nodes = Dev::Trace::Tree.Enumerable(tree).collect do |n| n end
+
+    traversed_nodes.each do |n|
+      puts "@@@@@ #{n.captured_input.activity.inspect}"
+      # pp n.captured_input.data
+      # raise
+      # puts n.captured_input.task
     end
-
-puts "traverse"
-
-traversed_nodes.each do |n|
-  puts n.captured_input.task
-end
 
     assert_equal traversed_nodes.count, 14
 
-# raise "@@@@@ #{traversed_nodes[13].captured_input.inspect}"
+    # raise traversed_nodes[1].captured_input.inspect
 
-    assert_equal traversed_nodes[0], tree                             #
-    assert_equal traversed_nodes[1], tree.nodes[0]                    # activity
+    assert_equal traversed_nodes[0], tree                             # activity
+    assert_equal traversed_nodes[1], tree.nodes[0]                    #   Start
     assert_equal traversed_nodes[2], tree.nodes[1]                    #   a
     assert_equal traversed_nodes[3], tree.nodes[2]                    #   sub_activity
     assert_equal traversed_nodes[4], tree.nodes[2].nodes[0]           #     Start
@@ -199,7 +219,7 @@ end
     assert_equal traversed_nodes[10], tree.nodes[2].nodes[2].nodes[3] #     End
     assert_equal traversed_nodes[11], tree.nodes[2].nodes[3]          #   End
     assert_equal traversed_nodes[12], tree.nodes[3]                   #   e
-    assert_equal traversed_nodes[13], tree.nodes[4]                   # End
+    assert_equal traversed_nodes[13], tree.nodes[4]                   #   End
     assert_equal traversed_nodes[14], tree.nodes[5]                   # End
 
 
