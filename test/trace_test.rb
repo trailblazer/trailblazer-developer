@@ -165,36 +165,45 @@ class TraceTest < Minitest::Spec
     tree, processed = Dev::Trace.Tree(stack.to_a)
     assert_equal tree.captured_input.task, activity
 
-    # raise tree.nodes[2].nodes[0].inspect
+    # raise tree.nodes[2].nodes[3].captured_input.inspect
 
     # breadth_search = Dev::Trace::Tree::Enumerable::Node.for(tree)
+
+    assert_equal Dev::Trace::Tree.Enumerable(tree).count, 14
+
 
     traversed_nodes = Dev::Trace::Tree.Enumerable(tree).collect do |n|
       n
     end
 
 puts "traverse"
+
 traversed_nodes.each do |n|
   puts n.captured_input.task
 end
-raise
+
+    assert_equal traversed_nodes.count, 14
+
+# raise "@@@@@ #{traversed_nodes[13].captured_input.inspect}"
+
+    assert_equal traversed_nodes[0], tree                             #
+    assert_equal traversed_nodes[1], tree.nodes[0]                    # activity
+    assert_equal traversed_nodes[2], tree.nodes[1]                    #   a
+    assert_equal traversed_nodes[3], tree.nodes[2]                    #   sub_activity
+    assert_equal traversed_nodes[4], tree.nodes[2].nodes[0]           #     Start
+    assert_equal traversed_nodes[5], tree.nodes[2].nodes[1]           #     b
+    assert_equal traversed_nodes[6], tree.nodes[2].nodes[2]           #     _activity
+    assert_equal traversed_nodes[7], tree.nodes[2].nodes[2].nodes[0]  #     Start
+    assert_equal traversed_nodes[8], tree.nodes[2].nodes[2].nodes[1]  #     c
+    assert_equal traversed_nodes[9], tree.nodes[2].nodes[2].nodes[2]  #     d
+    assert_equal traversed_nodes[10], tree.nodes[2].nodes[2].nodes[3] #     End
+    assert_equal traversed_nodes[11], tree.nodes[2].nodes[3]          #   End
+    assert_equal traversed_nodes[12], tree.nodes[3]                   #   e
+    assert_equal traversed_nodes[13], tree.nodes[4]                   # End
+    assert_equal traversed_nodes[14], tree.nodes[5]                   # End
 
 
-    assert_equal traversed_nodes, [
-      tree,
-      tree.nodes[0],
-      tree.nodes[1],
-      tree.nodes[2],
-      tree.nodes[2].nodes[0],
-      tree.nodes[2].nodes[1],
-      tree.nodes[2].nodes[2],
-      tree.nodes[2].nodes[3],
-      tree.nodes[2].nodes[4],
-      tree.nodes[3],
-      tree.nodes[4],
-    ]
 
-    raise traversed_nodes.inspect
 
 
 
