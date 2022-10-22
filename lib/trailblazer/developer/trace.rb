@@ -42,15 +42,9 @@ module Trailblazer::Developer
     #
     # @private
     def merge_plan
-      Activity::TaskWrap::Extension.new(
-        {
-          insert: [Activity::Adds::Insert.method(:Prepend), "task_wrap.call_task"],
-          row:    Activity::TaskWrap::Pipeline.Row("task_wrap.capture_args", Trace.method(:capture_args))
-        },
-        {
-          insert: [Activity::Adds::Insert.method(:Append)], # append to the very end of tW.
-          row:    Activity::TaskWrap::Pipeline.Row("task_wrap.capture_return", Trace.method(:capture_return))
-        },
+      Trailblazer::Activity::TaskWrap.Extension(
+        [Trace.method(:capture_args),   id: "task_wrap.capture_args",   prepend: "task_wrap.call_task"],
+        [Trace.method(:capture_return), id: "task_wrap.capture_return", append: nil], # append to the very end of tW.
       )
     end
 
@@ -80,10 +74,12 @@ module Trailblazer::Developer
     end
 
     def Captured(captured_class, data_collector, wrap_config, ((ctx, flow), circuit_options))
+      collected_data = data_collector.call(wrap_config, [ctx, flow], circuit_options)
+
       captured_class.new( # either Input or Output
         wrap_config[:task],
         circuit_options[:activity],
-        data_collector.call(wrap_config, [ctx, flow], circuit_options)
+        collected_data
       ).freeze
     end
 
@@ -101,6 +97,8 @@ module Trailblazer::Developer
     Entity::Input  = Class.new(Entity)
     Entity::Output = Class.new(Entity)
 
+    # The stack is a linear one-dimensional array. Per traced task two elements
+    # get pushed onto it.
     class Stack
       def initialize
         @stack = []
