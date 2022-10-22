@@ -76,13 +76,12 @@ class TraceTest < Minitest::Spec
       activity,
       [
         {seq: []},
-        {flow: true, _stack: Dev::Trace::Stack_.new}
+        {flow: true}
       ]
     )
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
-    stack = flow_options[:_stack]
 # FIXME: stack test
     stack_ary = stack.to_a
 
@@ -233,16 +232,20 @@ class TraceTest < Minitest::Spec
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    _(output).must_equal %{`-- #<Trailblazer::Activity:>
-    |-- Start.default
-    |-- B
-    |-- D
-    |   |-- Start.default
-    |   |-- B
-    |   |-- C
-    |   `-- End.success
-    |-- E
-    `-- End.success}
+    _(output).must_equal %{#<Class:>
+|-- Start.default
+|-- a
+|-- #<Class:>
+|   |-- Start.default
+|   |-- b
+|   |-- #<Class:>
+|   |   |-- Start.default
+|   |   |-- c
+|   |   |-- d
+|   |   `-- End.success
+|   `-- End.success
+|-- e
+`-- End.success}
   end
 
   it "collects stack entity data from :data collector" do

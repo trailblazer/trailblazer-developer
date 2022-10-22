@@ -27,6 +27,7 @@ module Trailblazer::Developer
         end
       end # Enumerable
 
+      # Map each {Node} instance to its parent {Node}.
       module ParentMap
         def self.for(node)
           children_map = []
@@ -47,11 +48,8 @@ module Trailblazer::Developer
       processed = []
       nodes     = []
 
-
       # for {captured_input} we're gonna build a {Node}!
       captured_input, remaining = stack_end[0], stack_end[1..-1]
-      # pp captured_input
-      # raise
 
           raise unless captured_input.is_a?(Entity::Input)
 
@@ -63,11 +61,7 @@ module Trailblazer::Developer
           processed += _processed
 
 
-#{processed.collect {|n| "  #{n}" }.join("\n")}"
-
           remaining = remaining - processed
-
-#{remaining.collect {|n| n }.join("\n")}"
 
         else # Entity::Output
 
