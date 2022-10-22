@@ -14,24 +14,24 @@ module Trailblazer::Developer
 
       module_function
 
-      # tree: Array of Trace::TreeNodes::Node
-      # task_node - current Trace::TreeNodes::Node to render
-      # position - task_node's position in tree
-      def call(tree:, task_node:, position:)
-        value = value_for(tree, task_node, position)
+      def call(tree:, task_node:, position:, **options)
+        value = value_for(tree, task_node, position, **options)
+
         [task_node.level, value]
       end
 
-      def value_for(tree, task_node, position)
-        if task_node.output.nil? && tree[position.next].nil? # i.e. when exception raised
-          return %{#{fmt(fmt(task_node.value, :red), :bold)}}
+      def value_for(tree, task_node, position, color_map:, **options)
+        _, label = Trace::Present.default_renderer(task_node: task_node, **options)
+
+        if task_node.captured_output.nil? && tree[position.next].nil? # i.e. when exception raised
+          return %{#{fmt(fmt(label, :red), :bold)}}
         end
 
-        if task_node.output.nil? # i.e. on entry/exit point of activity
-          return %{#{task_node.value}}
-        end
+        # if task_node.captured_output.nil? # i.e. on entry/exit point of activity
+        #   return %{#{label}}
+        # end
 
-        %{#{fmt(task_node.value, task_node.color_map[ signal_of(task_node) ])}}
+        %{#{fmt(label, color_map[ signal_of(task_node) ])}}
       end
 
       def fmt(line, style)
@@ -43,7 +43,7 @@ module Trailblazer::Developer
       end
 
       def signal_of(task_node)
-        entity_signal = task_node.output.data[:signal]
+        entity_signal = task_node.captured_output.data[:signal]
         entity_klass = entity_signal.is_a?(Class) ? entity_signal : entity_signal.class
 
         SIGNALS_MAP[entity_klass.name.to_sym]

@@ -3,10 +3,7 @@ require "test_helper"
 # TODO: test A in A in A, traced
 
 class TraceTest < Minitest::Spec
-
-
-
-
+  # FIXME: wtf is this test?
   it do
     nested_activity.([{seq: []}])
   end
@@ -17,38 +14,23 @@ class TraceTest < Minitest::Spec
       bc,
       [
         {seq: []},
-        {flow: true, _stack: Dev::Trace::Stack_.new}
+        {flow: true}
       ]
     )
 
-    stack = flow_options[:_stack]
-
-
-    tree, processed = Dev::Trace.Tree(stack.to_a)
-
-    # raise processed.inspect
-
-    puts "\ntree"
-    # pp tree
-    # tree = tree
-    # puts tree.captured_output.inspect
-    # puts tree.nodes[].captured_output.inspect
-
-
-    # pp Dev::Trace::Tree(stack.to_a)
     assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
 
-    _(ctx.inspect).must_equal %{{:seq=>[:b, :c]}}
-    _(flow_options[:flow].inspect).must_equal %{true}
+    assert_equal ctx.inspect, %{{:seq=>[:b, :c]}}
+    assert_equal flow_options[:flow].inspect, %{true}
 
-    output = Dev::Trace::Present.(stack)
+    output = Dev::Trace::Present.(stack, options_for_renderer: {label: {bc => bc.inspect}})
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    _(output).must_equal %{`-- #<Trailblazer::Activity:>
-    |-- Start.default
-    |-- B
-    |-- C
-    `-- End.success}
+    _(output).must_equal %{#<Trailblazer::Activity:>
+|-- Start.default
+|-- B
+|-- C
+`-- End.success}
   end
 
   it "nested tracing" do
@@ -84,37 +66,33 @@ class TraceTest < Minitest::Spec
 `-- End.success}
   end
 
-  it "collects stack entity data from :data collector" do
-    stack, signal, * = Dev::Trace.invoke(bc, [ { seq: [] } ])
-
-    nested = stack.to_a.first
-
-    _(nested.first.data).must_equal({ ctx: { seq: [:b, :c] }, task_name: bc })
-    _(nested.last.data).must_equal({ ctx: { seq: [:b, :c] }, signal: signal })
-  end
-
-  it "allows to inject custom :data collector" do
+  it "allows to inject custom :data_collector" do
     input_collector = ->(wrap_config, (ctx, _), _) { { ctx: ctx, something: :else } }
-    ouput_collector = ->(wrap_config, (ctx, _), _) { { ctx: ctx, signal: wrap_config[:return_signal] } }
+    output_collector = ->(wrap_config, (ctx, _), _) { { ctx: ctx, signal: wrap_config[:return_signal] } }
 
-    stack, signal, * = Dev::Trace.invoke(
+    stack, signal, (ctx, _) = Dev::Trace.invoke(
       bc,
       [
         { seq: [] },
         {
           input_data_collector: input_collector,
-          output_data_collector: ouput_collector,
+          output_data_collector: output_collector,
         }
       ]
     )
 
-    nested = stack.to_a.first
-    _(nested.first.data).must_equal({ ctx: { seq: [:b, :c] }, something: :else })
-    _(nested.last.data).must_equal({ ctx: { seq: [:b, :c] }, signal: signal })
+    assert_equal ctx[:seq], [:b, :c]
+
+    captured_input  = stack.to_a[0]
+    captured_output = stack.to_a[-1]
+
+    assert_equal captured_input.data, { ctx: { seq: [:b, :c] }, something: :else }
+    assert_equal captured_output.data, { ctx: { seq: [:b, :c] }, signal: signal }
   end
 
   it "Present allows to inject :renderer and pass through additional arguments to the renderer" do
-    stack, _ = Dev::Trace.invoke( nested_activity,
+    stack, _ = Dev::Trace.invoke(
+      nested_activity,
       [
         { seq: [] },
         {}
@@ -149,24 +127,5 @@ class TraceTest < Minitest::Spec
     |   `-- 3/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity::End semantic=:success>/End.success/pink
     |-- 2/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.f>/Trailblazer::Activity::Right/E/pink
     `-- 2/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity::End semantic=:success>/End.success/pink}
-  end
-
-  it "allows to inject custom :stack" do
-    skip "this test goes to the developer gem"
-    stack = Dev::Trace::Stack.new
-
-    begin
-      returned_stack, _ = Dev::Trace.invoke( nested_activity,
-        [
-          { content: "Let's start writing" },
-          { stack: stack }
-        ]
-      )
-    rescue
-      # pp stack
-      puts Dev::Trace::Present.(stack)
-    end
-
-    _(returned_stack).must_equal stack
   end
 end

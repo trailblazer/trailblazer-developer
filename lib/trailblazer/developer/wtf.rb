@@ -25,10 +25,17 @@ module Trailblazer::Developer
 
       return signal, [ctx, flow_options], circuit_options
     ensure
+
+      complete_stack = Exception::Stack.complete(flow_options[:stack]) # TODO: only in case of exception!
+
+
       puts Trace::Present.(
-        flow_options[:stack],
+        complete_stack,
         renderer: Wtf::Renderer,
-        color_map: Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
+        options_for_renderer: {
+          label:      {activity => activity.inspect},
+          color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
+        }
       )
     end
 
@@ -70,11 +77,11 @@ module Trailblazer::Developer
 
     def trace_output_data_collector(wrap_config, (ctx, flow_options), circuit_options)
       data  = Trace.default_output_data_collector(wrap_config, [ctx, flow_options], circuit_options)
-      input = flow_options[:stack].top
+      # input = flow_options[:stack].top
 
-      if Wtf.capture_variables?(step_name: input.data[:task_name], **flow_options)
-        data[:focused_variables] = Trace::Focusable.capture_variables_from(ctx, **flow_options)
-      end
+      # if Wtf.capture_variables?(step_name: input.data[:task_name], **flow_options)
+      #   data[:focused_variables] = Trace::Focusable.capture_variables_from(ctx, **flow_options)
+      # end
 
       data
     end
@@ -85,6 +92,29 @@ module Trailblazer::Developer
       return true if focus_on[:steps].empty? && focus_on[:variables].any? # For selected vars but all steps
 
       false
+    end
+
+    module Exception
+      # When an exception occurs the Stack instance is incomplete - it is missing Captured::Output instances
+      # for Inputs still open. This method adds the missing elements so the Trace::Tree algorithm doesn't crash.
+      module Stack
+        def self.complete(incomplete_stack)
+          processed = []
+
+          incomplete_stack.to_a.each do |captured|
+            if captured.is_a?(Trace::Captured::Input)
+              processed << captured
+            else
+              processed.pop
+            end
+          end
+
+          missing_captured = processed.reverse.collect { |captured| Trace::Captured::Output.new(captured.task, captured.activity, {}) }
+
+          Trace::Stack.new(incomplete_stack.to_a + missing_captured)
+        end
+      end # Stack
+
     end
   end
 end

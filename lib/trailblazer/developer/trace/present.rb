@@ -6,12 +6,12 @@ module Trailblazer::Developer
       module_function
 
       # @private
-      def default_renderer(node:, label: {}, **)
-        task        = node.captured_input[:task]
-        activity    = node.captured_input[:activity]
+      def default_renderer(task_node:, label: {}, **)
+        task        = task_node.captured_input[:task]
+        activity    = task_node.captured_input[:activity]
         label       = label[task] || compute_label(task, activity)
 
-        [node.level, label]
+        [task_node.level, label]
       end
 
       # @private
@@ -29,7 +29,7 @@ module Trailblazer::Developer
         enumerable_tree = Trace::Tree.Enumerable(tree)
 
         nodes = enumerable_tree.each_with_index.collect do |node, position|
-          renderer.(node: node, position: position, tree: enumerable_tree, **options_for_renderer)
+          renderer.(task_node: node, position: position, tree: enumerable_tree, **options_for_renderer)
         end
 
         Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)

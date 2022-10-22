@@ -10,6 +10,11 @@
 * Rename `Trace::Entity` to `Trace::Captured`.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
 
+task_node:
+  output => captured_output
+  input => captured_input
+  TODO: task_node => tree_node
+
 # 0.0.26
 
 * Fixing release, and allow using beta versions.

@@ -99,8 +99,8 @@ module Trailblazer::Developer
     # The stack is a linear one-dimensional array. Per traced task two elements
     # get pushed onto it.
     class Stack
-      def initialize
-        @stack = []
+      def initialize(captureds=[])
+        @stack = captureds
       end
 
       def <<(captured)

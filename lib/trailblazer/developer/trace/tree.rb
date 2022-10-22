@@ -51,10 +51,10 @@ module Trailblazer::Developer
       # for {captured_input} we're gonna build a {Node}!
       captured_input, remaining = stack_end[0], stack_end[1..-1]
 
-          raise unless captured_input.is_a?(Entity::Input)
+          raise unless captured_input.is_a?(Captured::Input)
 
       while next_captured = remaining[0]
-        if next_captured.is_a?(Entity::Input)
+        if next_captured.is_a?(Captured::Input)
 
           bla, _processed = Tree(remaining, level: level+1)
           nodes += [bla]
@@ -63,9 +63,9 @@ module Trailblazer::Developer
 
           remaining = remaining - processed
 
-        else # Entity::Output
+        else # Captured::Output
 
-          raise unless next_captured.is_a?(Entity::Output)
+          raise unless next_captured.is_a?(Captured::Output)
           raise if next_captured.activity != captured_input.activity
 
           node = Tree::Node.new(level, captured_input, next_captured, nodes)
