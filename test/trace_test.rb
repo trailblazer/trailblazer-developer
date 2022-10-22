@@ -7,7 +7,7 @@ class TraceTest < Minitest::Spec
     nested_activity.([{seq: []}])
   end
 
-  require "trailblazer/developer/trace/tree"
+
   it "traces flat activity" do
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(
       bc,
@@ -222,17 +222,11 @@ class TraceTest < Minitest::Spec
     assert_equal traversed_nodes[14], tree.nodes[5]                   # End
 
 
-
-
-
-
-
-
-    output = Dev::Trace::Present.(stack)
+    output = Dev::Trace::Present.(stack, options_for_renderer: {label: {activity => "#{activity.superclass} (anonymous)"}})
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    _(output).must_equal %{#<Class:>
+    _(output).must_equal %{Trailblazer::Activity::Railway (anonymous)
 |-- Start.default
 |-- a
 |-- #<Class:>
