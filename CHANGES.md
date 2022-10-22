@@ -1,5 +1,8 @@
-# 0.0.27
+# 0.1.0
 
+* `Trace.capture_args` and `capture_return` no longer use any `Graph` logic. This
+  is moved to `Trace::Present` instead to reduce complexity at crunch time.
+* In `Trace::Present.call` it's now possible to provide labels to the `default_renderer` using the `:label` option.
 * `Circuit.render` now accepts segments/path.
 * Add `Introspect.find_path` to retrieve steps from nested activities without having to
   traverse them.
