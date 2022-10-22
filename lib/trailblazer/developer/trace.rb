@@ -55,7 +55,7 @@ module Trailblazer::Developer
     def capture_args(wrap_config, ((ctx, flow), circuit_options))
       original_args = [[ctx, flow], circuit_options]
 
-      captured_input = Captured(Entity::Input, flow[:input_data_collector], wrap_config, original_args)
+      captured_input = Captured(Captured::Input, flow[:input_data_collector], wrap_config, original_args)
 
       flow[:stack] << captured_input
 
@@ -66,7 +66,7 @@ module Trailblazer::Developer
     def capture_return(wrap_config, ((ctx, flow), circuit_options))
       original_args = [[ctx, flow], circuit_options]
 
-      captured_output = Captured(Entity::Output, flow[:output_data_collector], wrap_config, original_args)
+      captured_output = Captured(Captured::Output, flow[:output_data_collector], wrap_config, original_args)
 
       flow[:stack] << captured_output
 
@@ -92,10 +92,9 @@ module Trailblazer::Developer
       { ctx: ctx, signal: wrap_config[:return_signal] }
     end
 
-    # TODO: rename Entity to Captured::Task
-    Entity         = Struct.new(:task, :activity, :data)
-    Entity::Input  = Class.new(Entity)
-    Entity::Output = Class.new(Entity)
+    Captured         = Struct.new(:task, :activity, :data)
+    Captured::Input  = Class.new(Captured)
+    Captured::Output = Class.new(Captured)
 
     # The stack is a linear one-dimensional array. Per traced task two elements
     # get pushed onto it.
