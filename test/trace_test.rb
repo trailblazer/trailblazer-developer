@@ -3,6 +3,10 @@ require "test_helper"
 # TODO: test A in A in A, traced
 
 class TraceTest < Minitest::Spec
+
+
+
+
   it do
     nested_activity.([{seq: []}])
   end
@@ -47,30 +51,8 @@ class TraceTest < Minitest::Spec
     `-- End.success}
   end
 
-  it "allows nested tracing" do
-    sub_activity = nil
-    _activity    = nil
-
-    activity = Class.new(Trailblazer::Activity::Railway) do
-      include T.def_steps(:a, :e)
-
-      sub_activity = Class.new(Trailblazer::Activity::Railway) do
-        include T.def_steps(:b)
-        _activity = Class.new(Trailblazer::Activity::Railway) do
-          include T.def_steps(:c, :d)
-          step :c
-          step :d
-        end
-
-        step :b
-        step Subprocess(_activity)
-      end
-
-      step :a
-      step Subprocess(sub_activity)
-      step :e
-    end
-
+  it "nested tracing" do
+    activity, sub_activity, _activity = Tracing.three_level_nested_activity
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
@@ -81,146 +63,6 @@ class TraceTest < Minitest::Spec
     )
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
-
-# FIXME: stack test
-    stack_ary = stack.to_a
-
-    # top activity
-    assert_equal stack_ary[0].class, Trailblazer::Developer::Trace::Entity::Input
-    assert_equal stack_ary[0].task, activity
-      assert_equal stack_ary[1].class, Trailblazer::Developer::Trace::Entity::Input
-      assert_equal stack_ary[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-      assert_equal stack_ary[2].class, Trailblazer::Developer::Trace::Entity::Output
-      assert_equal stack_ary[2].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-
-      assert_equal stack_ary[3].class, Trailblazer::Developer::Trace::Entity::Input
-      assert_equal stack_ary[3].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
-      assert_equal stack_ary[4].class, Trailblazer::Developer::Trace::Entity::Output
-      assert_equal stack_ary[4].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
-
-      # sub_activity
-      assert_equal stack_ary[5].class, Trailblazer::Developer::Trace::Entity::Input
-      assert_equal stack_ary[5].task, sub_activity
-        assert_equal stack_ary[6].class, Trailblazer::Developer::Trace::Entity::Input
-        assert_equal stack_ary[6].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-        assert_equal stack_ary[7].class, Trailblazer::Developer::Trace::Entity::Output
-        assert_equal stack_ary[7].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-
-        assert_equal stack_ary[8].class, Trailblazer::Developer::Trace::Entity::Input
-        assert_equal stack_ary[8].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
-        assert_equal stack_ary[9].class, Trailblazer::Developer::Trace::Entity::Output
-        assert_equal stack_ary[9].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
-
-        # _activity
-        assert_equal stack_ary[10].class, Trailblazer::Developer::Trace::Entity::Input
-        assert_equal stack_ary[10].task, _activity
-          assert_equal stack_ary[11].class, Trailblazer::Developer::Trace::Entity::Input
-          assert_equal stack_ary[11].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-          assert_equal stack_ary[12].class, Trailblazer::Developer::Trace::Entity::Output
-          assert_equal stack_ary[12].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-
-          assert_equal stack_ary[13].class, Trailblazer::Developer::Trace::Entity::Input
-          assert_equal stack_ary[13].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
-          assert_equal stack_ary[14].class, Trailblazer::Developer::Trace::Entity::Output
-          assert_equal stack_ary[14].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
-
-          assert_equal stack_ary[15].class, Trailblazer::Developer::Trace::Entity::Input
-          assert_equal stack_ary[15].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
-          assert_equal stack_ary[16].class, Trailblazer::Developer::Trace::Entity::Output
-          assert_equal stack_ary[16].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
-
-          assert_equal stack_ary[17].class, Trailblazer::Developer::Trace::Entity::Input
-          assert_equal stack_ary[17].task.inspect, %{#<Trailblazer::Activity::End semantic=:success>}
-          assert_equal stack_ary[18].class, Trailblazer::Developer::Trace::Entity::Output
-          assert_equal stack_ary[18].task.inspect, %{#<Trailblazer::Activity::End semantic=:success>}
-
-        assert_equal stack_ary[19].class, Trailblazer::Developer::Trace::Entity::Output
-        assert_equal stack_ary[19].task, _activity
-
-        assert_equal stack_ary[20].class, Trailblazer::Developer::Trace::Entity::Input
-        assert_equal stack_ary[20].task.inspect, %{#<Trailblazer::Activity::End semantic=:success>}
-        assert_equal stack_ary[21].class, Trailblazer::Developer::Trace::Entity::Output
-        assert_equal stack_ary[21].task.inspect, %{#<Trailblazer::Activity::End semantic=:success>}
-
-      assert_equal stack_ary[22].class, Trailblazer::Developer::Trace::Entity::Output
-      assert_equal stack_ary[22].task, sub_activity
-
-      assert_equal stack_ary[23].class, Trailblazer::Developer::Trace::Entity::Input
-      assert_equal stack_ary[23].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
-      assert_equal stack_ary[24].class, Trailblazer::Developer::Trace::Entity::Output
-      assert_equal stack_ary[24].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
-
-      assert_equal stack_ary[25].class, Trailblazer::Developer::Trace::Entity::Input
-      assert_equal stack_ary[25].task.inspect, %{#<Trailblazer::Activity::End semantic=:success>}
-      assert_equal stack_ary[26].class, Trailblazer::Developer::Trace::Entity::Output
-      assert_equal stack_ary[26].task.inspect, %{#<Trailblazer::Activity::End semantic=:success>}
-
-    assert_equal stack_ary[27].class, Trailblazer::Developer::Trace::Entity::Output
-    assert_equal stack_ary[27].task, activity
-
-    assert_equal stack.to_a.size, 28
-
-# FIXME: Tree-test
-    tree, processed = Dev::Trace.Tree(stack.to_a)
-    assert_equal tree.captured_input.task, activity
-
-
-
-    parent_map = Dev::Trace::Tree::ParentMap.for(tree)
-
-    parent_map = parent_map.to_h
-
-    assert_equal parent_map[tree], nil
-    assert_equal parent_map[tree.nodes[0]], tree
-    assert_equal parent_map[tree.nodes[1]], tree
-    assert_equal parent_map[tree.nodes[2]], tree
-    assert_equal parent_map[tree.nodes[2].nodes[0]], tree.nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[1]], tree.nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[2]], tree.nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[0]], tree.nodes[2].nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[1]], tree.nodes[2].nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[2]], tree.nodes[2].nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[2].nodes[3]], tree.nodes[2].nodes[2]
-    assert_equal parent_map[tree.nodes[2].nodes[3]], tree.nodes[2]
-    assert_equal parent_map[tree.nodes[3]], tree
-    assert_equal parent_map[tree.nodes[4]], tree
-    assert_equal parent_map[tree.nodes[5]], nil
-
-    # puts "@@@@@ #{.inspect}"
-
-
-    assert_equal Dev::Trace::Tree.Enumerable(tree).count, 14
-
-
-    traversed_nodes = Dev::Trace::Tree.Enumerable(tree).collect do |n| n end
-
-    traversed_nodes.each do |n|
-      puts "@@@@@ #{n.captured_input.activity.inspect}"
-      # pp n.captured_input.data
-      # raise
-      # puts n.captured_input.task
-    end
-
-    assert_equal traversed_nodes.count, 14
-
-    # raise traversed_nodes[1].captured_input.inspect
-
-    assert_equal traversed_nodes[0], tree                             # activity
-    assert_equal traversed_nodes[1], tree.nodes[0]                    #   Start
-    assert_equal traversed_nodes[2], tree.nodes[1]                    #   a
-    assert_equal traversed_nodes[3], tree.nodes[2]                    #   sub_activity
-    assert_equal traversed_nodes[4], tree.nodes[2].nodes[0]           #     Start
-    assert_equal traversed_nodes[5], tree.nodes[2].nodes[1]           #     b
-    assert_equal traversed_nodes[6], tree.nodes[2].nodes[2]           #     _activity
-    assert_equal traversed_nodes[7], tree.nodes[2].nodes[2].nodes[0]  #     Start
-    assert_equal traversed_nodes[8], tree.nodes[2].nodes[2].nodes[1]  #     c
-    assert_equal traversed_nodes[9], tree.nodes[2].nodes[2].nodes[2]  #     d
-    assert_equal traversed_nodes[10], tree.nodes[2].nodes[2].nodes[3] #     End
-    assert_equal traversed_nodes[11], tree.nodes[2].nodes[3]          #   End
-    assert_equal traversed_nodes[12], tree.nodes[3]                   #   e
-    assert_equal traversed_nodes[13], tree.nodes[4]                   #   End
-    assert_equal traversed_nodes[14], tree.nodes[5]                   # End
-
 
     output = Dev::Trace::Present.(stack, options_for_renderer: {label: {activity => "#{activity.superclass} (anonymous)"}})
 
