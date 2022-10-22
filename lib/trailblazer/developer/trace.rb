@@ -88,14 +88,11 @@ module Trailblazer::Developer
     end
 
     def default_input_data_collector(wrap_config, (ctx, _), circuit_options)
-      graph = Trailblazer::Activity::Introspect::Graph(circuit_options[:activity])
-      task  = wrap_config[:task]
-      name  = (node = graph.find { |node| node[:task] == task }) ? node[:id] : task
-
-      { ctx: ctx, task_name: name }
+      {ctx: ctx} # FIXME: snapshot!
     end
 
     def default_output_data_collector(wrap_config, (ctx, _), _)
+      {ctx: ctx} # FIXME: snapshot!
       { ctx: ctx, signal: wrap_config[:return_signal] }
     end
 

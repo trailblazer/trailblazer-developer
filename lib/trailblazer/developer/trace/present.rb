@@ -6,7 +6,15 @@ module Trailblazer::Developer
       module_function
 
       def default_renderer(node:, **)
-        [ node.level, %{#{node.captured_input.data[:task_name]}} ]
+        task      = node.captured_input[:task]
+        activity  = node.captured_input[:activity]
+
+        graph      = Trailblazer::Activity::Introspect::Graph(activity) # TODO: cache for run.
+        graph_node = graph.find { |n| n[:task] == task }
+
+        name  = graph_node ? graph_node[:id] : task
+
+        [node.level, name]
       end
 
       def call(stack, level: 1, tree: [], renderer: method(:default_renderer), **options)
