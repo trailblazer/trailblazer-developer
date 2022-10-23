@@ -39,7 +39,16 @@ module Trailblazer
 
           # @public
           def self.path_for(parent_map, node)
+            path = []
 
+            while parent = parent_map[node]
+              node_id = Activity::Introspect::Graph(node.captured_input.activity).find { |n| n.task == node.captured_input.task }.id
+              path << node_id
+
+              node = parent
+            end
+
+            path.reverse
           end
         end
 

@@ -7,7 +7,8 @@ class TraceTreeTest < Minitest::Spec
   end
 
   it do
-    activity, sub_activity, _activity = Tracing.three_level_nested_activity
+    activity, sub_activity, _activity = Tracing.three_level_nested_activity(
+      sub_activity_options: {id: "B"}, _activity_options: {id: "C"})
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
@@ -39,7 +40,7 @@ class TraceTreeTest < Minitest::Spec
 
 
   #@ ParentMap
-    parent_map = Dev::Trace::Tree::ParentMap.for(tree)
+    parent_map = Dev::Trace::Tree::ParentMap.build(tree)
 
     parent_map = parent_map.to_h
 
@@ -78,13 +79,23 @@ class TraceTreeTest < Minitest::Spec
     assert_equal traversed_nodes[4], tree.nodes[2].nodes[0]           #     Start
     assert_equal traversed_nodes[5], tree.nodes[2].nodes[1]           #     b
     assert_equal traversed_nodes[6], tree.nodes[2].nodes[2]           #     _activity
-    assert_equal traversed_nodes[7], tree.nodes[2].nodes[2].nodes[0]  #     Start
-    assert_equal traversed_nodes[8], tree.nodes[2].nodes[2].nodes[1]  #     c
-    assert_equal traversed_nodes[9], tree.nodes[2].nodes[2].nodes[2]  #     d
+    assert_equal traversed_nodes[7], tree.nodes[2].nodes[2].nodes[0]  #       Start
+    assert_equal traversed_nodes[8], tree.nodes[2].nodes[2].nodes[1]  #       c
+    assert_equal traversed_nodes[9], tree.nodes[2].nodes[2].nodes[2]  #       d
     assert_equal traversed_nodes[10], tree.nodes[2].nodes[2].nodes[3] #     End
     assert_equal traversed_nodes[11], tree.nodes[2].nodes[3]          #   End
     assert_equal traversed_nodes[12], tree.nodes[3]                   #   e
     assert_equal traversed_nodes[13], tree.nodes[4]                   #   End
     assert_equal traversed_nodes[14], tree.nodes[5]                   # End
+
+  #@ Tree::ParentMap.path_for()
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[0]), []
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[2]), [:a]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[3]), ["B"]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[5]), ["B", :b]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[9]), ["B", "C", :d]
+
+    # this test is to make sure the computed path and {#find_path} play along nicely.
+    assert_equal Dev::Introspect.find_path(activity, ["B", "C", :d]).task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
   end
 end
