@@ -9,6 +9,7 @@
 * Fixed a bug in `Trace::Present` where the traced top activity would show up as a node, which was wrong.
 * Rename `Trace::Entity` to `Trace::Captured`.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
+* Trace::Renderer and friends: remove `:position` keyword.
 
 task_node:
   output => captured_output

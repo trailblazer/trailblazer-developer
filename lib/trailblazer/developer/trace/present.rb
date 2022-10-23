@@ -24,12 +24,22 @@ module Trailblazer::Developer
 
       # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
       def call(stack, level: 1, renderer: method(:default_renderer), options_for_renderer: {}, **)
+        enumerable_tree = build_tree(stack)
+
+        render(enumerable_tree, renderer: renderer, **options_for_renderer)
+      end
+
+      def build_tree(stack)
         tree, processed = Trace.Tree(stack.to_a) # TODO: those lines need to be extracted
         # parent_map = Trace::Tree::ParentMap.for(tree)
-        enumerable_tree = Trace::Tree.Enumerable(tree)
+        Trace::Tree.Enumerable(tree)
+      end
 
+      # Returns the console output string.
+      # @private
+      def render(enumerable_tree, renderer:, **options_for_renderer, &block)
         nodes = enumerable_tree.each_with_index.collect do |node, position|
-          renderer.(task_node: node, position: position, tree: enumerable_tree, **options_for_renderer)
+          renderer.(task_node: node, tree: enumerable_tree, **options_for_renderer)
         end
 
         Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)

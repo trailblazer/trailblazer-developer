@@ -26,17 +26,38 @@ module Trailblazer::Developer
       return signal, [ctx, flow_options], circuit_options
     ensure
 
-      complete_stack = Exception::Stack.complete(flow_options[:stack]) # TODO: only in case of exception!
 
+      incomplete_stack = flow_options[:stack]
 
-      puts Trace::Present.(
-        complete_stack,
-        renderer: Wtf::Renderer,
-        options_for_renderer: {
-          label:      {activity => activity.inspect},
-          color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
+      # in 99%, exception_source is a {Captured::Input}.
+      exception_source = incomplete_stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
+                                                #   However, what if an error happens in, say, an input filter? TODO: test this
+
+      complete_stack = Exception::Stack.complete(incomplete_stack) # TODO: only in case of exception!
+
+      enumerable_tree = Trace::Present.build_tree(complete_stack)
+
+      exception_node  = enumerable_tree.find { |n| n.captured_input == exception_source }
+
+      options_for_renderer = {
+        label:      {activity => activity.inspect},
+        color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
+        style:      {
+          exception_node => [:red, :bold]
         }
-      )
+      }
+
+      puts Trace::Present.render(enumerable_tree, renderer: Wtf::Renderer, **options_for_renderer)
+      # return
+
+      # puts Trace::Present.(
+      #   complete_stack,
+      #   renderer: Wtf::Renderer,
+      #   options_for_renderer: {
+      #     label:      {activity => activity.inspect},
+      #     color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
+      #   }
+      # )
     end
 
     def arguments_for_trace(activity, (ctx, original_flow_options), **circuit_options)

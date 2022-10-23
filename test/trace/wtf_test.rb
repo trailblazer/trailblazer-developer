@@ -39,11 +39,15 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "traces until charlie, 3-level and exception occurs" do
+    exception = nil
     output, _ = capture_io do
-      assert_raises RuntimeError do
+      exception = assert_raises RuntimeError do
         Trailblazer::Developer.wtf?(alpha, [{ seq: Raiser.new(raise_in: :c) }])
       end
     end
+
+    assert_equal exception.message, %{hello from c!}
+
 puts output
     assert_equal output.gsub(/0x\w+/, ""), %{#<Class:>
 |-- \e[32mStart.default\e[0m

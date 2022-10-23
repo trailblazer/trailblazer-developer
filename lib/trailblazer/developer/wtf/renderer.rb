@@ -14,17 +14,18 @@ module Trailblazer::Developer
 
       module_function
 
-      def call(tree:, task_node:, position:, **options)
-        value = value_for(tree, task_node, position, **options)
+      def call(tree:, task_node:, **options)
+        label = styled_label(tree, task_node, **options)
 
-        [task_node.level, value]
+        [task_node.level, label]
       end
 
-      def value_for(tree, task_node, position, color_map:, **options)
+      def styled_label(tree, task_node, color_map:, style: {}, **options)
         _, label = Trace::Present.default_renderer(task_node: task_node, **options)
 
-        if task_node.captured_output.nil? && tree[position.next].nil? # i.e. when exception raised
-          return %{#{fmt(fmt(label, :red), :bold)}}
+
+        if styles = style[task_node] # FIXME: make nicer
+          styles.each { |s| label = fmt(label, s) }
         end
 
         # if task_node.captured_output.nil? # i.e. on entry/exit point of activity
