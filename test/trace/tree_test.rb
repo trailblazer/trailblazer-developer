@@ -1,9 +1,13 @@
 require "test_helper"
 
 class TraceTreeTest < Minitest::Spec
-  def assert_tree_node(node, task:)
-    assert_equal node.captured_input.task.inspect, task
-    assert_equal node.captured_output.task.inspect, task
+  def inspect_task(task)
+    task.inspect
+  end
+
+  def assert_tree_node(node, task:, inspect_task: method(:inspect_task))
+    assert_equal inspect_task.(node.captured_input.task), task
+    assert_equal inspect_task.(node.captured_output.task), task
   end
 
   it do
@@ -97,5 +101,62 @@ class TraceTreeTest < Minitest::Spec
 
     # this test is to make sure the computed path and {#find_path} play along nicely.
     assert_equal Dev::Introspect.find_path(activity, ["B", "C", :d]).task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+  end
+
+  it "{Tree} doesn't choke on identical, nested tasks" do
+    sub_activity = nil
+      _activity    = nil
+
+    activity = Class.new(Trailblazer::Activity::Railway) do
+      MyCallable = T.def_task(:a)
+      include T.def_steps(:e)
+
+      sub_activity = Class.new(Trailblazer::Activity::Railway) do
+        include T.def_steps(:b)
+        _activity = Class.new(Trailblazer::Activity::Railway) do
+          include T.def_steps(:c)
+          step :c
+          step task: MyCallable
+        end
+
+        step :b
+        step Subprocess(_activity)
+        step task: MyCallable
+      end
+      step task: MyCallable
+      step Subprocess(sub_activity)
+      step :e
+    end
+
+    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+      activity,
+      [
+        {seq: []},
+        {}
+      ]
+    )
+
+    assert_equal ctx[:seq], [:a, :b, :c, :a, :a, :e]
+
+    tree, processed = Dev::Trace.Tree(stack.to_a)
+
+    inspect_task = ->(task) { [task.name] }
+
+    assert_tree_node tree, task: activity.inspect
+    assert_tree_node tree.nodes[0], task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_tree_node tree.nodes[1], task: [:a], inspect_task: inspect_task
+    assert_tree_node tree.nodes[2], task: sub_activity.inspect
+    assert_tree_node tree.nodes[2].nodes[0], task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_tree_node tree.nodes[2].nodes[1], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
+    assert_tree_node tree.nodes[2].nodes[2], task: _activity.inspect
+    assert_tree_node tree.nodes[2].nodes[2].nodes[0], task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_tree_node tree.nodes[2].nodes[2].nodes[1], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
+    assert_tree_node tree.nodes[2].nodes[2].nodes[2], task: [:a], inspect_task: inspect_task
+    assert_tree_node tree.nodes[2].nodes[2].nodes[3], task: %{#<Trailblazer::Activity::End semantic=:success>}          # _activity.End.success
+    assert_tree_node tree.nodes[2].nodes[3], task: [:a], inspect_task: inspect_task
+    assert_tree_node tree.nodes[2].nodes[4], task: %{#<Trailblazer::Activity::End semantic=:success>}                   # sub_activity.End.success
+    assert_tree_node tree.nodes[3], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+    assert_tree_node tree.nodes[4], task: %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_nil tree.nodes[5]
   end
 end
