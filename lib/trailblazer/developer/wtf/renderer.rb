@@ -20,19 +20,19 @@ module Trailblazer::Developer
         [task_node.level, label]
       end
 
-      def styled_label(tree, task_node, color_map:, style: {}, **options)
+      def styled_label(tree, task_node, color_map:, **options)
         _, label = Trace::Present.default_renderer(task_node: task_node, **options)
 
-
-        if styles = style[task_node] # FIXME: make nicer
-          styles.each { |s| label = fmt(label, s) }
-        end
-
-        # if task_node.captured_output.nil? # i.e. on entry/exit point of activity
-        #   return %{#{label}}
-        # end
+        label = apply_style(label, task_node, **options)
 
         %{#{fmt(label, color_map[ signal_of(task_node) ])}}
+      end
+
+      def apply_style(label, task_node, style: {}, **)
+        return label unless styles = style[task_node]
+
+        styles.each { |s| label = fmt(label, s) }
+        label
       end
 
       def fmt(line, style)
