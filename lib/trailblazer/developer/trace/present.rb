@@ -23,7 +23,7 @@ module Trailblazer::Developer
       end
 
       # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
-      def call(stack, level: 1, tree: [], renderer: method(:default_renderer), options_for_renderer: {}, **)
+      def call(stack, level: 1, renderer: method(:default_renderer), options_for_renderer: {}, **)
         tree, processed = Trace.Tree(stack.to_a) # TODO: those lines need to be extracted
         # parent_map = Trace::Tree::ParentMap.for(tree)
         enumerable_tree = Trace::Tree.Enumerable(tree)
