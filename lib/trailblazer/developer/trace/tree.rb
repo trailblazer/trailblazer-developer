@@ -3,28 +3,15 @@ module Trailblazer
     module Trace
       # Datastructure representing a trace.
       class Tree
+        # This could also be seen as {tree.to_a}.
         def self.Enumerable(node)
-          Enumerable::Node.new(node)
+          Enumerable.nodes_for(node)
         end
 
         module Enumerable
-          class Node
-            include ::Enumerable
-
-            def initialize(node)
-              @breadth_first_nodes = self.class.nodes_for(node)
-            end
-
-            # @private
-            def self.nodes_for(node)
-              [node, *node.nodes.collect { |n| Node.nodes_for(n) } ].flatten
-            end
-
-            def each
-              @breadth_first_nodes.each do |node|
-                yield node
-              end
-            end
+          # @private
+          def self.nodes_for(node)
+            [node, *node.nodes.collect { |n| nodes_for(n) } ].flatten
           end
         end # Enumerable
 

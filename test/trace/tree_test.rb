@@ -46,7 +46,7 @@ class TraceTreeTest < Minitest::Spec
   #@ ParentMap
     parent_map = Dev::Trace::Tree::ParentMap.build(tree)
 
-    parent_map = parent_map.to_h
+    parent_map = parent_map.to_h # FIXME.
 
     assert_equal parent_map[tree], nil
     assert_equal parent_map[tree.nodes[0]], tree
@@ -66,38 +66,37 @@ class TraceTreeTest < Minitest::Spec
 
 
   #@ Tree::Enumerable
-    assert_equal Dev::Trace::Tree.Enumerable(tree).count, 14
+    array_of_nodes = Dev::Trace::Tree.Enumerable(tree)
+    assert_equal array_of_nodes.count, 14
 
 
-    traversed_nodes = Dev::Trace::Tree.Enumerable(tree).collect do |n| n end
+    assert_equal array_of_nodes.count, 14
+    assert_equal array_of_nodes.collect { |n| n.class }.uniq, [Trailblazer::Developer::Trace::Tree::Node]
 
+    # raise array_of_nodes[1].captured_input.inspect
 
-    assert_equal traversed_nodes.count, 14
-
-    # raise traversed_nodes[1].captured_input.inspect
-
-    assert_equal traversed_nodes[0], tree                             # activity
-    assert_equal traversed_nodes[1], tree.nodes[0]                    #   Start
-    assert_equal traversed_nodes[2], tree.nodes[1]                    #   a
-    assert_equal traversed_nodes[3], tree.nodes[2]                    #   sub_activity
-    assert_equal traversed_nodes[4], tree.nodes[2].nodes[0]           #     Start
-    assert_equal traversed_nodes[5], tree.nodes[2].nodes[1]           #     b
-    assert_equal traversed_nodes[6], tree.nodes[2].nodes[2]           #     _activity
-    assert_equal traversed_nodes[7], tree.nodes[2].nodes[2].nodes[0]  #       Start
-    assert_equal traversed_nodes[8], tree.nodes[2].nodes[2].nodes[1]  #       c
-    assert_equal traversed_nodes[9], tree.nodes[2].nodes[2].nodes[2]  #       d
-    assert_equal traversed_nodes[10], tree.nodes[2].nodes[2].nodes[3] #     End
-    assert_equal traversed_nodes[11], tree.nodes[2].nodes[3]          #   End
-    assert_equal traversed_nodes[12], tree.nodes[3]                   #   e
-    assert_equal traversed_nodes[13], tree.nodes[4]                   #   End
-    assert_equal traversed_nodes[14], tree.nodes[5]                   # End
+    assert_equal array_of_nodes[0], tree                             # activity
+    assert_equal array_of_nodes[1], tree.nodes[0]                    #   Start
+    assert_equal array_of_nodes[2], tree.nodes[1]                    #   a
+    assert_equal array_of_nodes[3], tree.nodes[2]                    #   sub_activity
+    assert_equal array_of_nodes[4], tree.nodes[2].nodes[0]           #     Start
+    assert_equal array_of_nodes[5], tree.nodes[2].nodes[1]           #     b
+    assert_equal array_of_nodes[6], tree.nodes[2].nodes[2]           #     _activity
+    assert_equal array_of_nodes[7], tree.nodes[2].nodes[2].nodes[0]  #       Start
+    assert_equal array_of_nodes[8], tree.nodes[2].nodes[2].nodes[1]  #       c
+    assert_equal array_of_nodes[9], tree.nodes[2].nodes[2].nodes[2]  #       d
+    assert_equal array_of_nodes[10], tree.nodes[2].nodes[2].nodes[3] #     End
+    assert_equal array_of_nodes[11], tree.nodes[2].nodes[3]          #   End
+    assert_equal array_of_nodes[12], tree.nodes[3]                   #   e
+    assert_equal array_of_nodes[13], tree.nodes[4]                   #   End
+    assert_equal array_of_nodes[14], tree.nodes[5]                   # End
 
   #@ Tree::ParentMap.path_for()
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[0]), []
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[2]), [:a]
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[3]), ["B"]
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[5]), ["B", :b]
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, traversed_nodes[9]), ["B", "C", :d]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, array_of_nodes[0]), []
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, array_of_nodes[2]), [:a]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, array_of_nodes[3]), ["B"]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, array_of_nodes[5]), ["B", :b]
+    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, array_of_nodes[9]), ["B", "C", :d]
 
     # this test is to make sure the computed path and {#find_path} play along nicely.
     assert_equal Dev::Introspect.find_path(activity, ["B", "C", :d]).task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
