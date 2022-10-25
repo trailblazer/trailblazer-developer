@@ -15,7 +15,8 @@ module Trailblazer::Developer
     # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
     # This allows to display the trace even when an exception happened
     def invoke(activity, (ctx, flow_options), **circuit_options)
-      activity, (ctx, flow_options), circuit_options = Wtf.arguments_for_trace(
+      # activity, (ctx, flow_options), circuit_options = Wtf.arguments_for_trace(
+      activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call(
         activity, [ctx, flow_options], **circuit_options
       )
 
@@ -35,7 +36,12 @@ module Trailblazer::Developer
 
       complete_stack = Exception::Stack.complete(incomplete_stack) # TODO: only in case of exception!
 
-      enumerable_tree = Trace::Present.build_tree(complete_stack)
+      enumerable_tree, tree = Trace::Present.build_tree(complete_stack)
+
+# TODO: move to trb-pro
+# require "trailblazer/developer/pro"
+# Pro.call( enumerable_tree, tree)
+
 
       exception_node  = enumerable_tree.find { |n| n.captured_input == exception_source }
 
@@ -60,28 +66,28 @@ module Trailblazer::Developer
       # )
     end
 
-    def arguments_for_trace(activity, (ctx, original_flow_options), **circuit_options)
-      default_flow_options = {
-        # this instance gets mutated with every step. unfortunately, there is
-        # no other way in Ruby to keep the trace even when an exception was thrown.
-        stack: Trace::Stack.new,
+    # def arguments_for_trace(activity, (ctx, original_flow_options), **circuit_options)
+    #   default_flow_options = {
+    #     # this instance gets mutated with every step. unfortunately, there is
+    #     # no other way in Ruby to keep the trace even when an exception was thrown.
+    #     stack: Trace::Stack.new,
 
-        input_data_collector: method(:trace_input_data_collector),
-        output_data_collector: method(:trace_output_data_collector),
-      }
+    #     input_data_collector: method(:trace_input_data_collector),
+    #     output_data_collector: method(:trace_output_data_collector),
+    #   }
 
-      # Merge default options with flow_options as an order of precedence
-      flow_options = { **default_flow_options, **Hash( original_flow_options ) }
+    #   # Merge default options with flow_options as an order of precedence
+    #   flow_options = { **default_flow_options, **Hash( original_flow_options ) }
 
-      # Normalize `focus_on` param to
-      #   1. Wrap step and variable names into an array if not already
-      flow_options[:focus_on] = {
-        steps: Array( flow_options.dig(:focus_on, :steps) ),
-        variables: Array( flow_options.dig(:focus_on, :variables) ),
-      }
+    #   # Normalize `focus_on` param to
+    #   #   1. Wrap step and variable names into an array if not already
+    #   flow_options[:focus_on] = {
+    #     steps: Array( flow_options.dig(:focus_on, :steps) ),
+    #     variables: Array( flow_options.dig(:focus_on, :variables) ),
+    #   }
 
-      [activity, [ ctx, flow_options ], circuit_options]
-    end
+    #   [activity, [ ctx, flow_options ], circuit_options]
+    # end
 
     # Overring default input and output data collectors to collect/capture
     #   1. inspect of focusable variables for given focusable step
