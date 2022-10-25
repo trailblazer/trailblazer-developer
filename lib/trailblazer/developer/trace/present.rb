@@ -17,14 +17,14 @@ module Trailblazer::Developer
       # @private
       def compute_label(task, activity)
         graph       = Trailblazer::Activity::Introspect::Graph(activity) # TODO: cache for run.
-        graph_node  = graph.find { |n| n[:task] == task }
+        graph_node  = graph.find { |n| n[:task] == task } or raise "[Trailblazer] no Graph node for #{task} found in #{activity.inspect}"
 
         graph_node[:id]
       end
 
       # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
       def call(stack, level: 1, renderer: method(:default_renderer), options_for_renderer: {}, **)
-        enumerable_tree = build_tree(stack)
+        enumerable_tree, tree = build_tree(stack)
 
         render(enumerable_tree, renderer: renderer, **options_for_renderer)
       end
@@ -32,7 +32,7 @@ module Trailblazer::Developer
       def build_tree(stack)
         tree, processed = Trace.Tree(stack.to_a) # TODO: those lines need to be extracted
         # parent_map = Trace::Tree::ParentMap.for(tree)
-        Trace::Tree.Enumerable(tree)
+        return Trace::Tree.Enumerable(tree), tree # FIXME: only return one tree
       end
 
       # Returns the console output string.
