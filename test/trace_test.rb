@@ -96,14 +96,14 @@ class TraceTest < Minitest::Spec
     renderer = ->(task_node:, tree:, color:, label:, **) do
       task = task_node.captured_input.task
 
-      id = label[task] || Trailblazer::Activity::Introspect::Graph(task_node.captured_input.activity).find { |n| n.task == task }.id
+      id_label = label[task] || Trailblazer::Activity::Introspect::Graph(task_node.captured_input.activity).find { |n| n.task == task }.id
 
       if task.is_a? Method
         task = "#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.#{task.name}>"
       end
       [
         task_node.level,
-        %{#{task_node.level}/#{task}/#{task_node.captured_output.data[:signal]}/#{id}/#{color}}
+        %{#{task_node.level}/#{task}/#{task_node.captured_output.data[:signal]}/#{id_label}/#{color}}
       ]
     end
 
