@@ -23,7 +23,7 @@ module Trailblazer::Developer
       end
 
       # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
-      def call(stack, level: 1, renderer: method(:default_renderer), options_for_renderer: {}, **)
+      def call(stack, level: 1, renderer: method(:default_renderer), **options_for_renderer)
         enumerable_tree, tree = build_tree(stack)
 
         render(enumerable_tree, renderer: renderer, **options_for_renderer)
@@ -38,7 +38,7 @@ module Trailblazer::Developer
       # Returns the console output string.
       # @private
       def render(enumerable_tree, renderer:, **options_for_renderer, &block)
-        nodes = enumerable_tree.each_with_index.collect do |node, position|
+        nodes = enumerable_tree.collect do |node|
           renderer.(task_node: node, tree: enumerable_tree, **options_for_renderer)
         end
 
