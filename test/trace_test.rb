@@ -1,13 +1,10 @@
 require "test_helper"
 
-# TODO: test A in A in A, traced
-
 class TraceTest < Minitest::Spec
   # FIXME: wtf is this test?
   it do
     nested_activity.([{seq: []}])
   end
-
 
   it "traces flat activity" do
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(

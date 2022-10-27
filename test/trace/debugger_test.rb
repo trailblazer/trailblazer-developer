@@ -19,27 +19,28 @@ class DebuggerTest < Minitest::Spec
       compile_id.to_s*9
     end
 
-
-    tree, processed = Dev::Trace.Tree(stack.to_a)
-
-    enumerable_tree = Dev::Trace::Tree.Enumerable(tree)
-
-    debugger_nodes = Dev::Trace::Debugger::Node.build(
-      tree,
-      enumerable_tree,
-
+    debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
+      stack,
       compute_runtime_id: my_compute_runtime_id
     )
 
-    assert_equal debugger_nodes[0].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_equal debugger_nodes[0].compile_id, %{Start.default}
-    assert_equal debugger_nodes[0].compile_path, ["Start.default"]
-    assert_equal debugger_nodes[0].runtime_id, %{Start.default}
+    assert_equal debugger_nodes[0].task, activity
+    assert_equal debugger_nodes[0].compile_id, %{TOP LEVEL ACTIVITY!}
+    assert_equal debugger_nodes[0].compile_path, []
+    assert_equal debugger_nodes[0].runtime_id, %{TOP LEVEL ACTIVITY!}
+    assert_equal debugger_nodes[0].level, 0
+
+    assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_equal debugger_nodes[1].compile_id, %{Start.default}
+    assert_equal debugger_nodes[1].compile_path, ["Start.default"]
+    assert_equal debugger_nodes[1].runtime_id, %{Start.default}
+    assert_equal debugger_nodes[1].level, 1
 
 
-    assert_equal debugger_nodes[8].compile_id, :d
-    assert_equal debugger_nodes[8].compile_path, ["B", "C", :d]
-    assert_equal debugger_nodes[8].runtime_id, "ddddddddd"
-    assert_equal debugger_nodes[8].runtime_path, ["B", "C", "ddddddddd"]
+    assert_equal debugger_nodes[9].compile_id, :d
+    assert_equal debugger_nodes[9].compile_path, ["B", "C", :d]
+    assert_equal debugger_nodes[9].runtime_id, "ddddddddd"
+    assert_equal debugger_nodes[9].runtime_path, ["B", "C", "ddddddddd"]
+    assert_equal debugger_nodes[9].level, 3
   end
 end

@@ -80,7 +80,7 @@ module Trailblazer
         end
 
 
-      end
+      end # Tree
     end
   end # Developer
 end

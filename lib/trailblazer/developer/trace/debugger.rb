@@ -11,11 +11,13 @@ module Trailblazer
             @runtime_id     = runtime_id
             @compile_path   = compile_path
             @runtime_path   = runtime_path
+            @level          = @captured_node.level
 
-            # class, "type", default_label
+            # class, "type", default_label,
+            # which track, return signal, etc
           end
 
-          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id
+          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level
 
 
           def self.default_compute_runtime_id(compile_id:, captured_node:, activity:, task:, graph:, **)
@@ -29,15 +31,20 @@ module Trailblazer
           def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id))
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
+            graph_nodes = { # TODO: any other way to grab the container_activity? Maybe by passing {activity}?
+              enumerable_tree[0].captured_input.activity => [Struct.new(:id, :task).new("TOP LEVEL ACTIVITY!", enumerable_tree[0].captured_input.task)]
+            }
+
             # DISCUSS: this might change if we introduce a new Node type for Trace.
-            debugger_nodes = enumerable_tree[1..-1].collect do |node|
+            debugger_nodes = enumerable_tree[0..-1].collect do |node|
               activity = node.captured_input.activity
               task = node.captured_input.task
 
-              graph_for_activity = Activity::Introspect.Graph(activity)
 
+              graph_for_activity = graph_nodes[activity] || Activity::Introspect.Graph(activity)
 
-
+# DISCUSS: pass down the Graph::Node?
+              # these attributes are not changing with the presentation
               Debugger::Node.new(
                 captured_node: node,
                 activity: activity,
@@ -49,9 +56,18 @@ module Trailblazer
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
               )
             end
+          end
 
-            # TODO: add root node
+          def self.build_for_stack(stack, **options_for_debugger_node)
+            tree, processed = Dev::Trace.Tree(stack.to_a)
 
+            enumerable_tree = Dev::Trace::Tree.Enumerable(tree)
+
+            Dev::Trace::Debugger::Node.build(
+              tree,
+              enumerable_tree,
+              **options_for_debugger_node,
+            )
           end
         end
       end # Debugger
