@@ -17,7 +17,7 @@ module Trailblazer
             # which track, return signal, etc
           end
 
-          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level
+          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node
 
 
           def self.default_compute_runtime_id(compile_id:, captured_node:, activity:, task:, graph:, **)
@@ -31,8 +31,10 @@ module Trailblazer
           def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id))
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
+            # TODO: maybe allow {graph[task]}
+            top_activity = enumerable_tree[0].captured_input.task
             graph_nodes = { # TODO: any other way to grab the container_activity? Maybe by passing {activity}?
-              enumerable_tree[0].captured_input.activity => [Struct.new(:id, :task).new("TOP LEVEL ACTIVITY!", enumerable_tree[0].captured_input.task)]
+              enumerable_tree[0].captured_input.activity => [Struct.new(:id, :task).new(top_activity.inspect, top_activity)]
             }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.

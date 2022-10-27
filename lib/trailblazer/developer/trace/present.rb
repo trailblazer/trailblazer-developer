@@ -7,7 +7,7 @@ module Trailblazer::Developer
 
       # @private
       def default_renderer(debugger_node:, label: {}, **) # DISCUSS: for compatibility, should we pass {:task_node} here, too?
-        label = debugger_node.runtime_id
+        label = label[debugger_node.task] || debugger_node.runtime_id
 
         [debugger_node.level, label]
       end
@@ -28,8 +28,6 @@ module Trailblazer::Developer
 
         Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
       end
-
-
-    end
+    end # Present
   end
 end

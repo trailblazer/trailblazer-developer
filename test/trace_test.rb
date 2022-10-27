@@ -20,10 +20,26 @@ class TraceTest < Minitest::Spec
     assert_equal ctx.inspect, %{{:seq=>[:b, :c]}}
     assert_equal flow_options[:flow].inspect, %{true}
 
-    output = Dev::Trace::Present.(stack, label: {bc => bc.inspect})
+    output = Dev::Trace::Present.(stack)
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
     _(output).must_equal %{#<Trailblazer::Activity:>
+|-- Start.default
+|-- B
+|-- C
+`-- End.success}
+  end
+
+  it "you can pass an explicit task label via {:label}" do
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {}])
+
+    output = Dev::Trace::Present.(stack,
+      label: {
+        bc => "#{bc.class} (anonymous)"
+      }
+    )
+
+    assert_equal output, %{Trailblazer::Activity (anonymous)
 |-- Start.default
 |-- B
 |-- C
@@ -43,6 +59,7 @@ class TraceTest < Minitest::Spec
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
+# TODO: test label explicitely
     output = Dev::Trace::Present.(stack, label: {activity => "#{activity.superclass} (anonymous)"})
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
@@ -90,17 +107,17 @@ class TraceTest < Minitest::Spec
   it "Present allows to inject :renderer and pass through additional arguments to the renderer (e.g. {:color})" do
     stack, _ = Dev::Trace.invoke(nested_activity, [{ seq: [] }, {}])
 
-    renderer = ->(task_node:, tree:, color:, label:, **) do
-      task = task_node.captured_input.task
+    renderer = ->(debugger_node:, tree:, color:, label:, **) do
+      task = debugger_node.captured_node.captured_input.task
 
-      id_label = label[task] || Trailblazer::Activity::Introspect::Graph(task_node.captured_input.activity).find { |n| n.task == task }.id
+      id_label = label[task] || Trailblazer::Activity::Introspect::Graph(debugger_node.captured_node.captured_input.activity).find { |n| n.task == task }.id
 
       if task.is_a? Method
         task = "#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.#{task.name}>"
       end
       [
-        task_node.level,
-        %{#{task_node.level}/#{task}/#{task_node.captured_output.data[:signal]}/#{id_label}/#{color}}
+        debugger_node.level,
+        %{#{debugger_node.level}/#{task}/#{debugger_node.captured_node.captured_output.data[:signal]}/#{id_label}/#{color}}
       ]
     end
 
