@@ -25,9 +25,9 @@ class DebuggerTest < Minitest::Spec
     )
 
     assert_equal debugger_nodes[0].task, activity
-    assert_equal debugger_nodes[0].compile_id, %{TOP LEVEL ACTIVITY!}
+    assert_equal debugger_nodes[0].compile_id, activity.inspect
     assert_equal debugger_nodes[0].compile_path, []
-    assert_equal debugger_nodes[0].runtime_id, %{TOP LEVEL ACTIVITY!}
+    assert_equal debugger_nodes[0].runtime_id, activity.inspect
     assert_equal debugger_nodes[0].level, 0
 
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
