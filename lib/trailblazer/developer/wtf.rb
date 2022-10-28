@@ -36,17 +36,21 @@ module Trailblazer::Developer
 
       complete_stack = Exception::Stack.complete(incomplete_stack) # TODO: only in case of exception!
 
-      enumerable_tree, tree = Trace::Present.build_tree(complete_stack)
+      # DISCUSS: should Stack have a public API?
+      exception_node = complete_stack.to_a.find { |n| n == exception_source }
+
+
+
+      enumerable_tree, tree = Trace::Present.(complete_stack)
 
 # TODO: move to trb-pro
 # require "trailblazer/developer/pro"
 # Pro.call( enumerable_tree, tree)
 
 
-      exception_node  = enumerable_tree.find { |n| n.captured_input == exception_source }
 
       options_for_renderer = {
-        label:      {activity => activity.inspect},
+        # label:      {activity => activity.inspect},
         color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
         style:      {
           exception_node => [:red, :bold]

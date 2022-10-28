@@ -1,5 +1,6 @@
 require "test_helper"
 
+# Test {Trace.call} and {Trace::Present.call}
 class TraceTest < Minitest::Spec
   # FIXME: wtf is this test?
   it do
@@ -7,13 +8,7 @@ class TraceTest < Minitest::Spec
   end
 
   it "traces flat activity" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(
-      bc,
-      [
-        {seq: []},
-        {flow: true}
-      ]
-    )
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke( bc, [{seq: []}, {flow: true}])
 
     assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
 
@@ -34,6 +29,7 @@ class TraceTest < Minitest::Spec
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {}])
 
     output = Dev::Trace::Present.(stack,
+      # options_for_renderer:
       label: {
         bc => "#{bc.class} (anonymous)"
       }
@@ -104,13 +100,29 @@ class TraceTest < Minitest::Spec
     assert_equal captured_output.data, { ctx: { seq: [:b, :c] }, signal: signal }
   end
 
-  it "Present allows to inject :renderer and pass through additional arguments to the renderer (e.g. {:color})" do
+  it "{Present.call} accepts block to produce options that can be merged with original options" do
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke( bc, [{seq: []}, {flow: true}])
+
+
+    output = Dev::Trace::Present.(stack, label: {bc => "<Anonymous activity>"}) do |enumerable_tree, **options|
+
+    end
+
+    assert_equal output, %{<Anonymous activity>
+|-- Start.default
+|-- B
+|-- C
+`-- End.success}
+  end
+
+  it "{Present.call} allows to inject :renderer and pass through additional arguments to the renderer (e.g. {:color})" do
     stack, _ = Dev::Trace.invoke(nested_activity, [{ seq: [] }, {}])
 
-    renderer = ->(debugger_node:, tree:, color:, label:, **) do
+    renderer = ->(debugger_node:, tree:, color:, **) do
       task = debugger_node.captured_node.captured_input.task
 
-      id_label = label[task] || Trailblazer::Activity::Introspect::Graph(debugger_node.captured_node.captured_input.activity).find { |n| n.task == task }.id
+      # id_label = label[task] || Trailblazer::Activity::Introspect::Graph(debugger_node.captured_node.captured_input.activity).find { |n| n.task == task }.id
+      id_label = debugger_node.label
 
       if task.is_a? Method
         task = "#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.#{task.name}>"
@@ -125,7 +137,6 @@ class TraceTest < Minitest::Spec
       stack,
       renderer: renderer,
       color:    "pink", # additional options.
-      label: {nested_activity => nested_activity.inspect}
     )
 
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")

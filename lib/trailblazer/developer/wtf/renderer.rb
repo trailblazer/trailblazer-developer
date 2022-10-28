@@ -14,22 +14,22 @@ module Trailblazer::Developer
 
       module_function
 
-      def call(tree:, task_node:, **options)
-        label = styled_label(tree, task_node, **options)
+      def call(tree:, debugger_node:, **options)
+        label = styled_label(tree, debugger_node, **options)
 
-        [task_node.level, label]
+        [debugger_node.level, label]
       end
 
-      def styled_label(tree, task_node, color_map:, **options)
-        _, label = Trace::Present.default_renderer(task_node: task_node, **options)
+      def styled_label(tree, debugger_node, color_map:, **options)
+        _, label = Trace::Present.default_renderer(debugger_node: debugger_node, **options)
 
-        label = apply_style(label, task_node, **options)
+        label = apply_style(label, debugger_node, **options)
 
-        %{#{fmt(label, color_map[ signal_of(task_node) ])}}
+        %{#{fmt(label, color_map[ signal_of(debugger_node) ])}}
       end
 
-      def apply_style(label, task_node, style: {}, **)
-        return label unless styles = style[task_node]
+      def apply_style(label, debugger_node, style: {}, **)
+        return label unless styles = style[debugger_node]
 
         styles.each { |s| label = fmt(label, s) }
         label

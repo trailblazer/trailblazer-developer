@@ -3,7 +3,7 @@ module Trailblazer
     module Trace
       module Debugger
         class Node
-          def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, **)
+          def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, label:, **)
             @captured_node  = captured_node
             @activity       = activity
             @task           = task
@@ -12,26 +12,32 @@ module Trailblazer
             @compile_path   = compile_path
             @runtime_path   = runtime_path
             @level          = @captured_node.level
+            @label          = label
 
             # class, "type", default_label,
             # which track, return signal, etc
           end
 
-          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node
+          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node, :label
 
 
           def self.default_compute_runtime_id(compile_id:, captured_node:, activity:, task:, graph:, **)
             compile_id
           end
 
+          def self.default_compute_label(label:, task:, runtime_id:, **)
+            label = label[task] || runtime_id
+          end
+
           def self.runtime_path(runtime_id:, compile_path:, **)
             compile_path[0..-2] + [runtime_id]
           end
 
-          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id))
+          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), label: {})
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
             # TODO: maybe allow {graph[task]}
+            # TODO: cache activity graph
             top_activity = enumerable_tree[0].captured_input.task
             graph_nodes = { # TODO: any other way to grab the container_activity? Maybe by passing {activity}?
               enumerable_tree[0].captured_input.activity => [Struct.new(:id, :task).new(top_activity.inspect, top_activity)]
@@ -56,6 +62,7 @@ module Trailblazer
                 compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
                 runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
+                label:        default_compute_label(label: label, runtime_id: runtime_id, task: task),
               )
             end
           end

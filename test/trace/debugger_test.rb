@@ -13,15 +13,21 @@ class DebuggerTest < Minitest::Spec
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
+  #@ particular nodes need a special {runtime_id}
     my_compute_runtime_id = ->(captured_node:, activity:, compile_id:, **) do
       return compile_id unless activity.instance_variable_get(:@special)
 
       compile_id.to_s*9
     end
 
+
     debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
-      compute_runtime_id: my_compute_runtime_id
+      compute_runtime_id: my_compute_runtime_id,
+  #@ we can pass particular label "hints". # DISCUSS: keying by task might mix up nodes.
+      label: {
+        activity => %{#{activity.superclass} (anonymous)}
+      }
     )
 
     assert_equal debugger_nodes[0].task, activity
@@ -29,12 +35,14 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].compile_path, []
     assert_equal debugger_nodes[0].runtime_id, activity.inspect
     assert_equal debugger_nodes[0].level, 0
+    assert_equal debugger_nodes[0].label, %{Trailblazer::Activity::Railway (anonymous)}
 
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_equal debugger_nodes[1].compile_id, %{Start.default}
     assert_equal debugger_nodes[1].compile_path, ["Start.default"]
     assert_equal debugger_nodes[1].runtime_id, %{Start.default}
     assert_equal debugger_nodes[1].level, 1
+    assert_equal debugger_nodes[1].label, %{Start.default}
 
 
     assert_equal debugger_nodes[9].compile_id, :d
@@ -42,5 +50,6 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].runtime_id, "ddddddddd"
     assert_equal debugger_nodes[9].runtime_path, ["B", "C", "ddddddddd"]
     assert_equal debugger_nodes[9].level, 3
+    assert_equal debugger_nodes[9].label, %{ddddddddd}
   end
 end

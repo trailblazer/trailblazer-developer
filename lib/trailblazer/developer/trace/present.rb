@@ -6,22 +6,20 @@ module Trailblazer::Developer
       module_function
 
       # @private
-      def default_renderer(debugger_node:, label: {}, **) # DISCUSS: for compatibility, should we pass {:task_node} here, too?
-        label = label[debugger_node.task] || debugger_node.runtime_id
-
-        [debugger_node.level, label]
+      def default_renderer(debugger_node:, **) # DISCUSS: for compatibility, should we pass {:task_node} here, too?
+        [debugger_node.level, debugger_node.label]
       end
 
       # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
-      def call(stack, renderer: method(:default_renderer), **options_for_renderer)
-        enumerable_tree = Debugger::Node.build_for_stack(stack) # currently, we agree on using a Debugger::Node list as the presentation data structure.
+      def call(stack, renderer: method(:default_renderer), label: {}, **options_for_renderer)
+        enumerable_tree = Debugger::Node.build_for_stack(stack, label: label) # currently, we agree on using a Debugger::Node list as the presentation data structure.
 
         render(enumerable_tree, renderer: renderer, **options_for_renderer)
       end
 
       # Returns the console output string.
       # @private
-      def render(enumerable_tree, renderer:, **options_for_renderer, &block)
+      def render(enumerable_tree, renderer:, **options_for_renderer)
         nodes = enumerable_tree.collect do |debugger_node|
           renderer.(debugger_node: debugger_node, tree: enumerable_tree, **options_for_renderer)
         end
