@@ -31,7 +31,7 @@ class TraceTest < Minitest::Spec
     output = Dev::Trace::Present.(stack,
       # options_for_renderer:
       label: {
-        bc => "#{bc.class} (anonymous)"
+        stack.to_a[0] => "#{bc.class} (anonymous)"
       }
     )
 
@@ -56,7 +56,7 @@ class TraceTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
 # TODO: test label explicitely
-    output = Dev::Trace::Present.(stack, label: {activity => "#{activity.superclass} (anonymous)"})
+    output = Dev::Trace::Present.(stack, label: {stack.to_a[0] => "#{activity.superclass} (anonymous)"})
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
@@ -101,10 +101,10 @@ class TraceTest < Minitest::Spec
   end
 
   it "{Present.call} accepts block to produce options that can be merged with original options" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke( bc, [{seq: []}, {flow: true}])
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {flow: true}])
 
 
-    output = Dev::Trace::Present.(stack, label: {bc => "<Anonymous activity>"}) do |enumerable_tree, **options|
+    output = Dev::Trace::Present.(stack, label: {stack.to_a[0] => "<Anonymous activity>"}) do |enumerable_tree, **options|
 
     end
 
