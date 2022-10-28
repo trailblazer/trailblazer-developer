@@ -27,12 +27,14 @@ class DebuggerTest < Minitest::Spec
       stack,
       compute_runtime_id: my_compute_runtime_id,
   #@ we can pass particular label "hints".
-      label: {
-        captured_input_for_activity => %{#{activity.superclass} (anonymous)}
+      captured_input_for_activity => {
+        label: %{#{activity.superclass} (anonymous)},
       },
   #@ we may pass Node.data options (keyed by Stack::Captured)
-      data: {
-        captured_input_for_sub_activity => {exception_source: true}
+      captured_input_for_sub_activity => {
+        data: {
+          exception_source: true
+        }
       },
     )
 
@@ -43,6 +45,8 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].level, 0
     assert_equal debugger_nodes[0].label, %{Trailblazer::Activity::Railway (anonymous)}
     assert_equal debugger_nodes[0].data, {}
+    assert_equal debugger_nodes[0].captured_input, stack.to_a[0]
+    assert_equal debugger_nodes[0].captured_output, stack.to_a[-1]
 
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_equal debugger_nodes[1].compile_id, %{Start.default}
@@ -51,6 +55,8 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].level, 1
     assert_equal debugger_nodes[1].label, %{Start.default}
     assert_equal debugger_nodes[1].data, {}
+    assert_equal debugger_nodes[1].captured_input, stack.to_a[1]
+    assert_equal debugger_nodes[1].captured_output, stack.to_a[2]
 
     assert_equal debugger_nodes[3].task, sub_activity
     assert_equal debugger_nodes[3].data, {exception_source: true}
@@ -62,5 +68,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].level, 3
     assert_equal debugger_nodes[9].label, %{ddddddddd}
     assert_equal debugger_nodes[9].data, {}
+    assert_equal debugger_nodes[9].captured_input, stack.to_a[15]
+    assert_equal debugger_nodes[9].captured_output, stack.to_a[16]
   end
 end

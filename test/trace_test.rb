@@ -28,11 +28,10 @@ class TraceTest < Minitest::Spec
   it "you can pass an explicit task label via {:label}" do
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {}])
 
-    output = Dev::Trace::Present.(stack,
+    output = Dev::Trace::Present.(
+      stack,
       # options_for_renderer:
-      label: {
-        stack.to_a[0] => "#{bc.class} (anonymous)"
-      }
+      stack.to_a[0] => {label: "#{bc.class} (anonymous)"}
     )
 
     assert_equal output, %{Trailblazer::Activity (anonymous)
@@ -56,7 +55,7 @@ class TraceTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
 # TODO: test label explicitely
-    output = Dev::Trace::Present.(stack, label: {stack.to_a[0] => "#{activity.superclass} (anonymous)"})
+    output = Dev::Trace::Present.(stack, stack.to_a[0] => {label: "#{activity.superclass} (anonymous)"})
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
@@ -104,7 +103,7 @@ class TraceTest < Minitest::Spec
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {flow: true}])
 
 
-    output = Dev::Trace::Present.(stack, label: {stack.to_a[0] => "<Anonymous activity>"}) do |enumerable_tree, **options|
+    output = Dev::Trace::Present.(stack, stack.to_a[0] => {label: "<Anonymous activity>"}) do |enumerable_tree, **options|
 
     end
 

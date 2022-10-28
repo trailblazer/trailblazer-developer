@@ -11,10 +11,10 @@ module Trailblazer::Developer
       end
 
       # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
-      def call(stack, renderer: method(:default_renderer), label: {}, **options_for_renderer)
-        debugger_nodes = Debugger::Node.build_for_stack(stack, label: label) # currently, we agree on using a Debugger::Node list as the presentation data structure.
+      def call(stack, renderer: method(:default_renderer), **options)
+        debugger_nodes = Debugger::Node.build_for_stack(stack, **options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
 
-        render(debugger_nodes, renderer: renderer, **options_for_renderer)
+        render(debugger_nodes, renderer: renderer, **options)
       end
 
       # Returns the console output string.

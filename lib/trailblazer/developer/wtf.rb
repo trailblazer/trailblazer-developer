@@ -36,38 +36,27 @@ module Trailblazer::Developer
 
       complete_stack = Exception::Stack.complete(incomplete_stack) # TODO: only in case of exception!
 
-      # DISCUSS: should Stack have a public API?
-      exception_node = complete_stack.to_a.find { |n| n == exception_source }
 
 
 
-      enumerable_tree, tree = Trace::Present.(complete_stack)
+
+
+
+      puts Trace::Present.(
+        complete_stack,
+        # we can hand in options per node, identified by their captured_input part.
+        exception_source => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
+
+        renderer:   Wtf::Renderer,
+        color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
+        style: {exception_source => [:red, :bold]}
+
+        # **options_for_renderer
+      )
 
 # TODO: move to trb-pro
 # require "trailblazer/developer/pro"
 # Pro.call( enumerable_tree, tree)
-
-
-
-      options_for_renderer = {
-        # label:      {activity => activity.inspect},
-        color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
-        style:      {
-          exception_node => [:red, :bold]
-        }
-      }
-
-      puts Trace::Present.render(enumerable_tree, renderer: Wtf::Renderer, **options_for_renderer)
-      # return
-
-      # puts Trace::Present.(
-      #   complete_stack,
-      #   renderer: Wtf::Renderer,
-      #   options_for_renderer: {
-      #     label:      {activity => activity.inspect},
-      #     color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
-      #   }
-      # )
     end
 
     # def arguments_for_trace(activity, (ctx, original_flow_options), **circuit_options)
