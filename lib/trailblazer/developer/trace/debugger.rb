@@ -3,7 +3,7 @@ module Trailblazer
     module Trace
       module Debugger
         class Node
-          def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, label:, **)
+          def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, label:, data:, **)
             @captured_node  = captured_node
             @activity       = activity
             @task           = task
@@ -13,12 +13,13 @@ module Trailblazer
             @runtime_path   = runtime_path
             @level          = @captured_node.level
             @label          = label
+            @data           = data
 
             # class, "type", default_label,
             # which track, return signal, etc
           end
 
-          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node, :label
+          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node, :label, :data
 
 
           def self.default_compute_runtime_id(compile_id:, captured_node:, activity:, task:, graph:, **)
@@ -33,7 +34,12 @@ module Trailblazer
             compile_path[0..-2] + [runtime_id]
           end
 
-          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), label: {})
+          def self.data_for(captured_node:, data:, **)
+            # We key by {Captured::Input}.
+            data[captured_node.captured_input] || {}
+          end
+
+          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), label: {}, data: {})
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
             # TODO: maybe allow {graph[task]}
@@ -63,6 +69,7 @@ module Trailblazer
                 runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
                 label:        default_compute_label(label: label, runtime_id: runtime_id, task: task),
+                data:         data_for(captured_node: node, data: data)
               )
             end
           end

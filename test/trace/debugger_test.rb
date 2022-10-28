@@ -20,6 +20,7 @@ class DebuggerTest < Minitest::Spec
       compile_id.to_s*9
     end
 
+    captured_input_for_subactivity = stack.to_a.find { |captured| captured.task == sub_activity }
 
     debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
@@ -27,7 +28,11 @@ class DebuggerTest < Minitest::Spec
   #@ we can pass particular label "hints". # DISCUSS: keying by task might mix up nodes.
       label: {
         activity => %{#{activity.superclass} (anonymous)}
-      }
+      },
+  #@ we may pass Node.data options (keyed by Stack::Captured)
+      data: {
+        captured_input_for_subactivity => {exception_source: true}
+      },
     )
 
     assert_equal debugger_nodes[0].task, activity
@@ -36,6 +41,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].runtime_id, activity.inspect
     assert_equal debugger_nodes[0].level, 0
     assert_equal debugger_nodes[0].label, %{Trailblazer::Activity::Railway (anonymous)}
+    assert_equal debugger_nodes[0].data, {}
 
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_equal debugger_nodes[1].compile_id, %{Start.default}
@@ -43,7 +49,10 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].runtime_id, %{Start.default}
     assert_equal debugger_nodes[1].level, 1
     assert_equal debugger_nodes[1].label, %{Start.default}
+    assert_equal debugger_nodes[1].data, {}
 
+    assert_equal debugger_nodes[3].task, sub_activity
+    assert_equal debugger_nodes[3].data, {exception_source: true}
 
     assert_equal debugger_nodes[9].compile_id, :d
     assert_equal debugger_nodes[9].compile_path, ["B", "C", :d]
@@ -51,5 +60,6 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].runtime_path, ["B", "C", "ddddddddd"]
     assert_equal debugger_nodes[9].level, 3
     assert_equal debugger_nodes[9].label, %{ddddddddd}
+    assert_equal debugger_nodes[9].data, {}
   end
 end
