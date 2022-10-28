@@ -20,18 +20,19 @@ class DebuggerTest < Minitest::Spec
       compile_id.to_s*9
     end
 
-    captured_input_for_subactivity = stack.to_a.find { |captured| captured.task == sub_activity }
+    captured_input_for_activity     = stack.to_a.find { |captured| captured.task == activity }
+    captured_input_for_sub_activity = stack.to_a.find { |captured| captured.task == sub_activity }
 
     debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
       compute_runtime_id: my_compute_runtime_id,
-  #@ we can pass particular label "hints". # DISCUSS: keying by task might mix up nodes.
+  #@ we can pass particular label "hints".
       label: {
-        activity => %{#{activity.superclass} (anonymous)}
+        captured_input_for_activity => %{#{activity.superclass} (anonymous)}
       },
   #@ we may pass Node.data options (keyed by Stack::Captured)
       data: {
-        captured_input_for_subactivity => {exception_source: true}
+        captured_input_for_sub_activity => {exception_source: true}
       },
     )
 

@@ -15,7 +15,7 @@ module Trailblazer
             @label          = label
             @data           = data
 
-            # class, "type", default_label,
+            # class, "type",
             # which track, return signal, etc
           end
 
@@ -26,8 +26,8 @@ module Trailblazer
             compile_id
           end
 
-          def self.default_compute_label(label:, task:, runtime_id:, **)
-            label = label[task] || runtime_id
+          def self.default_compute_label(label:, captured_node:, runtime_id:, **)
+            label = label[captured_node.captured_input] || runtime_id
           end
 
           def self.runtime_path(runtime_id:, compile_path:, **)
@@ -39,6 +39,7 @@ module Trailblazer
             data[captured_node.captured_input] || {}
           end
 
+          # we always key options for specific nodes by Stack::Captured::Input, so we don't confuse activities if they were called multiple times.
           def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), label: {}, data: {})
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
@@ -68,7 +69,7 @@ module Trailblazer
                 compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
                 runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
-                label:        default_compute_label(label: label, runtime_id: runtime_id, task: task),
+                label:        default_compute_label(label: label, runtime_id: runtime_id, captured_node: node),
                 data:         data_for(captured_node: node, data: data)
               )
             end
