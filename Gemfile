@@ -7,4 +7,4 @@ gemspec
 # gem "trailblazer-activity", path: "../trailblazer-activity"
 # gem "trailblazer-activity-dsl-linear", path: "../trailblazer-activity-dsl-linear"
 # gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
-# gem "trailblazer-activity", github: "trailblazer/trailblazer-activity"
+gem "trailblazer-activity", github: "trailblazer/trailblazer-activity"
