@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Developer tools for Trailblazer."
   spec.description   = "Developer tools for Trailblazer: debugger, activity visualizer and tracing."
-  spec.homepage      = "http://trailblazer.to"
+  spec.homepage      = "http://trailblazer.to/2.1/docs/trailblazer.html#trailblazer-developer"
   spec.license       = "LGPL-3.0"
 
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
@@ -22,7 +22,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "minitest-line"
   spec.add_development_dependency "rake"
+  spec.add_development_dependency "trailblazer-operation"
 
   spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.0.0", "< 1.1.0"
+  # FIXME: Activity 0.14.1
   spec.add_dependency "hirb"
 end

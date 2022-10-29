@@ -19,7 +19,130 @@ class DocsDeveloperTest < Minitest::Spec
     end
   end
 
+  require "trailblazer/operation"
+  module A
+    Memo = DocsDeveloperTest::Memo
+
+    module Memo::Operation
+      class Validate < Trailblazer::Operation
+        include T.def_steps(:call_contract)
+        step :extract_params
+        step :call_contract
+
+        def extract_params(ctx, raise_exception: false, **)
+          if raise_exception
+            ctx.merge
+          end
+
+          true
+        end
+      end
+    end
+
+    module Memo::Operation
+      class Create < Trailblazer::Operation
+        #~methods
+        include T.def_steps(:extract_markdown, :model, :save)
+        #~methods end
+        step :extract_markdown
+        step :model
+        step Subprocess(Validate)
+        step :save
+      end
+    end
+  end
+
+
+  it "#wtf?" do
+    output, _ = capture_io do
+      result = Memo::Operation::Create.wtf?(seq: [], params: {})
+    end
+
+    assert_equal output, %{DocsDeveloperTest::Memo::Operation::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mextract_markdown\e[0m
+|-- \e[32mmodel\e[0m
+|-- DocsDeveloperTest::Memo::Operation::Validate
+|   |-- \e[32mStart.default\e[0m
+|   |-- \e[32mextract_params\e[0m
+|   |-- \e[32mcall_contract\e[0m
+|   `-- End.success
+|-- \e[32msave\e[0m
+`-- End.success
+}
+=begin
+#:wtf-op
+result = Memo::Operation::Create.wtf?(params: {title: "Remember me..."})
+#:wtf-op end
+=end
+
+  #@ exception
+    output, _ = capture_io do
+      assert_raises ArgumentError do
+        result = Memo::Operation::Create.wtf?(seq: [], raise_exception: true)
+      end
+    end
+    assert_equal output, %{DocsDeveloperTest::Memo::Operation::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mextract_markdown\e[0m
+|-- \e[32mmodel\e[0m
+`-- DocsDeveloperTest::Memo::Operation::Validate
+    |-- \e[32mStart.default\e[0m
+    `-- \e[1m\e[31mextract_params\e[0m\e[22m
+}
+puts
+puts
+puts output.gsub("DocsDeveloperTest::", "").gsub(/^/, "   ")
+
+=begin
+
+ArgumentError: wrong number of arguments (given 0, expected 1)
+# ...
+=end
+  end
+
+  module B
+    Memo = Module.new
+
+    #:memo-railway
+    module Memo::Operation
+      class Create < Trailblazer::Activity::Railway # Note that this is not an {Operation}!
+        step :extract_markdown
+        step :model
+        #~methods
+        include T.def_steps(:extract_markdown, :model, :save)
+        # step Subprocess(Validate)
+        step :save
+        #~methods end
+      end
+    end
+    #:memo-railway end
+  end
+
+  it "{#wtf?} with {Activity}" do
+    output, _ = capture_io do
+      result = Trailblazer::Developer.wtf?(B::Memo::Operation::Create, [{seq: [], params: {}}, {}])
+    end
+
+    assert_equal output, %{DocsDeveloperTest::B::Memo::Operation::Create
+|-- \e[32mStart.default\e[0m
+|-- \e[32mextract_markdown\e[0m
+|-- \e[32mmodel\e[0m
+|-- \e[32msave\e[0m
+`-- End.success
+}
+=begin
+#:wtf-activity
+signal, (ctx, _) = Trailblazer::Developer.wtf?(
+  Memo::Operation::Create, [{params: {title: "Remember me.."}}, {}]
+)
+#:wtf-activity end
+=end
+  end
+
   it 'wtf?' do
+    skip "we are going to reimplement focussing"
+
     #:step
     class Memo::Create < Trailblazer::Activity::Path
       step :validate
