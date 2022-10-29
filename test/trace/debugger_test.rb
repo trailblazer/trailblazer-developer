@@ -41,6 +41,8 @@ class DebuggerTest < Minitest::Spec
     )
 
     assert_equal debugger_nodes[0].task, activity
+    assert_equal debugger_nodes[0].instance_variable_get(:@activity), Trailblazer::Activity::TaskWrap.container_activity_for(activity)
+
     assert_equal debugger_nodes[0].compile_id, activity.inspect
     assert_equal debugger_nodes[0].compile_path, []
     assert_equal debugger_nodes[0].runtime_id, activity.inspect
@@ -61,6 +63,9 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].captured_output, stack.to_a[2]
 
     assert_equal debugger_nodes[3].task, sub_activity
+    # the "parent activity" for {sub_activity} is not the Activity::Railway class but instance of Acivity.
+    assert_equal debugger_nodes[3].instance_variable_get(:@activity).class, Trailblazer::Activity
+    assert_equal debugger_nodes[3].instance_variable_get(:@activity), debugger_nodes[1].instance_variable_get(:@activity)
     assert_equal debugger_nodes[3].data, {exception_source: true}
 
     assert_equal debugger_nodes[9].compile_id, :d
