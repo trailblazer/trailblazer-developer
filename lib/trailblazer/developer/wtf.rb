@@ -40,13 +40,13 @@ module Trailblazer::Developer
       puts Trace::Present.(
         complete_stack,
         # we can hand in options per node, identified by their captured_input part.
-        **{exception_source => {data: {exception_source: true}}}, # goes to {Debugger::Node.build}
+        node_options: {
+          exception_source => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
+        },
 
         renderer:   Wtf::Renderer,
         color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
         style: {exception_source => [:red, :bold]}
-
-        # **options_for_renderer
       )
 # TODO: move to trb-pro
 # require "trailblazer/developer/pro"

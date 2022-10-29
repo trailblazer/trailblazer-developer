@@ -26,16 +26,18 @@ class DebuggerTest < Minitest::Spec
     debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
       compute_runtime_id: my_compute_runtime_id,
+      node_options: {
   #@ we can pass particular label "hints".
-      captured_input_for_activity => {
-        label: %{#{activity.superclass} (anonymous)},
-      },
+        captured_input_for_activity => {
+          label: %{#{activity.superclass} (anonymous)},
+        },
   #@ we may pass Node.data options (keyed by Stack::Captured)
-      captured_input_for_sub_activity => {
-        data: {
-          exception_source: true
+        captured_input_for_sub_activity => {
+          data: {
+            exception_source: true
+          }
         }
-      },
+      }, # node_options
     )
 
     assert_equal debugger_nodes[0].task, activity

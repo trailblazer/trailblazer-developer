@@ -30,8 +30,9 @@ class TraceTest < Minitest::Spec
 
     output = Dev::Trace::Present.(
       stack,
-      # options_for_renderer:
-      stack.to_a[0] => {label: "#{bc.class} (anonymous)"}
+      node_options: {
+        stack.to_a[0] => {label: "#{bc.class} (anonymous)"}
+      }
     )
 
     assert_equal output, %{Trailblazer::Activity (anonymous)
@@ -55,7 +56,11 @@ class TraceTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
 # TODO: test label explicitely
-    output = Dev::Trace::Present.(stack, stack.to_a[0] => {label: "#{activity.superclass} (anonymous)"})
+    output = Dev::Trace::Present.(stack,
+      node_options: {
+        stack.to_a[0] => {label: "#{activity.superclass} (anonymous)"},
+      }
+    )
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
@@ -103,9 +108,11 @@ class TraceTest < Minitest::Spec
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {flow: true}])
 
 
-    output = Dev::Trace::Present.(stack, stack.to_a[0] => {label: "<Anonymous activity>"}) do |enumerable_tree, **options|
-
-    end
+    output = Dev::Trace::Present.(stack,
+      node_options: {
+        stack.to_a[0] => {label: "<Anonymous activity>"}
+      }
+    )
 
     assert_equal output, %{<Anonymous activity>
 |-- Start.default

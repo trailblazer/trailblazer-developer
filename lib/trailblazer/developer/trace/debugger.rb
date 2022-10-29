@@ -41,7 +41,7 @@ module Trailblazer
           end
 
           # we always key options for specific nodes by Stack::Captured::Input, so we don't confuse activities if they were called multiple times.
-          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), **options_for_nodes)
+          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), node_options: {}, **options_for_nodes)
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
             # TODO: maybe allow {graph[task]}
@@ -55,7 +55,8 @@ module Trailblazer
             debugger_nodes = enumerable_tree[0..-1].collect do |node|
               activity      = node.captured_input.activity
               task          = node.captured_input.task
-              node_options  = options_for_nodes[node.captured_input] || {} # it's possible to pass per-node options, like {label: "Yo!"}
+              # it's possible to pass per-node options, like {label: "Yo!"} via {:node_options[<captured_input>]}
+              options       = node_options[node.captured_input] || {}
 
 
 
@@ -72,8 +73,8 @@ module Trailblazer
                 compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
                 runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
-                label:        default_compute_label(runtime_id: runtime_id, captured_node: node, **node_options),
-                data:         data_for(captured_node: node, **node_options)
+                label:        default_compute_label(runtime_id: runtime_id, captured_node: node, **options),
+                data:         data_for(captured_node: node, **options)
               )
             end
           end
