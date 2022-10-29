@@ -3,8 +3,7 @@ module Trailblazer
     module Render
       module TaskWrap
         def self.call(activity, segments)
-          node      = Introspect.find_path(activity, segments)
-          activity  = node.activity
+          node, activity = Activity::Introspect.find_path(activity, segments)
 
           task_wrap = activity.to_h[:config][:wrap_static]
           task      = node.task

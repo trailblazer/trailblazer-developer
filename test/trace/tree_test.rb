@@ -99,7 +99,7 @@ class TraceTreeTest < Minitest::Spec
     assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, array_of_nodes[9]), ["B", "C", :d]
 
     # this test is to make sure the computed path and {#find_path} play along nicely.
-    assert_equal Dev::Introspect.find_path(activity, ["B", "C", :d]).task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+    assert_equal Trailblazer::Activity::Introspect.find_path(activity, ["B", "C", :d])[0].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
   end
 
   it "{Tree} doesn't choke on identical, nested tasks" do

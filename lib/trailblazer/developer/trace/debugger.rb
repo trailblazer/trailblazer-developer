@@ -5,7 +5,7 @@ module Trailblazer
         class Node
           def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, label:, data:, **)
             @captured_node  = captured_node # DISCUSS: private?
-            @activity       = activity
+            @activity       = activity # this is the {Activity} *instance* running this {task}.
             @task           = task
             @compile_id     = compile_id
             @runtime_id     = runtime_id
@@ -46,9 +46,13 @@ module Trailblazer
 
             # TODO: maybe allow {graph[task]}
             # TODO: cache activity graph
+
+            container_activity = enumerable_tree[0].captured_input.activity # TODO: any other way to grab the container_activity? Maybe via {activity.container_activity}?
+
             top_activity = enumerable_tree[0].captured_input.task
-            graph_nodes = { # TODO: any other way to grab the container_activity? Maybe by passing {activity}?
-              enumerable_tree[0].captured_input.activity => [Struct.new(:id, :task).new(top_activity.inspect, top_activity)]
+            # puts "@@@@@> #{top_activity.superclass.inspect}"
+            graph_nodes = {
+              container_activity => [Struct.new(:id, :task).new(top_activity.inspect, top_activity)]
             }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
@@ -80,11 +84,11 @@ module Trailblazer
           end
 
           def self.build_for_stack(stack, **options_for_debugger_node)
-            tree, processed = Dev::Trace.Tree(stack.to_a)
+            tree, processed = Trace.Tree(stack.to_a)
 
-            enumerable_tree = Dev::Trace::Tree.Enumerable(tree)
+            enumerable_tree = Trace::Tree.Enumerable(tree)
 
-            Dev::Trace::Debugger::Node.build(
+            Debugger::Node.build(
               tree,
               enumerable_tree,
               **options_for_debugger_node,
