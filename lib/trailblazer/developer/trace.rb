@@ -88,7 +88,7 @@ module Trailblazer::Developer
     end
 
     def default_output_data_collector(wrap_config, (ctx, _), _)
-      {ctx: ctx} # FIXME: snapshot!
+      # FIXME: snapshot!
       { ctx: ctx, signal: wrap_config[:return_signal] }
     end
 
