@@ -50,9 +50,9 @@ module Trailblazer
             container_activity = enumerable_tree[0].captured_input.activity # TODO: any other way to grab the container_activity? Maybe via {activity.container_activity}?
 
             top_activity = enumerable_tree[0].captured_input.task
-            # puts "@@@@@> #{top_activity.superclass.inspect}"
+
             graph_nodes = {
-              container_activity => [Struct.new(:id, :task).new(top_activity.inspect, top_activity)]
+              container_activity => {top_activity => Struct.new(:id).new(top_activity.inspect)}
             }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
@@ -73,7 +73,7 @@ module Trailblazer
                 activity: activity,
                 task: task,
 
-                compile_id:   compile_id = graph_for_activity.find { |_n| _n.task == task }.id,
+                compile_id:   compile_id = graph_for_activity[task].id,
                 compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
                 runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),

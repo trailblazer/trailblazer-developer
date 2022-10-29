@@ -5,8 +5,6 @@
   is moved to `Trace::Present` instead to reduce complexity at crunch time.
 * In `Trace::Present.call` it's now possible to provide labels to the `default_renderer` using the `:label` option.
 * `Circuit.render` now accepts segments/path.
-* Add `Introspect.find_path` to retrieve steps from nested activities without having to
-  traverse them.
 * Fixed a bug in `Trace::Present` where the traced top activity would show up as a node, which was wrong.
 * Rename `Trace::Entity` to `Trace::Captured`.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
