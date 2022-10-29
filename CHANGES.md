@@ -1,5 +1,6 @@
 # 0.1.0
 
+* Present: :label is mandatory currently (insert exception)
 * `Trace.capture_args` and `capture_return` no longer use any `Graph` logic. This
   is moved to `Trace::Present` instead to reduce complexity at crunch time.
 * In `Trace::Present.call` it's now possible to provide labels to the `default_renderer` using the `:label` option.
@@ -10,6 +11,12 @@
 * Rename `Trace::Entity` to `Trace::Captured`.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
 * Trace::Renderer and friends: remove `:position` keyword.
+
+* task_node.input is now .captured_input # TODO: make compatible?
+* task_node should be captured_node
+* task_node.value is gone, it used to be the ID.
+TODO: deprecate `:focus_on`
+
 
 task_node:
   output => captured_output

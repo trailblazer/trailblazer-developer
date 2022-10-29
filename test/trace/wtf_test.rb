@@ -130,7 +130,6 @@ puts output
 }
   end
 
-
   it "supports circuit interface call definition and doesn't mutate any passed options" do
     ctx = { seq: [] }
     flow_options = { flow: true }
