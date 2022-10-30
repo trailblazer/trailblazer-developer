@@ -54,6 +54,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].captured_input, stack.to_a[0]
     assert_equal debugger_nodes[0].captured_output, stack.to_a[-1]
 
+    assert_equal debugger_nodes[1].instance_variable_get(:@activity).class, Trailblazer::Activity # The [activity] field is an Activity.
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_equal debugger_nodes[1].compile_id, %{Start.default}
     assert_equal debugger_nodes[1].compile_path, ["Start.default"]

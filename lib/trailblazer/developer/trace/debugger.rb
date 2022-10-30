@@ -3,6 +3,7 @@ module Trailblazer
     module Trace
       module Debugger
         class Node
+          # The idea is to only work with {Activity} instances on this level, as that's the runtime concept.
           def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, label:, data:, **)
             @captured_node  = captured_node # DISCUSS: private?
             @activity       = activity # this is the {Activity} *instance* running this {task}.

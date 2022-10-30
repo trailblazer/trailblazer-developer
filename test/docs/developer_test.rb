@@ -52,6 +52,18 @@ class DocsDeveloperTest < Minitest::Spec
     end
   end
 
+  it "{Introspect.find_path} with Railway" do
+    assert_raises ArgumentError do
+      Trailblazer::Activity::Introspect.find_path(Memo::Operation::Create, [])
+    end
+
+    activity = Memo::Operation::Create.to_h[:activity]
+    node, host_activity, _ = Trailblazer::Activity::Introspect.find_path(activity, [])
+
+    assert_equal node.task,     activity
+    assert_equal host_activity, Trailblazer::Activity::TaskWrap.container_activity_for(activity)
+  end
+
 
   it "#wtf?" do
     output, _ = capture_io do

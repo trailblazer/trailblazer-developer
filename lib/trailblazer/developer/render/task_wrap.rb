@@ -2,10 +2,9 @@ module Trailblazer
   module Developer
     module Render
       module TaskWrap
-        def self.call(activity, segments)
-          node, activity = Activity::Introspect.find_path(activity, segments)
-
-          task_wrap = activity.to_h[:config][:wrap_static]
+        # @param activity Trailblazer::Activity
+        def self.render_for(activity, node)
+          task_wrap = task_wrap_for_activity(activity) # TODO: MERGE WITH BELOW
           task      = node.task
           step_wrap = task_wrap[task] # the taskWrap for the actual step, e.g. {input,call_task,output}.
 
@@ -27,6 +26,11 @@ module Trailblazer
           nodes = [[0, activity], [1, node.id], *nodes]
 
           Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
+        end
+
+        # @param activity Activity
+        def self.task_wrap_for_activity(activity, **)
+          activity[:wrap_static]
         end
 
         def self.render_task_wrap_step(row, level)

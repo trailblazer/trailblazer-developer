@@ -17,14 +17,16 @@ class RenderTaskWrapTest < Minitest::Spec
     end
 
     #@ no special tW
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:a])
-    assert_inspect pipe, %{#<Class:xxx>
+    node, activity, _ = Trailblazer::Developer::Introspect.find_path(activity, [:a])
+    pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
+    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
 `-- a
     `-- task_wrap.call_task..............Method}
 
     #@ only In() set
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:b])
-    assert_inspect pipe, %{#<Class:xxx>
+    node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:b])
+    pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
+    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
 `-- b
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
     |   |-- input.init_hash.............................. ............................................. VariableMapping.initial_aggregate
@@ -38,8 +40,9 @@ class RenderTaskWrapTest < Minitest::Spec
         `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
 
     #@ only with Inject()
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:c])
-    assert_inspect pipe, %{#<Class:xxx>
+    node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:c])
+    pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
+    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
 `-- c
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
     |   |-- input.init_hash.............................. ............................................. VariableMapping.initial_aggregate
@@ -64,8 +67,9 @@ class RenderTaskWrapTest < Minitest::Spec
       step Subprocess(sub_activity), id: :B
     end
 
-    pipe = Trailblazer::Developer::Render::TaskWrap.(activity, [:B, :b])
-    assert_inspect pipe, %{#<Class:xxx>
+    node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:B, :b])
+    pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
+    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
 `-- b
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
     |   |-- input.init_hash.............................. ............................................. VariableMapping.initial_aggregate
