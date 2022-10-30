@@ -52,7 +52,7 @@ class DocsDeveloperTest < Minitest::Spec
     end
   end
 
-  it "{Introspect.find_path} with Railway" do
+  it "{Introspect.find_path} with Railway" do  # FIXME: this is shitty design.
     assert_raises ArgumentError do
       Trailblazer::Activity::Introspect.find_path(Memo::Operation::Create, [])
     end
@@ -61,6 +61,11 @@ class DocsDeveloperTest < Minitest::Spec
     node, host_activity, _ = Trailblazer::Activity::Introspect.find_path(activity, [])
 
     assert_equal node.task,     activity
+    assert_equal host_activity, Trailblazer::Activity::TaskWrap.container_activity_for(activity)
+
+
+    node, host_activity, _ = Trailblazer::Developer::Introspect.find_path(Memo::Operation::Create, [])
+    assert_equal node.task, Memo::Operation::Create.to_h[:activity]
     assert_equal host_activity, Trailblazer::Activity::TaskWrap.container_activity_for(activity)
   end
 
