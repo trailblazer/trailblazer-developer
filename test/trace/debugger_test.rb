@@ -26,11 +26,11 @@ class DebuggerTest < Minitest::Spec
     debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
       compute_runtime_id: my_compute_runtime_id,
-      node_options: {
-  #@ we can pass particular label "hints".
-        captured_input_for_activity => {
-          label: %{#{activity.superclass} (anonymous)},
-        },
+        node_options: {
+    #@ we can pass particular label "hints".
+          captured_input_for_activity => {
+            label: %{#{activity.superclass} (anonymous)},
+          },
   #@ we may pass Node.data options (keyed by Stack::Captured)
         captured_input_for_sub_activity => {
           data: {
@@ -43,9 +43,11 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].task, activity
     assert_equal debugger_nodes[0].instance_variable_get(:@activity), Trailblazer::Activity::TaskWrap.container_activity_for(activity)
 
-    assert_equal debugger_nodes[0].compile_id, activity.inspect
+    assert_equal debugger_nodes[0].task, activity
+    assert_equal debugger_nodes[0].compile_id, nil
     assert_equal debugger_nodes[0].compile_path, []
-    assert_equal debugger_nodes[0].runtime_id, activity.inspect
+    assert_equal debugger_nodes[0].runtime_id, nil
+    assert_equal debugger_nodes[0].runtime_path, []
     assert_equal debugger_nodes[0].level, 0
     assert_equal debugger_nodes[0].label, %{Trailblazer::Activity::Railway (anonymous)}
     assert_equal debugger_nodes[0].data, {}
@@ -55,6 +57,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_equal debugger_nodes[1].compile_id, %{Start.default}
     assert_equal debugger_nodes[1].compile_path, ["Start.default"]
+    assert_equal debugger_nodes[1].runtime_path, ["Start.default"]
     assert_equal debugger_nodes[1].runtime_id, %{Start.default}
     assert_equal debugger_nodes[1].level, 1
     assert_equal debugger_nodes[1].label, %{Start.default}
@@ -67,6 +70,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[3].instance_variable_get(:@activity).class, Trailblazer::Activity
     assert_equal debugger_nodes[3].instance_variable_get(:@activity), debugger_nodes[1].instance_variable_get(:@activity)
     assert_equal debugger_nodes[3].data, {exception_source: true}
+    assert_equal debugger_nodes[3].runtime_path, ["B"]
 
     assert_equal debugger_nodes[9].compile_id, :d
     assert_equal debugger_nodes[9].compile_path, ["B", "C", :d]

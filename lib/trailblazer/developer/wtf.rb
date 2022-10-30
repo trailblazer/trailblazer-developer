@@ -14,7 +14,7 @@ module Trailblazer::Developer
 
     # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
     # This allows to display the trace even when an exception happened
-    def invoke(activity, (ctx, flow_options), **circuit_options)
+    def invoke(activity, (ctx, flow_options), present_options: {}, **circuit_options)
       flow_options ||= {}
 
       stack = Trace::Stack.new # unfortunately, we need this mutable object before things break.
@@ -46,11 +46,9 @@ module Trailblazer::Developer
 
         renderer:   Wtf::Renderer,
         color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge( flow_options[:color_map] || {} ),
-        style: {exception_source => [:red, :bold]}
+        style: {exception_source => [:red, :bold]},
+        **present_options, # TODO: test.
       )
-# TODO: move to trb-pro
-# require "trailblazer/developer/pro"
-# Pro.call( enumerable_tree, tree)
     end
 
     module Exception

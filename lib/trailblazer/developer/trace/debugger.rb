@@ -33,6 +33,8 @@ module Trailblazer
           end
 
           def self.runtime_path(runtime_id:, compile_path:, **)
+            return compile_path if compile_path.empty? # FIXME: this currently only applies to root.
+
             compile_path[0..-2] + [runtime_id]
           end
 
@@ -51,7 +53,7 @@ module Trailblazer
             top_activity = enumerable_tree[0].captured_input.task
 
             graph_nodes = {
-              container_activity => {top_activity => {id: top_activity.inspect}} # exposes {Introspect::Graph}-compatible interface.
+              container_activity => {top_activity => {id: nil}} # exposes {Introspect::Graph}-compatible interface.
             }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
