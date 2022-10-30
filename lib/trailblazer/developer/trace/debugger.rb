@@ -44,15 +44,14 @@ module Trailblazer
           def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), node_options: {}, **options_for_nodes)
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
-            # TODO: maybe allow {graph[task]}
-            # TODO: cache activity graph
 
             container_activity = enumerable_tree[0].captured_input.activity # TODO: any other way to grab the container_activity? Maybe via {activity.container_activity}?
 
+  # TODO: cache activity graph
             top_activity = enumerable_tree[0].captured_input.task
 
             graph_nodes = {
-              container_activity => {top_activity => Struct.new(:id).new(top_activity.inspect)}
+              container_activity => {top_activity => {id: top_activity.inspect}} # exposes {Introspect::Graph}-compatible interface.
             }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
@@ -73,7 +72,7 @@ module Trailblazer
                 activity: activity,
                 task: task,
 
-                compile_id:   compile_id = graph_for_activity[task].id,
+                compile_id:   compile_id = graph_for_activity[task][:id],
                 compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
                 runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
