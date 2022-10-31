@@ -29,7 +29,7 @@ module Trailblazer
             path = []
 
             while parent = parent_map[node] # DISCUSS: what if the graphs are cached and present, already?
-              node_id = Activity::Introspect::Graph(node.captured_input.activity)[node.captured_input.task].id
+              node_id = Activity::Introspect::TaskMap(node.captured_input.activity)[node.captured_input.task][:id]
               path << node_id
 
               node = parent

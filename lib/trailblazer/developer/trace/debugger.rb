@@ -53,8 +53,8 @@ module Trailblazer
   # TODO: cache activity graph
             top_activity = enumerable_tree[0].captured_input.task
 
-            graph_nodes = {
-              container_activity => {top_activity => {id: nil}} # exposes {Introspect::Graph}-compatible interface.
+            task_maps_per_activity = {
+              container_activity => {top_activity => {id: nil}} # exposes {Introspect::TaskMap}-compatible interface.
             }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
@@ -66,18 +66,19 @@ module Trailblazer
 
 
 
-              graph_for_activity = graph_nodes[activity] || Activity::Introspect.Graph(activity)
+              task_map_for_activity = task_maps_per_activity[activity] || Activity::Introspect.TaskMap(activity)
 
 # DISCUSS: pass down the Graph::Node?
               # these attributes are not changing with the presentation
+              # puts "@@@@@ #{task.inspect} lives in #{activity}"
               Debugger::Node.new(
                 captured_node: node,
                 activity: activity,
                 task: task,
 
-                compile_id:   compile_id = graph_for_activity[task][:id],
+                compile_id:   compile_id = task_map_for_activity[task][:id],
                 compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
-                runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: graph_for_activity),  # FIXME: args may vary
+                runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: task_map_for_activity),  # FIXME: args may vary
                 runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
                 label:        default_compute_label(runtime_id: runtime_id, captured_node: node, **options),
                 data:         data_for(captured_node: node, **options)
