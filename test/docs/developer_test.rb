@@ -87,6 +87,7 @@ class DocsDeveloperTest < Minitest::Spec
 |-- \e[32msave\e[0m
 `-- End.success
 }
+# puts output
 =begin
 #:wtf-op
 result = Memo::Operation::Create.wtf?(params: {title: "Remember me..."})

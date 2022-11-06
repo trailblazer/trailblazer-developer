@@ -14,23 +14,32 @@ class DebuggerTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
   #@ particular nodes need a special {runtime_id}
-    my_compute_runtime_id = ->(captured_node:, activity:, compile_id:, **) do
+    my_compute_runtime_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
       return compile_id unless activity.instance_variable_get(:@special)
 
-      compile_id.to_s*9
+      ctx[:runtime_id] = compile_id.to_s*9
     end
 
     captured_input_for_activity     = stack.to_a.find { |captured| captured.task == activity }
     captured_input_for_sub_activity = stack.to_a.find { |captured| captured.task == sub_activity }
 
+    #@ this is internal API but we're never gonna need this anywhere except for other internals :)
+    pipeline_extension = Activity::TaskWrap::Extension.build([
+      Dev::Trace::Debugger::Normalizer.Task(my_compute_runtime_id),
+      id: :my_compute_runtime_id,
+      append: :runtime_id # so that the following {#runtime_path} picks up those changes made here.
+    ])
+    extended_normalizer = pipeline_extension.(Dev::Trace::Debugger::Normalizer::PIPELINES.last)
+
+
     debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
-      compute_runtime_id: my_compute_runtime_id,
-        node_options: {
+      normalizer: extended_normalizer,
+      node_options: {
     #@ we can pass particular label "hints".
-          captured_input_for_activity => {
-            label: %{#{activity.superclass} (anonymous)},
-          },
+        captured_input_for_activity => {
+          label: %{#{activity.superclass} (anonymous)},
+        },
   #@ we may pass Node.data options (keyed by Stack::Captured)
         captured_input_for_sub_activity => {
           data: {
@@ -82,5 +91,17 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].data, {}
     assert_equal debugger_nodes[9].captured_input, stack.to_a[15]
     assert_equal debugger_nodes[9].captured_output, stack.to_a[16]
+  end
+
+  it "add {runtime_id} normalizer task" do
+    my_compute_runtime_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
+      # activity is the host activity
+      return compile_id unless activity[:each] == true
+      index = captured_node.captured_input.data[:ctx].fetch(:index)
+
+      ctx[:runtime_id] = "#{compile_id}.#{index}"
+    end
+
+    Trailblazer::Developer::Trace::Debugger.add_normalizer_step!(my_compute_runtime_id, id: "compile_id.Each")
   end
 end

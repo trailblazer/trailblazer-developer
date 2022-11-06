@@ -16,3 +16,4 @@ require "trailblazer/developer/render/circuit"
 require "trailblazer/developer/render/linear"
 require "trailblazer/developer/render/task_wrap"
 require "trailblazer/developer/introspect" # TODO: might get removed, again.
+require "trailblazer/developer/trace/debugger/normalizer"

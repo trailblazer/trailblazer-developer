@@ -25,26 +25,8 @@ module Trailblazer
           attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node, :label, :data, :captured_input, :captured_output
 
 
-          def self.default_compute_runtime_id(compile_id:, captured_node:, activity:, task:, graph:, **)
-            compile_id
-          end
-
-          def self.default_compute_label(label: nil, runtime_id:, **)
-            label = label || runtime_id
-          end
-
-          def self.runtime_path(runtime_id:, compile_path:, **)
-            return compile_path if compile_path.empty? # FIXME: this currently only applies to root.
-
-            compile_path[0..-2] + [runtime_id]
-          end
-
-          def self.data_for(data: {}, **)
-            data
-          end
-
           # we always key options for specific nodes by Stack::Captured::Input, so we don't confuse activities if they were called multiple times.
-          def self.build(tree, enumerable_tree, compute_runtime_id: method(:default_compute_runtime_id), node_options: {}, **options_for_nodes)
+          def self.build(tree, enumerable_tree, node_options: {}, normalizer: Debugger::Normalizer::PIPELINES.last, **options_for_nodes)
             parent_map = Trace::Tree::ParentMap.build(tree).to_h # DISCUSS: can we use {enumerable_tree} for {ParentMap}?
 
 
@@ -68,25 +50,30 @@ module Trailblazer
 
               task_map_for_activity = task_maps_per_activity[activity] || Activity::Introspect.TaskMap(activity)
 
-# DISCUSS: pass down the Graph::Node?
+              options_for_debugger_node, _ = normalizer.(
+                {
+                  captured_node:          node,
+                  task:                   task,
+                  activity:               activity,
+                  parent_map:             parent_map,
+                  task_map_for_activity:  task_map_for_activity,
+                  **options
+                },
+                []
+              )
+
               # these attributes are not changing with the presentation
-              # puts "@@@@@ #{task.inspect} lives in #{activity}"
               Debugger::Node.new(
                 captured_node: node,
                 activity: activity,
                 task: task,
 
-                compile_id:   compile_id = task_map_for_activity[task][:id],
-                compile_path: compile_path = Trace::Tree::ParentMap.path_for(parent_map, node),
-                runtime_id:   runtime_id = compute_runtime_id.(compile_id: compile_id, captured_node: node, activity: activity, task: task, graph: task_map_for_activity),  # FIXME: args may vary
-                runtime_path: runtime_path(compile_id: compile_id, runtime_id: runtime_id, compile_path: compile_path),
-                label:        default_compute_label(runtime_id: runtime_id, captured_node: node, **options),
-                data:         data_for(captured_node: node, **options)
+                **options_for_debugger_node,
               )
             end
           end
 
-          def self.build_for_stack(stack, **options_for_debugger_node)
+          def self.build_for_stack(stack, **options_for_debugger_nodes)
             tree, processed = Trace.Tree(stack.to_a)
 
             enumerable_tree = Trace::Tree.Enumerable(tree)
@@ -94,7 +81,7 @@ module Trailblazer
             Debugger::Node.build(
               tree,
               enumerable_tree,
-              **options_for_debugger_node,
+              **options_for_debugger_nodes,
             )
           end
         end
