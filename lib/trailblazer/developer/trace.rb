@@ -3,14 +3,12 @@ require 'trailblazer/activity'
 module Trailblazer::Developer
   module Trace
 
-    Activity = Trailblazer::Activity
-
     class << self
       # Public entry point to activate tracing when running {activity}.
       def call(activity, (ctx, flow_options), **circuit_options)
         activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call( activity, [ctx, flow_options], **circuit_options ) # only run once for the entire circuit!
 
-        signal, (ctx, flow_options) = Activity::TaskWrap.invoke(activity, [ctx, flow_options], **circuit_options)
+        signal, (ctx, flow_options) = Trailblazer::Activity::TaskWrap.invoke(activity, [ctx, flow_options], **circuit_options)
 
         return flow_options[:stack], signal, [ctx, flow_options]
       end
@@ -84,7 +82,10 @@ module Trailblazer::Developer
     end
 
     def default_input_data_collector(wrap_config, (ctx, _), circuit_options)
-      {ctx: ctx} # FIXME: snapshot!
+      # mutable, old_ctx = ctx.decompose
+      # mutable, old_ctx = ctx, nil
+
+      {ctx: ctx.clone.freeze} # TODO: proper snapshot!
     end
 
     def default_output_data_collector(wrap_config, (ctx, _), _)
