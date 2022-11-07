@@ -9,6 +9,7 @@
 * Rename `Trace::Entity` to `Trace::Captured`.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
 * Trace::Renderer and friends: remove `:position` keyword.
+* Add Debugger::Normalizer
 
 * task_node.input is now .captured_input # TODO: make compatible?
 * task_node should be captured_node

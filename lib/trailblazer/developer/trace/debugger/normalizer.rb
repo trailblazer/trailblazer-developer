@@ -4,12 +4,14 @@ module Trailblazer
       module Debugger
         # @private
         # Public entry point to add Debugger::Node normalizer steps.
-        def self.add_normalizer_step!(step, id:, normalizer: Normalizer::PIPELINES.last)
+        def self.add_normalizer_step!(step, id:, normalizer: Normalizer::PIPELINES.last, **options)
           task = Normalizer.Task(step)
 
           # We have a TaskWrap::Pipeline (a very simple style of "activity" used for normalizers) and
           # add another step using the "friendly interface" from {Activity::Adds}.
-          pipeline_extension = Activity::TaskWrap::Extension.build([task, id: id, append: nil])
+          options = {append: nil} unless options.any?
+
+          pipeline_extension = Activity::TaskWrap::Extension.build([task, id: id, **options])
 
           Normalizer::PIPELINES << pipeline_extension.(normalizer)
         end
