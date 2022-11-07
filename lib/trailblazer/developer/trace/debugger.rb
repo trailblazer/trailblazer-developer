@@ -2,27 +2,11 @@ module Trailblazer
   module Developer
     module Trace
       module Debugger
-        class Node
+        class Node < Struct.new(:captured_node, :task, :activity, :compile_id, :compile_path, :runtime_id, :runtime_path, :label, :data, :captured_input, :captured_output, :level, keyword_init: true)
           # The idea is to only work with {Activity} instances on this level, as that's the runtime concept.
-          def initialize(captured_node:, compile_id:, runtime_id:, activity:, task:, compile_path:, runtime_path:, label:, data:, **)
-            @captured_node  = captured_node # DISCUSS: private?
-            @activity       = activity # this is the {Activity} *instance* running this {task}.
-            @task           = task
-            @compile_id     = compile_id
-            @runtime_id     = runtime_id
-            @compile_path   = compile_path
-            @runtime_path   = runtime_path
-            @level          = @captured_node.level
-            @label          = label
-            @data           = data
-            @captured_input = captured_node.captured_input
-            @captured_output = captured_node.captured_output
 
-            # class, "type",
+            # TODO: class, "type",
             # which track, return signal, etc
-          end
-
-          attr_reader :task, :compile_path, :compile_id, :runtime_path, :runtime_id, :level, :captured_node, :label, :data, :captured_input, :captured_output
 
 
           # we always key options for specific nodes by Stack::Captured::Input, so we don't confuse activities if they were called multiple times.
@@ -62,14 +46,20 @@ module Trailblazer
                 []
               )
 
+              options_for_debugger_node = options_for_debugger_node.slice(*(options_for_debugger_node.keys - [:parent_map, :task_map_for_activity]))
+
               # these attributes are not changing with the presentation
               Debugger::Node.new(
-                captured_node: node,
-                activity: activity,
-                task: task,
+                captured_node:  node,
+                activity:       activity,
+                task:           task,
+
+                level: node.level,
+                captured_input: node.captured_input,
+                captured_output: node.captured_output,
 
                 **options_for_debugger_node,
-              )
+              ).freeze
             end
           end
 
