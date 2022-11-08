@@ -2,11 +2,6 @@ require "test_helper"
 
 # Test {Trace.call} and {Trace::Present.call}
 class TraceTest < Minitest::Spec
-  # FIXME: wtf is this test?
-  it do
-    nested_activity.([{seq: []}])
-  end
-
   it "traces flat activity" do
     stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke( bc, [{seq: []}, {flow: true}])
 
@@ -18,7 +13,7 @@ class TraceTest < Minitest::Spec
     output = Dev::Trace::Present.(stack)
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    _(output).must_equal %{#<Trailblazer::Activity:>
+    assert_equal output, %{#<Trailblazer::Activity:>
 |-- Start.default
 |-- B
 |-- C
@@ -43,7 +38,7 @@ class TraceTest < Minitest::Spec
   end
 
   it "nested tracing" do
-    activity, sub_activity, _activity = Tracing.three_level_nested_activity
+    activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
@@ -54,6 +49,14 @@ class TraceTest < Minitest::Spec
     )
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
+
+  #@ we get ctx_snapshot for in and out
+    assert_equal stack.to_a[3].data[:ctx_snapshot], {:seq=>"[]"}
+    assert_equal stack.to_a[4].data[:ctx_snapshot], {:seq=>"[:a]"}
+
+    assert_equal stack.to_a[23].data[:ctx_snapshot], {:seq=>"[:a, :b, :c, :d]"}
+  #@ we see out snapshot after Out() filters, {:nil_value} in added in {Out()}
+    assert_equal stack.to_a[24].data[:ctx_snapshot], {:seq=>"[:a, :b, :c, :d, :e]", :nil_value=>"nil"}
 
 # TODO: test label explicitely
     output = Dev::Trace::Present.(stack,

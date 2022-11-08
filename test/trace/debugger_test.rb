@@ -91,6 +91,8 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].data, {}
     assert_equal debugger_nodes[9].captured_input, stack.to_a[15]
     assert_equal debugger_nodes[9].captured_output, stack.to_a[16]
+    assert_equal debugger_nodes[9].captured_input.data[:ctx_snapshot], {:seq=>"[:a, :b, :c]"}
+    assert_equal debugger_nodes[9].captured_output.data[:ctx_snapshot], {:seq=>"[:a, :b, :c, :d]"}
   end
 
   it "add {runtime_id} normalizer task" do

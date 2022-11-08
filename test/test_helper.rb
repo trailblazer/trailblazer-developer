@@ -16,7 +16,7 @@ Minitest::Spec.class_eval do
   include Trailblazer::Activity::Testing::Assertions
 
   module Tracing
-    def self.three_level_nested_activity(sub_activity_options: {}, _activity_options: {})
+    def self.three_level_nested_activity(sub_activity_options: {}, _activity_options: {}, e_options: {})
       sub_activity = nil
       _activity    = nil
 
@@ -37,7 +37,7 @@ Minitest::Spec.class_eval do
 
         step :a
         step Subprocess(sub_activity), **sub_activity_options
-        step :e
+        step :e, e_options
       end
 
       return activity, sub_activity, _activity

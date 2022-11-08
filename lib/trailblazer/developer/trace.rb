@@ -85,12 +85,21 @@ module Trailblazer::Developer
       # mutable, old_ctx = ctx.decompose
       # mutable, old_ctx = ctx, nil
 
-      {ctx: ctx.clone.freeze} # TODO: proper snapshot!
+      {
+        # ctx: ctx.to_h.freeze,
+        ctx_snapshot: ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
+      } # TODO: proper snapshot!
     end
 
     def default_output_data_collector(wrap_config, (ctx, _), _)
+      returned_ctx, _ = wrap_config[:return_args]
+
       # FIXME: snapshot!
-      { ctx: ctx, signal: wrap_config[:return_signal] }
+      {
+        # ctx: ctx.to_h.freeze,
+        ctx_snapshot: returned_ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
+        signal: wrap_config[:return_signal]
+      }
     end
 
     Captured         = Struct.new(:task, :activity, :data)
