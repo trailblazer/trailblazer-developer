@@ -8,20 +8,8 @@ module Trailblazer
           task      = node.task
           step_wrap = task_wrap[task] # the taskWrap for the actual step, e.g. {input,call_task,output}.
 
-          renderers = Hash.new(method(:render_task_wrap_step))
-          renderers.merge!(
-            Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input => method(:render_input),
-            Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output => method(:render_input),
-          )
-
-          nodes = []
-
           level = 2
-          step_wrap.to_a.each do |row|
-            renderer = renderers[row[1].class]
-
-            nodes = nodes + renderer.(row, level) # call the rendering component.
-          end
+          nodes = render_pipeline(step_wrap, level)
 
           nodes = [[0, activity], [1, node.id], *nodes]
 
@@ -31,6 +19,24 @@ module Trailblazer
         # @param activity Activity
         def self.task_wrap_for_activity(activity, **)
           activity[:wrap_static]
+        end
+
+        def self.render_pipeline(pipeline, level)
+          renderers = Hash.new(method(:render_task_wrap_step))
+          renderers.merge!(
+            Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input => method(:render_input),
+            Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output => method(:render_input),
+          )
+# TODO: use collect
+          nodes=[]
+
+          pipeline.to_a.collect do |row|
+            renderer = renderers[row[1].class]
+
+            nodes = nodes + renderer.(row, level) # call the rendering component.
+          end
+
+          nodes
         end
 
         def self.render_task_wrap_step(row, level)
