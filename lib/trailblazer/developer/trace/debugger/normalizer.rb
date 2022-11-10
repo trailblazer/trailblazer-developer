@@ -18,7 +18,7 @@ module Trailblazer
 
         module Normalizer
           def self.Task(user_step) # TODO: we could keep this in the {activity} gem.
-            Activity::Pipeline::TaskAdapter.for_step(user_step, option: false) # we don't need Option as we don't have ciruit_options here, and no {:exec_context}
+            Activity::TaskWrap::Pipeline::TaskAdapter.for_step(user_step, option: false) # we don't need Option as we don't have ciruit_options here, and no {:exec_context}
           end
 
           # Default steps for the Debugger::Node options pipeline, following the step-interface.
