@@ -1,18 +1,28 @@
 # 0.0.27
 
-* Present: :label is mandatory currently (insert exception)
+## Trace
+
 * `Trace.capture_args` and `capture_return` no longer use any `Graph` logic. This
   is moved to `Trace::Present` instead to reduce complexity at crunch time.
+* Removed the `:focus_on` option for `#wtf?`. This is now solved through the debugger.
+* `Trace.default_input_collector` and `default_output_collector` now receive the original taskWrap/pipeline-args
+  `[wrap_ctx, original_args]`.
 * In `Trace::Present.call` it's now possible to provide labels to the `default_renderer` using the `:label` option.
 * `Circuit.render` now accepts segments/path.
 * Fixed a bug in `Trace::Present` where the traced top activity would show up as a node, which was wrong.
 * Rename `Trace::Entity` to `Trace::Captured`.
-* Use `trailblazer-activity-dsl-linear-1.0.0`.
-* Trace::Renderer and friends: remove `:position` keyword.
+* Removed `:position` keyword in `Trace::Renderer` and friends.
+* Changed `Trace::Stack` from a nested datastructure to a linear `Captured` stack.
+
+## Debugger
+
+* Add `Debugger::Node` as an interface and datastructure between tracing (`Stack` and `Captured`) and `Present`,
+  the latter now having access to `Debugger::Node`, only.
 * Add `Debugger::Normalizer`, which computes default values for `Debugger::Node` at present-time.
-* Removed the `:focus_on` option for `#wtf?`. This is now solved through the debugger.
-* `Trace.default_input_collector` and `default_output_collector` now receive the original taskWrap/pipeline-args
-  `[wrap_ctx, original_args]`.
+
+## Internals
+
+* Use `trailblazer-activity-dsl-linear-1.0.0`.
 
 # 0.0.26
 

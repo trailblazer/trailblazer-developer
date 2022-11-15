@@ -80,6 +80,7 @@ module Trailblazer::Developer
     end
 
     # Called in {#Captured}.
+    # DISCUSS: this is where to start for a new {Inspector} implementation.
     def default_input_data_collector(wrap_config, ((ctx, _), _)) # DISCUSS: would it be faster to access ctx via {original_args[0][0]}?
       # mutable, old_ctx = ctx.decompose
       # mutable, old_ctx = ctx, nil
