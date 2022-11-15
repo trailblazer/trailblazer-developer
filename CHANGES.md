@@ -1,4 +1,4 @@
-# 0.1.0
+# 0.0.27
 
 * Present: :label is mandatory currently (insert exception)
 * `Trace.capture_args` and `capture_return` no longer use any `Graph` logic. This
@@ -9,18 +9,10 @@
 * Rename `Trace::Entity` to `Trace::Captured`.
 * Use `trailblazer-activity-dsl-linear-1.0.0`.
 * Trace::Renderer and friends: remove `:position` keyword.
-* Add Debugger::Normalizer
-
-* task_node.input is now .captured_input # TODO: make compatible?
-* task_node should be captured_node
-* task_node.value is gone, it used to be the ID.
-TODO: deprecate `:focus_on`
-
-
-task_node:
-  output => captured_output
-  input => captured_input
-  TODO: task_node => tree_node
+* Add `Debugger::Normalizer`, which computes default values for `Debugger::Node` at present-time.
+* Removed the `:focus_on` option for `#wtf?`. This is now solved through the debugger.
+* `Trace.default_input_collector` and `default_output_collector` now receive the original taskWrap/pipeline-args
+  `[wrap_ctx, original_args]`.
 
 # 0.0.26
 

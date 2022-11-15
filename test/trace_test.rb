@@ -84,8 +84,8 @@ class TraceTest < Minitest::Spec
   end
 
   it "allows to inject custom :data_collector" do
-    input_collector = ->(wrap_config, (ctx, _), _) { { ctx: ctx, something: :else } }
-    output_collector = ->(wrap_config, (ctx, _), _) { { ctx: ctx, signal: wrap_config[:return_signal] } }
+    input_collector = ->(wrap_config, ((ctx, _), _)) { { ctx: ctx, something: :else } }
+    output_collector = ->(wrap_config, ((ctx, _), _)) { { ctx: ctx, signal: wrap_config[:return_signal] } }
 
     stack, signal, (ctx, _) = Dev::Trace.invoke(
       bc,
