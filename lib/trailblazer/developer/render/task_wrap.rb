@@ -46,22 +46,18 @@ module Trailblazer
         end
 
         def self.render_input(row, level)
+          variable_mapping = Activity::DSL::Linear::VariableMapping
+
           input_pipe = row[1].instance_variable_get(:@pipe) # this is again a {TaskWrap::Pipeline}.
 
           filters = input_pipe.to_a.collect do |id, filter|
-
             id, class_name, info =
-              if filter.is_a?(Activity::DSL::Linear::VariableMapping::AddVariables)
-                if id =~ /inject\./ # TODO: maybe Inject() should be encapsulated in {AddVariables::Inject}?
+              if filter.is_a?(variable_mapping::AddVariables) || filter.is_a?(variable_mapping::SetVariable)
+                # TODO: grab user_filter here if needed for understanding
+                # _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
+                _info       = ""
 
-                  [id, filter.class.to_s.match(/VariableMapping::.+/), ""]
-                else
-                  _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
-                  rendered_id = "#{id.match(/.+0\.\w\w\w/)}[...]"
-
-                  [rendered_id, filter.class.to_s.match(/VariableMapping::.+/), _info]
-                end
-
+                [id, filter.class.to_s.match(/VariableMapping::.+/), _info]
               else # generic VariableMapping::DSL step such as {VariableMapping.scope}
                 _name = filter.inspect.match(/VariableMapping\.\w+/)
 
