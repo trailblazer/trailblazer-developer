@@ -24,7 +24,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
   spec.add_development_dependency "trailblazer-operation", ">= 0.9.0", "< 1.0.0"
 
-  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.1.0", "< 1.2.0"
-  # FIXME: Activity 0.14.1
+  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.1.0", "< 1.3.0"
   spec.add_dependency "hirb"
 end
