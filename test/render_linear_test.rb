@@ -28,9 +28,9 @@ class RenderLinearTest < Minitest::Spec
  6 ============================>finalize!}
   end
 
-  describe "step with only one output (happens with Nested)" do
+  describe "step with only one {:success} output" do
     class Present < Trailblazer::Activity::Railway
-      pass :ok!, outputs: {:success => Trailblazer::Activity::Output("signal", :success)}
+      pass Subprocess(Trailblazer::Activity::Path), id: :ok!
     end
 
     it do
