@@ -1,7 +1,7 @@
 module Trailblazer
   module Version
     module Developer
-      VERSION = "0.0.27"
+      VERSION = "0.0.28"
     end
   end
 end
