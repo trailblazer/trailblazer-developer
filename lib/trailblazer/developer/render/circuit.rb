@@ -17,7 +17,7 @@ module Trailblazer
             activity  = node.task
           end
 
-          graph = Activity::Introspect::Graph(activity)
+          graph = Introspect::Graph(activity)
 
           circuit_hash(graph, **options)
         end

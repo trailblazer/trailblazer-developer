@@ -15,7 +15,7 @@ module Trailblazer
         module_function
 
         def call(operation, style: :line)
-          graph = Activity::Introspect::Graph(operation)
+          graph = Introspect::Graph(operation)
 
           rows = graph.collect do |node, i|
             next if node[:data][:stop_event] # DISCUSS: show this?
