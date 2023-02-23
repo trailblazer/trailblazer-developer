@@ -16,12 +16,7 @@ module Trailblazer
 
             container_activity = enumerable_tree[0].captured_input.activity # TODO: any other way to grab the container_activity? Maybe via {activity.container_activity}?
 
-  # TODO: cache activity graph
             top_activity = enumerable_tree[0].captured_input.task
-
-            task_maps_per_activity = {
-              container_activity => {top_activity => {id: nil}} # exposes {Introspect::TaskMap}-compatible interface.
-            }
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
             debugger_nodes = enumerable_tree[0..-1].collect do |node|
@@ -31,22 +26,18 @@ module Trailblazer
               options       = node_options[node.captured_input] || {}
 
 
-
-              task_map_for_activity = task_maps_per_activity[activity] || Activity::Introspect.TaskMap(activity)
-
               options_for_debugger_node, _ = normalizer.(
                 {
                   captured_node:          node,
                   task:                   task,
                   activity:               activity,
                   parent_map:             parent_map,
-                  task_map_for_activity:  task_map_for_activity,
                   **options
                 },
                 []
               )
 
-              options_for_debugger_node = options_for_debugger_node.slice(*(options_for_debugger_node.keys - [:parent_map, :task_map_for_activity]))
+              options_for_debugger_node = options_for_debugger_node.slice(*(options_for_debugger_node.keys - [:parent_map]))
 
               # these attributes are not changing with the presentation
               Debugger::Node.new(

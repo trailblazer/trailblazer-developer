@@ -23,8 +23,8 @@ module Trailblazer
 
           # Default steps for the Debugger::Node options pipeline, following the step-interface.
           module Default
-            def self.compile_id(ctx, task_map_for_activity:, task:, **)
-              ctx[:compile_id] = task_map_for_activity.fetch(task)[:id]
+            def self.compile_id(ctx, activity:, task:, **)
+              ctx[:compile_id] = Activity::Introspect.Nodes(activity, task: task)[:id]
             end
 
             def self.compile_path(ctx, parent_map:, captured_node:, **)
