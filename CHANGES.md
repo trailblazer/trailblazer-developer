@@ -1,3 +1,8 @@
+# 0.0.28
+
+* Move `Introspect::Graph` over from `trailblazer-activity`. It's a data structure very specific
+  to rendering, which is not a part of pure runtime behavior.
+
 # 0.0.27
 
 ## Trace
