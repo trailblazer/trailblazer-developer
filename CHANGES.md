@@ -2,6 +2,8 @@
 
 * Move `Introspect::Graph` over from `trailblazer-activity`. It's a data structure very specific
   to rendering, which is not a part of pure runtime behavior.
+* Use `Introspect.Nodes` API instead of `TaskMap`.
+* Remove `:task_maps_per_activity` in `Debugger` as we don't need to cache anymore.
 
 # 0.0.27
 

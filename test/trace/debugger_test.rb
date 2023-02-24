@@ -98,7 +98,7 @@ class DebuggerTest < Minitest::Spec
   it "add {runtime_id} normalizer task" do
     my_compute_runtime_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
       # activity is the host activity
-      return compile_id unless activity[:each] == true
+      return compile_id unless activity.to_h[:config][:each] == true
       index = captured_node.captured_input.data[:ctx].fetch(:index)
 
       ctx[:runtime_id] = "#{compile_id}.#{index}"

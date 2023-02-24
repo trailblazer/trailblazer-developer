@@ -18,7 +18,7 @@ module Trailblazer
 
         # @param activity Activity
         def self.task_wrap_for_activity(activity, **)
-          activity[:wrap_static]
+          activity.to_h[:config][:wrap_static]
         end
 
         def self.render_pipeline(pipeline, level)
