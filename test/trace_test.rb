@@ -2,12 +2,32 @@ require "test_helper"
 
 # Test {Trace.call} and {Trace::Present.call}
 class TraceTest < Minitest::Spec
-  it "traces flat activity" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke( bc, [{seq: []}, {flow: true}])
+  it "traces flat strategy" do
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {flow: true}])
 
     assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
 
-    assert_equal ctx.inspect, %{{:seq=>[:b, :c]}}
+    assert_equal ctx.inspect, %{{:seq=>[:B, :C]}}
+    assert_equal flow_options[:flow].inspect, %{true}
+
+    output = Dev::Trace::Present.(stack)
+    output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
+
+    assert_equal output, %{#<Class:>
+|-- Start.default
+|-- B
+|-- C
+`-- End.success}
+  end
+
+  it "traces flat activity" do
+    activity = flat_activity.to_h[:activity]
+
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(activity, [{seq: []}, {flow: true}])
+
+    assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
+
+    assert_equal ctx.inspect, %{{:seq=>[:B, :C]}}
     assert_equal flow_options[:flow].inspect, %{true}
 
     output = Dev::Trace::Present.(stack)
@@ -21,16 +41,16 @@ class TraceTest < Minitest::Spec
   end
 
   it "you can pass an explicit task label via {:label}" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {}])
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {}])
 
     output = Dev::Trace::Present.(
       stack,
       node_options: {
-        stack.to_a[0] => {label: "#{bc.class} (anonymous)"}
+        stack.to_a[0] => {label: "#{flat_activity.class} (anonymous)"}
       }
     )
 
-    assert_equal output, %{Trailblazer::Activity (anonymous)
+    assert_equal output, %{Class (anonymous)
 |-- Start.default
 |-- B
 |-- C
@@ -88,7 +108,7 @@ class TraceTest < Minitest::Spec
     output_collector = ->(wrap_config, ((ctx, _), _)) { { ctx: ctx, signal: wrap_config[:return_signal] } }
 
     stack, signal, (ctx, _) = Dev::Trace.invoke(
-      bc,
+      flat_activity,
       [
         { seq: [] },
         {
@@ -98,17 +118,17 @@ class TraceTest < Minitest::Spec
       ]
     )
 
-    assert_equal ctx[:seq], [:b, :c]
+    assert_equal ctx[:seq], [:B, :C]
 
     captured_input  = stack.to_a[0]
     captured_output = stack.to_a[-1]
 
-    assert_equal captured_input.data, { ctx: { seq: [:b, :c] }, something: :else }
-    assert_equal captured_output.data, { ctx: { seq: [:b, :c] }, signal: signal }
+    assert_equal captured_input.data, { ctx: { seq: [:B, :C] }, something: :else }
+    assert_equal captured_output.data, { ctx: { seq: [:B, :C] }, signal: signal }
   end
 
   it "{Present.call} accepts block to produce options that can be merged with original options" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(bc, [{seq: []}, {flow: true}])
+    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {flow: true}])
 
 
     output = Dev::Trace::Present.(stack,
@@ -130,7 +150,6 @@ class TraceTest < Minitest::Spec
     renderer = ->(debugger_node:, tree:, color:, **) do
       task = debugger_node.captured_node.captured_input.task
 
-      # id_label = label[task] || Trailblazer::Activity::Introspect::Graph(debugger_node.captured_node.captured_input.activity).find { |n| n.task == task }.id
       id_label = debugger_node.label
 
       if task.is_a? Method
@@ -150,15 +169,15 @@ class TraceTest < Minitest::Spec
 
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    _(output).must_equal %{0/#<Trailblazer::Activity:>/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity:>/pink
+    _(output).must_equal %{0/#<Class:>/#<Trailblazer::Activity::End semantic=:success>/#<Class:>/pink
 |-- 1/#<Trailblazer::Activity::Start semantic=:default>/Trailblazer::Activity::Right/Start.default/pink
 |-- 1/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.b>/Trailblazer::Activity::Right/B/pink
-|-- 1/#<Trailblazer::Activity:>/#<Trailblazer::Activity::End semantic=:success>/D/pink
+|-- 1/#<Class:>/#<Trailblazer::Activity::End semantic=:success>/D/pink
 |   |-- 2/#<Trailblazer::Activity::Start semantic=:default>/Trailblazer::Activity::Right/Start.default/pink
-|   |-- 2/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.b>/Trailblazer::Activity::Right/B/pink
-|   |-- 2/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.c>/Trailblazer::Activity::Right/C/pink
+|   |-- 2/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.B>/Trailblazer::Activity::Right/B/pink
+|   |-- 2/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.C>/Trailblazer::Activity::Right/C/pink
 |   `-- 2/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity::End semantic=:success>/End.success/pink
-|-- 1/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.f>/Trailblazer::Activity::Right/E/pink
+|-- 1/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.e>/Trailblazer::Activity::Right/E/pink
 `-- 1/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity::End semantic=:success>/End.success/pink}
   end
 end

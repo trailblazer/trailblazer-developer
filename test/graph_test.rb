@@ -7,24 +7,24 @@ class IntrospectGraphTest < Minitest::Spec
     describe "#find" do
       let(:node) { graph.find(:B) }
       it { expect(node[:id]).must_equal :B }
-      it { assert_outputs(node, success: Activity::Right) }
-      it { expect(node[:task]).must_equal implementing.method(:b) }
-      it { expect(node[:outgoings].inspect).must_equal(%{[#<struct Trailblazer::Developer::Introspect::Graph::Outgoing output=#<struct Trailblazer::Activity::Output signal=Trailblazer::Activity::Right, semantic=:success>, task=#{bc.inspect}>]}) }
-      it { expect(node[:data].inspect).must_equal %{{:more=>true}} }
+      it { assert_outputs(node, success: Trailblazer::Activity::Right) }
+      it { expect(node[:task]).must_equal Implementing.method(:b) }
+      it { expect(node[:outgoings].inspect).must_equal(%{[#<struct Trailblazer::Developer::Introspect::Graph::Outgoing output=#<struct Trailblazer::Activity::Output signal=Trailblazer::Activity::Right, semantic=:success>, task=#{flat_activity.inspect}>]}) }
+      it { assert_equal node[:data][:more].inspect, "true" }
 
       describe "with Start.default" do
         let(:node) { graph.find("Start.default") }
         it { expect(node[:id]).must_equal "Start.default" }
-        it { assert_outputs(node, success: Activity::Right) }
+        it { assert_outputs(node, success: Trailblazer::Activity::Right) }
         it { expect(node[:task]).must_equal nested_activity.to_h[:circuit].to_h[:start_task] }
       end
 
       describe "with block" do
-        let(:node) { graph.find { |node| node[:task] == implementing.method(:b) } }
+        let(:node) { graph.find { |node| node[:task] == Implementing.method(:b) } }
 
         it { expect(node[:id]).must_equal :B }
-        it { expect(node[:task]).must_equal implementing.method(:b) }
-        it { assert_outputs(node, success: Activity::Right) }
+        it { expect(node[:task]).must_equal Implementing.method(:b) }
+        it { assert_outputs(node, success: Trailblazer::Activity::Right) }
       end
     end
 
@@ -35,13 +35,13 @@ class IntrospectGraphTest < Minitest::Spec
         expect(nodes.size).must_equal 5
 
         expect(nodes[0][:task].inspect).must_equal %{#<Trailblazer::Activity::Start semantic=:default>}
-        assert_outgoings nodes[0], Activity::Right => implementing.method(:b)
-        expect(nodes[1][:task]).must_equal implementing.method(:b)
-        assert_outgoings nodes[1], Activity::Right => bc
-        expect(nodes[2][:task]).must_equal bc
-        assert_outgoings nodes[2], bc.to_h[:outputs][0].signal => nodes[3].task
-        expect(nodes[3][:task]).must_equal implementing.method(:f)
-        assert_outgoings nodes[3], Activity::Right => nested_activity.to_h[:outputs][0].signal
+        assert_outgoings nodes[0], Trailblazer::Activity::Right => Implementing.method(:b)
+        expect(nodes[1][:task]).must_equal Implementing.method(:b)
+        assert_outgoings nodes[1], Trailblazer::Activity::Right => flat_activity
+        expect(nodes[2][:task]).must_equal flat_activity
+        assert_outgoings nodes[2], flat_activity.to_h[:outputs][0].signal => nodes[3].task
+        expect(nodes[3][:task]).must_equal Implementing.method(:e)
+        assert_outgoings nodes[3], Trailblazer::Activity::Right => nested_activity.to_h[:outputs][0].signal
         expect(nodes[4][:task].inspect).must_equal %{#<Trailblazer::Activity::End semantic=:success>}
         assert_outgoings nodes[4], {}
       end

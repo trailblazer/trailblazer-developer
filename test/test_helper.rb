@@ -15,6 +15,28 @@ Minitest::Spec.class_eval do
   Dev = Trailblazer::Developer
   include Trailblazer::Activity::Testing::Assertions
 
+  Implementing = T.def_tasks(:b, :e, :B, :C)
+
+  let(:flat_activity) do
+    Class.new(Trailblazer::Activity::Path) do
+      step task: Implementing.method(:B), id: :B
+      step task: Implementing.method(:C), id: :C
+    end
+  end
+
+  let(:nested_activity) do
+    flat_activity = self.flat_activity
+
+    Class.new(Trailblazer::Activity::Path) do
+      step task: Implementing.method(:b),
+        id: :B,
+        more: true,
+        DataVariable() => :more
+      step Subprocess(flat_activity), id: :D
+      step task: Implementing.method(:e), id: :E
+    end
+  end
+
   module Tracing
     def self.three_level_nested_activity(sub_activity_options: {}, _activity_options: {}, e_options: {})
       sub_activity = nil

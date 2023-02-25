@@ -24,7 +24,7 @@ class DebuggerTest < Minitest::Spec
     captured_input_for_sub_activity = stack.to_a.find { |captured| captured.task == sub_activity }
 
     #@ this is internal API but we're never gonna need this anywhere except for other internals :)
-    pipeline_extension = Activity::TaskWrap::Extension.build([
+    pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
       Dev::Trace::Debugger::Normalizer.Task(my_compute_runtime_id),
       id: :my_compute_runtime_id,
       append: :runtime_id # so that the following {#runtime_path} picks up those changes made here.
