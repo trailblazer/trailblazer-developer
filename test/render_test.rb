@@ -7,7 +7,7 @@ class RenderCircuitTest < Minitest::Spec
       step :b
     end
 
-    circuit = Trailblazer::Developer::Render::Circuit.(activity.to_h)
+    circuit = Trailblazer::Developer.render(activity.to_h)
     assert_equal circuit, %{
 #<Start/:default>
  {Trailblazer::Activity::Right} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=a>
