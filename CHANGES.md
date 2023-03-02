@@ -4,6 +4,8 @@
   to rendering, which is not a part of pure runtime behavior.
 * Use `Introspect.Nodes` API instead of `TaskMap`.
 * Remove `:task_maps_per_activity` in `Debugger` as we don't need to cache anymore.
+* Require `trailblazer-activity-dsl-linear-1.2.0`.
+* Remove `Render::Circuit` as this is part of `trailblazer-activity` now.
 
 # 0.0.27
 
