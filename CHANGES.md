@@ -1,3 +1,11 @@
+# 0.0.29
+
+* The `:render_method` callable can now return output along with additional returned values.
+* Pass the top-level `:activity` into the `:render_method`.
+* In `#wtf?`, only complete the stack when an exception occurred.
+* `wtf?` now returns all original return values plus the computed output from `:render_method`,
+  followed by an arbitrary object from the rendering code.
+
 # 0.0.28
 
 * Move `Introspect::Graph` over from `trailblazer-activity`. It's a data structure very specific
