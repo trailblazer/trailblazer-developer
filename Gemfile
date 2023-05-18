@@ -11,3 +11,5 @@ gemspec
 # gem "trailblazer-activity",           github: "trailblazer/trailblazer-activity"
 # gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
 
+
+gem "benchmark-ips"

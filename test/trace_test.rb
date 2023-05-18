@@ -87,7 +87,7 @@ class TraceTest < Minitest::Spec
 
     puts output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    _(output).must_equal %{Trailblazer::Activity::Railway (anonymous)
+    assert_equal output, %{Trailblazer::Activity::Railway (anonymous)
 |-- Start.default
 |-- a
 |-- #<Class:>
@@ -101,6 +101,68 @@ class TraceTest < Minitest::Spec
 |   `-- End.success
 |-- e
 `-- End.success}
+  end
+
+  require "trailblazer/developer/trace/snapshot"
+
+  require "benchmark/ips"
+
+  it "nested tracing with better-snapshot" do
+    activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
+
+    inspect_only_flow_options = {}
+
+    Snapshot = Trailblazer::Developer::Trace::Snapshot
+
+    snapshot_flow_options = {
+      input_data_collector:   Snapshot.method(:input_data_collector),
+      output_data_collector:  Snapshot.method(:output_data_collector),
+      variable_versions:      Snapshot::Versions.new
+    }
+
+Benchmark.ips do |x|
+    x.report("inspect-only") do ||
+
+      stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+        activity,
+        [
+          {seq: []},
+          inspect_only_flow_options
+        ]
+      )
+    end
+
+    x.report("snapshot") do ||
+
+      stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+        activity,
+        [
+          {seq: []},
+          snapshot_flow_options
+        ]
+      )
+    end
+
+    x.compare!
+end
+
+
+    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+      activity,
+      [
+        {seq: []},
+        {flow: true,
+
+          input_data_collector:   Snapshot.method(:input_data_collector),
+          output_data_collector:  Snapshot.method(:output_data_collector),
+          variable_versions:      Snapshot::Versions.new
+        }
+      ]
+    )
+
+    pp flow_options[:variable_versions]
+
+    assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
   end
 
   it "allows to inject custom :data_collector" do
