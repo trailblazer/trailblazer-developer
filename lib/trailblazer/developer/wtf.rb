@@ -58,28 +58,28 @@ module Trailblazer::Developer
     end
 
     module Exception
-      # When an exception occurs the Stack instance is incomplete - it is missing Captured::Output instances
+      # When an exception occurs the Stack instance is incomplete - it is missing Snapshot::After instances
       # for Inputs still open. This method adds the missing elements so the Trace::Tree algorithm doesn't crash.
       module Stack
         def self.complete(incomplete_stack)
           processed = []
 
           incomplete_stack.to_a.each do |captured|
-            if captured.is_a?(Trace::Captured::Input)
+            if captured.is_a?(Trace::Snapshot::Before)
               processed << captured
             else
               processed.pop
             end
           end
 
-          missing_captured = processed.reverse.collect { |captured| Trace::Captured::Output.new(captured.task, captured.activity, {}) }
+          missing_captured = processed.reverse.collect { |captured| Trace::Snapshot::After.new(captured.task, captured.activity, {}) }
 
           Trace::Stack.new(incomplete_stack.to_a + missing_captured)
         end
       end # Stack
 
       def self.complete_stack_for_exception(incomplete_stack, exception)
-        # in 99%, exception_source is a {Captured::Input}.
+        # in 99%, exception_source is a {Snapshot::Before}.
         exception_source = incomplete_stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
                                                   #   However, what if an error happens in, say, an input filter? TODO: test this
 

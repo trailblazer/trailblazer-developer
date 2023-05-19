@@ -53,10 +53,10 @@ module Trailblazer
         # for {captured_input} we're gonna build a {Node}!
         captured_input, remaining = stack_end[0], stack_end[1..-1]
 
-            raise unless captured_input.is_a?(Captured::Input)
+            raise unless captured_input.is_a?(Snapshot::Before)
 
         while next_captured = remaining[0]
-          if next_captured.is_a?(Captured::Input)
+          if next_captured.is_a?(Snapshot::Before)
 
             bla, _processed = Tree(remaining, level: level+1)
             nodes += [bla]
@@ -65,9 +65,9 @@ module Trailblazer
 
             remaining = remaining - processed
 
-          else # Captured::Output
+          else # Snapshot::After
 
-            raise unless next_captured.is_a?(Captured::Output)
+            raise unless next_captured.is_a?(Snapshot::After)
             raise if next_captured.activity != captured_input.activity
 
             node = Tree::Node.new(level, captured_input, next_captured, nodes)

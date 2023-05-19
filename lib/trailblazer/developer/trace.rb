@@ -15,9 +15,9 @@ module Trailblazer::Developer
 
       def arguments_for_call(activity, (options, original_flow_options), **original_circuit_options)
         default_flow_options = {
-          stack:                  Trace::Stack.new,
-          input_data_collector:   Trace.method(:default_input_data_collector),
-          output_data_collector:  Trace.method(:default_output_data_collector),
+          stack:              Trace::Stack.new,
+          before_snapshooter: Trace::Snapshot::Deprecated.method(:default_input_data_collector),
+          after_snapshooter:  Trace::Snapshot::Deprecated.method(:default_output_data_collector),
         }
 
         flow_options = {**default_flow_options, **Hash(original_flow_options)}
@@ -51,9 +51,7 @@ module Trailblazer::Developer
     def capture_args(wrap_config, ((ctx, flow), circuit_options))
       original_args = [[ctx, flow], circuit_options]
 
-      captured_input = Captured(Captured::Input, flow[:input_data_collector], wrap_config, original_args)
-
-      flow[:stack] << captured_input
+      flow[:stack] << take_snapshot!(Snapshot::Before, flow[:before_snapshooter], wrap_config, original_args)
 
       return wrap_config, original_args
     end
@@ -62,49 +60,14 @@ module Trailblazer::Developer
     def capture_return(wrap_config, ((ctx, flow), circuit_options))
       original_args = [[ctx, flow], circuit_options]
 
-      captured_output = Captured(Captured::Output, flow[:output_data_collector], wrap_config, original_args)
-
-      flow[:stack] << captured_output
+      flow[:stack] << take_snapshot!(Snapshot::After, flow[:after_snapshooter], wrap_config, original_args)
 
       return wrap_config, original_args
     end
 
-    def Captured(captured_class, data_collector, wrap_config, ((ctx, flow), circuit_options))
-      collected_data = data_collector.call(wrap_config, [[ctx, flow], circuit_options])
-
-      captured_class.new( # either Input or Output
-        wrap_config[:task],
-        circuit_options[:activity],
-        collected_data
-      ).freeze
+    # TODO: return {flow_options} or at least {stack}
+    def take_snapshot!(snapshot_class, snapshooter, wrap_config, original_args)
+      snapshot_class.build(snapshooter, wrap_config, original_args)
     end
-
-    # Called in {#Captured}.
-    # DISCUSS: this is where to start for a new {Inspector} implementation.
-    def default_input_data_collector(wrap_config, ((ctx, _), _)) # DISCUSS: would it be faster to access ctx via {original_args[0][0]}?
-      # mutable, old_ctx = ctx.decompose
-      # mutable, old_ctx = ctx, nil
-
-      {
-        # ctx: ctx.to_h.freeze,
-        ctx_snapshot: ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
-      } # TODO: proper snapshot!
-    end
-
-    # Called in {#Captured}.
-    def default_output_data_collector(wrap_config, ((ctx, _), _))
-      returned_ctx, _ = wrap_config[:return_args]
-
-      # FIXME: snapshot!
-      {
-        # ctx: ctx.to_h.freeze,
-        ctx_snapshot: returned_ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
-        signal: wrap_config[:return_signal]
-      }
-    end
-
-    Captured         = Struct.new(:task, :activity, :data)
-    Captured::Input  = Class.new(Captured)
-    Captured::Output = Class.new(Captured)
   end
 end

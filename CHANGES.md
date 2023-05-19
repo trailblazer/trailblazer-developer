@@ -1,3 +1,11 @@
+# 0.0.30
+
+* Introduce the concept of `Snapshot` which can be a moment in time before or after a step.
+  `Captured::Input`/`Captured::Output` are now `Snapshot::Before` and `Snapshot::After`.
+* Rename `:output_data_collector` and `:input_data_collector` to `:after_snapshooter` and `:before_snapshooter`
+  as they both produce instances of `Snapshot`.
+* Add `Snapshot::Ctx` which is a new, faster way of capturing variables in ctx before and after a step.
+
 # 0.0.29
 
 * The `:render_method` callable can now return output along with additional returned values.
