@@ -154,14 +154,14 @@ class TraceTest < Minitest::Spec
     Snapshot = Trailblazer::Developer::Trace::Snapshot
 
     inspect_only_flow_options = {
-      input_data_collector:   Snapshot::Deprecated.method(:default_input_data_collector),
-      output_data_collector:  Snapshot::Deprecated.method(:default_output_data_collector),
+      before_snapshooter:   Snapshot::Deprecated.method(:default_input_data_collector),
+      after_snapshooter:  Snapshot::Deprecated.method(:default_output_data_collector),
     }
 
 
     snapshot_flow_options = {
-      input_data_collector:   Snapshot.method(:before_snapshooter),
-      output_data_collector:  Snapshot.method(:after_snapshooter),
+      before_snapshooter:   Snapshot.method(:before_snapshooter),
+      after_snapshooter:  Snapshot.method(:after_snapshooter),
       variable_versions:      Snapshot::Ctx::Versions.new
     }
 
@@ -197,8 +197,8 @@ class TraceTest < Minitest::Spec
 
 
     snapshot_flow_options = {
-      input_data_collector:   Snapshot.method(:before_snapshooter),
-      output_data_collector:  Snapshot.method(:after_snapshooter),
+      before_snapshooter:   Snapshot.method(:before_snapshooter),
+      after_snapshooter:  Snapshot.method(:after_snapshooter),
       variable_versions:      Snapshot::Ctx::Versions.new
     }
 
@@ -294,8 +294,8 @@ class TraceTest < Minitest::Spec
       [
         { seq: [] },
         {
-          input_data_collector: input_collector,
-          output_data_collector: output_collector,
+          before_snapshooter: input_collector,
+          after_snapshooter: output_collector,
         }
       ]
     )
