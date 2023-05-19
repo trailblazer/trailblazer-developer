@@ -21,20 +21,27 @@ module Trailblazer::Developer
       def input_data_collector(wrap_ctx, ((ctx, flow_options), _))
         variable_versions = flow_options[:variable_versions]
 
-        keys = ctx.keys
-
-        ctx_variable_refs = ctx.collect do |key, value|
-          _ref = variable_versions.add!(key, value)
-        end
-
         {
-          ctx_variable_refs: ctx_variable_refs
+          ctx_variable_refs:  collect_ctx_variable_snapshots!(variable_versions, ctx),
         }
       end
 
-      def output_data_collector(wrap_ctx, args)
-        input_data_collector(wrap_ctx, args)
-          .merge(signal: wrap_ctx[:return_signal])
+      # This is usually run at the very end of taskWrap, after Out().
+      def output_data_collector(wrap_ctx, _)
+        returned_ctx, flow_options = wrap_ctx[:return_args]
+
+        variable_versions = flow_options[:variable_versions]
+
+        {
+          ctx_variable_refs:  collect_ctx_variable_snapshots!(variable_versions, returned_ctx),
+          signal:             wrap_ctx[:return_signal]
+        }
+      end
+
+      def collect_ctx_variable_snapshots!(variable_versions, ctx)
+        _ctx_variable_refs = ctx.collect do |key, value|
+          _ref = variable_versions.add!(key, value)
+        end
       end
 
       class Versions
@@ -46,7 +53,7 @@ module Trailblazer::Developer
           value_hash = value.hash # DISCUSS: does this really always change when a deeply nested object changes?
 
           if @variables.key?(name)
-            existing_version = @variables[name][value_hash] and return existing_version
+            @variables[name][value_hash] and return [name, value_hash]
           end
 
           @variables[name] ||= {}

@@ -108,7 +108,27 @@ class TraceTest < Minitest::Spec
   require "benchmark/ips"
 
   it "nested tracing with better-snapshot" do
-    activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
+    # activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
+
+
+    namespace = Module.new do
+    end
+      class namespace::Endpoint < Trailblazer::Activity::Railway
+        step :authenticate
+        step :authorize,
+          Inject(:current_user, override: true) => ->(ctx, **) { User.new(2) }, #
+          Inject() => [:seq],
+          Out() => []
+
+        def authenticate(ctx, current_user:, seq:, **)
+          seq << :authenticate
+        end
+
+        def authorize(ctx, current_user:, seq:, **)
+          seq << :authorize
+        end
+      end
+
 
     inspect_only_flow_options = {}
 
@@ -120,49 +140,98 @@ class TraceTest < Minitest::Spec
       variable_versions:      Snapshot::Versions.new
     }
 
-Benchmark.ips do |x|
-    x.report("inspect-only") do ||
+    activity = namespace::Endpoint
 
-      stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
-        activity,
-        [
-          {seq: []},
-          inspect_only_flow_options
-        ]
-      )
+# Benchmark.ips do |x|
+#     x.report("inspect-only") do ||
+
+#       stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+#         activity,
+#         [
+#           {seq: []},
+#           inspect_only_flow_options
+#         ]
+#       )
+#     end
+
+#     x.report("snapshot") do ||
+
+#       stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+#         activity,
+#         [
+#           {seq: []},
+#           snapshot_flow_options
+#         ]
+#       )
+#     end
+
+#     x.compare!
+# end
+
+    # Test custom classes without explicit {#hash} implementation.
+    class User
+      def initialize(id)
+        @id = id
+      end
     end
-
-    x.report("snapshot") do ||
-
-      stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
-        activity,
-        [
-          {seq: []},
-          snapshot_flow_options
-        ]
-      )
-    end
-
-    x.compare!
-end
 
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
       [
-        {seq: []},
-        {flow: true,
-
-          input_data_collector:   Snapshot.method(:input_data_collector),
-          output_data_collector:  Snapshot.method(:output_data_collector),
-          variable_versions:      Snapshot::Versions.new
-        }
+        {
+          current_user: User.new(1),
+          seq: []
+        },
+        snapshot_flow_options
       ]
     )
 
-    pp flow_options[:variable_versions]
 
-    assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
+    assert_equal ctx[:seq], [:authenticate, :authorize]
+
+    versions = flow_options[:variable_versions].instance_variable_get(:@variables)
+
+    pp versions
+
+    stack = flow_options[:stack].to_a
+
+    assert_equal stack[0].task, namespace::Endpoint
+    assert_snapshot versions, stack[0], current_user: 0, seq: 0
+
+    assert_equal stack[1].task.inspect, %(#<Trailblazer::Activity::Start semantic=:default>)
+    assert_snapshot versions, stack[1], current_user: 0, seq: 0
+    assert_equal stack[2].task.inspect, %(#<Trailblazer::Activity::Start semantic=:default>)
+    assert_snapshot versions, stack[2], current_user: 0, seq: 0
+
+    # Endpoint #authenticate
+    assert_equal stack[3].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authenticate>)
+    assert_snapshot versions, stack[3], current_user: 0, seq: 0
+    assert_equal stack[4].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authenticate>)
+    assert_snapshot versions, stack[4], current_user: 0, seq: 1
+
+    # Endpoint #authorize
+    assert_equal stack[5].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authorize>)
+    assert_snapshot versions, stack[5], current_user: 1, seq: 1
+    assert_equal stack[6].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authorize>)
+    assert_snapshot versions, stack[6], current_user: 0, seq: 2
+
+    # Endpoint End.success
+    assert_equal stack[7].task.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
+    assert_snapshot versions, stack[7], current_user: 0, seq: 2
+
+  end
+
+  def assert_snapshot(versions, captured, **expected_variable_names_to_expected_index)
+    captured_refs = captured.data[:ctx_variable_refs] # [[variable_name, hash]]
+
+
+    assert_equal captured_refs.collect { |name, hash| name }, expected_variable_names_to_expected_index.keys
+
+    expected_variable_names_to_expected_index.each do |variable_name, index|
+      assert_equal versions.fetch(variable_name).keys[index], captured_refs.find { |name, hash| name == variable_name }[1], # both hashs have to be identical
+        "hash mismatch for `#{variable_name}`"
+    end
   end
 
   it "allows to inject custom :data_collector" do
