@@ -105,14 +105,16 @@ class TraceTest < Minitest::Spec
 
   require "trailblazer/developer/trace/snapshot"
 
-  require "benchmark/ips"
 
   it "nested tracing with better-snapshot" do
-    # activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
-
+    # Test custom classes without explicit {#hash} implementation.
+    class User
+      def initialize(id)
+        @id = id
+      end
+    end
 
     namespace = Module.new do
-
       class self::Endpoint < Trailblazer::Activity::Railway
         class Create < Trailblazer::Activity::Railway
           step :model
@@ -152,9 +154,6 @@ class TraceTest < Minitest::Spec
       end
     end
 
-
-
-
     inspect_only_flow_options = {}
 
     Snapshot = Trailblazer::Developer::Trace::Snapshot
@@ -167,13 +166,15 @@ class TraceTest < Minitest::Spec
 
     activity = namespace::Endpoint
 
+
+# require "benchmark/ips"
 # Benchmark.ips do |x|
 #     x.report("inspect-only") do ||
 
 #       stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
 #         activity,
 #         [
-#           {seq: []},
+#           {seq: [], current_user: Object.new, params: {name: "Q & I"}},
 #           inspect_only_flow_options
 #         ]
 #       )
@@ -184,7 +185,7 @@ class TraceTest < Minitest::Spec
 #       stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
 #         activity,
 #         [
-#           {seq: []},
+#           {seq: [], current_user: Object.new, params: {name: "Q & I"}},
 #           snapshot_flow_options
 #         ]
 #       )
@@ -193,13 +194,12 @@ class TraceTest < Minitest::Spec
 #     x.compare!
 # end
 
-    # Test custom classes without explicit {#hash} implementation.
-    class User
-      def initialize(id)
-        @id = id
-      end
-    end
 
+    snapshot_flow_options = {
+      input_data_collector:   Snapshot.method(:input_data_collector),
+      output_data_collector:  Snapshot.method(:output_data_collector),
+      variable_versions:      Snapshot::Versions.new
+    }
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
@@ -218,7 +218,7 @@ class TraceTest < Minitest::Spec
 
     versions = flow_options[:variable_versions].instance_variable_get(:@variables)
 
-    pp versions
+    # pp versions
 
     stack = flow_options[:stack].to_a
 

@@ -5,6 +5,9 @@ module Trailblazer::Developer
     # We figure out if a variable has changed by using `variable.hash` (works
     # even with deeply nested structures).
     #
+    # Key idea here is to have minimum work at operation-runtime. Specifics like
+    # figuring out what has changed can be done when using the debugger.
+    #
     # By keeping "old" versions, we get three benefits.
     # 1. We only need to call {inspect} once on a traced variable. Especially
     #    when variables are complex structures or strings, this dramatically speeds
@@ -53,12 +56,13 @@ module Trailblazer::Developer
         def add!(name, value)
           value_hash = value.hash # DISCUSS: does this really always change when a deeply nested object changes?
 
-          if @variables.key?(name)
-            @variables[name][value_hash] and return [name, value_hash]
+          if ! @variables.key?(name)
+            @variables[name] = {}
           end
 
-          @variables[name] ||= {}
-          @variables[name][value_hash] = value.inspect # FIXME: don't make it hard-coded {inspect}.
+          if ! @variables[name].key?(value_hash)
+            @variables[name][value_hash] = value.inspect # FIXME: don't make it hard-coded {inspect}.
+          end
 
           [name, value_hash].freeze # "Ref"
         end
