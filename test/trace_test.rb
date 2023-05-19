@@ -112,13 +112,35 @@ class TraceTest < Minitest::Spec
 
 
     namespace = Module.new do
-    end
-      class namespace::Endpoint < Trailblazer::Activity::Railway
+
+      class self::Endpoint < Trailblazer::Activity::Railway
+        class Create < Trailblazer::Activity::Railway
+          step :model
+          step :screw_params! # unfortunately, people do that.
+
+          def model(ctx, current_user:, seq:, **)
+            seq << :model
+
+            ctx[:model] = Object.new
+          end
+
+          def screw_params!(ctx, params:, seq:, **)
+            seq << :screw_params!
+
+            # DISCUSS: this sucks, of course!
+            params[:song] = params
+          end
+        end
+
+
         step :authenticate
         step :authorize,
           Inject(:current_user, override: true) => ->(ctx, **) { User.new(2) }, #
           Inject() => [:seq],
           Out() => []
+        step Subprocess(Create),
+          In() => [:current_user, :params, :seq],
+          Out() => [:model]
 
         def authenticate(ctx, current_user:, seq:, **)
           seq << :authenticate
@@ -128,6 +150,9 @@ class TraceTest < Minitest::Spec
           seq << :authorize
         end
       end
+    end
+
+
 
 
     inspect_only_flow_options = {}
@@ -181,14 +206,15 @@ class TraceTest < Minitest::Spec
       [
         {
           current_user: User.new(1),
-          seq: []
+          params: {name: "Q & I"},
+          seq: [],
         },
         snapshot_flow_options
       ]
     )
 
 
-    assert_equal ctx[:seq], [:authenticate, :authorize]
+    assert_equal ctx[:seq], [:authenticate, :authorize, :model, :screw_params!]
 
     versions = flow_options[:variable_versions].instance_variable_get(:@variables)
 
@@ -197,34 +223,58 @@ class TraceTest < Minitest::Spec
     stack = flow_options[:stack].to_a
 
     assert_equal stack[0].task, namespace::Endpoint
-    assert_snapshot versions, stack[0], current_user: 0, seq: 0
+    assert_snapshot versions, stack[0], current_user: 0, params: 0, seq: 0
 
     assert_equal stack[1].task.inspect, %(#<Trailblazer::Activity::Start semantic=:default>)
-    assert_snapshot versions, stack[1], current_user: 0, seq: 0
+    assert_snapshot versions, stack[1], current_user: 0, params: 0, seq: 0
     assert_equal stack[2].task.inspect, %(#<Trailblazer::Activity::Start semantic=:default>)
-    assert_snapshot versions, stack[2], current_user: 0, seq: 0
+    assert_snapshot versions, stack[2], current_user: 0, params: 0, seq: 0
 
     # Endpoint #authenticate
     assert_equal stack[3].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authenticate>)
-    assert_snapshot versions, stack[3], current_user: 0, seq: 0
+    assert_snapshot versions, stack[3], current_user: 0, params: 0, seq: 0
     assert_equal stack[4].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authenticate>)
-    assert_snapshot versions, stack[4], current_user: 0, seq: 1
+    assert_snapshot versions, stack[4], current_user: 0, params: 0, seq: 1
 
     # Endpoint #authorize
     assert_equal stack[5].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authorize>)
-    assert_snapshot versions, stack[5], current_user: 1, seq: 1
+    assert_snapshot versions, stack[5], current_user: 1, params: 0, seq: 1
     assert_equal stack[6].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authorize>)
-    assert_snapshot versions, stack[6], current_user: 0, seq: 2
+    assert_snapshot versions, stack[6], current_user: 0, params: 0, seq: 2
+
+    # Create {in}
+    assert_equal stack[7].task, namespace::Endpoint::Create
+    assert_snapshot versions, stack[7], current_user: 0, params: 0, seq: 2
+
+      # Create :model
+      assert_equal stack[10].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=model>)
+      assert_snapshot versions, stack[10], current_user: 0, params: 0, seq: 2
+      assert_equal stack[11].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=model>)
+      assert_snapshot versions, stack[11], current_user: 0, params: 0, seq: 3, model: 0
+
+      # Create :screw_params!
+      assert_equal stack[12].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=screw_params!>)
+      assert_snapshot versions, stack[12], current_user: 0, params: 0, seq: 3, model: 0
+      assert_equal stack[13].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=screw_params!>)
+      assert_snapshot versions, stack[13], current_user: 0, params: 1, seq: 4, model: 0
+
+      # Create End.success
+      assert_equal stack[15].task.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
+      assert_snapshot versions, stack[15], current_user: 0, params: 1, seq: 4, model: 0
+
+    # Create {out}
+    assert_equal stack[16].task, namespace::Endpoint::Create
+    assert_snapshot versions, stack[16], current_user: 0, params: 1, seq: 4, model: 0
 
     # Endpoint End.success
-    assert_equal stack[7].task.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
-    assert_snapshot versions, stack[7], current_user: 0, seq: 2
-
+    assert_equal stack[17].task.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
+    assert_snapshot versions, stack[17], current_user: 0, params: 1, seq: 4, model: 0
+    assert_equal stack[18].task.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
+    assert_snapshot versions, stack[18], current_user: 0, params: 1, seq: 4, model: 0
   end
 
   def assert_snapshot(versions, captured, **expected_variable_names_to_expected_index)
     captured_refs = captured.data[:ctx_variable_refs] # [[variable_name, hash]]
-
 
     assert_equal captured_refs.collect { |name, hash| name }, expected_variable_names_to_expected_index.keys
 

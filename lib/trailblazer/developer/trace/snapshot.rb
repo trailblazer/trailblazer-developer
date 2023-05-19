@@ -18,6 +18,7 @@ module Trailblazer::Developer
     module Snapshot
       module_function
 
+      # This is run just before {call_task}, after In().
       def input_data_collector(wrap_ctx, ((ctx, flow_options), _))
         variable_versions = flow_options[:variable_versions]
 
