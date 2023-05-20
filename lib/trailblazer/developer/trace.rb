@@ -2,7 +2,9 @@ module Trailblazer::Developer
   module Trace
 
     class << self
-      # Public entry point to activate tracing when running {activity}.
+      # Public entry point to run an activity with tracing.
+      # It returns the accumulated stack of Snapshots, along with the original return values.
+      # Note that {Trace.invoke} does not do any rendering.
       def call(activity, (ctx, flow_options), **circuit_options)
         activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call( activity, [ctx, flow_options], **circuit_options ) # only run once for the entire circuit!
 
@@ -44,30 +46,32 @@ module Trailblazer::Developer
       )
     end
 
+    # Snapshot::Before and After are a generic concept of Trace, as
+    # they're the interface to Trace::Present, WTF, and Debugger.
+
     # It's important to understand that {flow[:stack]} is mutated by design. This is needed so
     # in case of exceptions we still have a "global" trace - unfortunately Ruby doesn't allow
     # us a better way.
     # taskWrap step to capture incoming arguments of a step.
-    def capture_args(wrap_config, ((ctx, flow), circuit_options))
-      original_args = [[ctx, flow], circuit_options]
+    def capture_args(wrap_config, original_args)
+      flow_options = original_args[0][1]
 
-      flow[:stack] << take_snapshot!(Snapshot::Before, flow[:before_snapshooter], wrap_config, original_args)
+      snapshot, stack_options = Snapshot::Before.(flow_options[:before_snapshooter], wrap_config, original_args)
+
+      flow_options[:stack].add!(snapshot, stack_options)
 
       return wrap_config, original_args
     end
 
     # taskWrap step to capture outgoing arguments from a step.
-    def capture_return(wrap_config, ((ctx, flow), circuit_options))
-      original_args = [[ctx, flow], circuit_options]
+    def capture_return(wrap_config, ((ctx, flow_options), circuit_options))
+      original_args = [[ctx, flow_options], circuit_options]
 
-      flow[:stack] << take_snapshot!(Snapshot::After, flow[:after_snapshooter], wrap_config, original_args)
+      snapshot, stack_options = Snapshot::After.(flow_options[:after_snapshooter], wrap_config, original_args)
+
+      flow_options[:stack].add!(snapshot, stack_options)
 
       return wrap_config, original_args
-    end
-
-    # TODO: return {flow_options} or at least {stack}
-    def take_snapshot!(snapshot_class, snapshooter, wrap_config, original_args)
-      snapshot_class.build(snapshooter, wrap_config, original_args)
     end
   end
 end

@@ -4,6 +4,8 @@ module Trailblazer::Developer
     # includes a ctx snapshot, variable versions and a returned signal for after-step
     # snapshots.
     #
+    # Note that {Before} and {After} are generic concepts know to Trace::Present and Debugger.
+    #
     # Snapshot::After{
     #   signal: <End.Success>
     #   ctx_snapshot: Snapshot::Ctx{
@@ -14,14 +16,17 @@ module Trailblazer::Developer
       Before  = Class.new(Snapshot)
       After   = Class.new(Snapshot)
 
-      def self.build(data_collector, wrap_config, ((ctx, flow), circuit_options))
-        collected_data = data_collector.call(wrap_config, [[ctx, flow], circuit_options])
+      # This is called from {Trace.capture_args} and {Trace.capture_return} in the taskWrap.
+      def self.call(ctx_snapshooter, wrap_config, ((ctx, flow), circuit_options))
+        collected_ctx_data, stack_options = ctx_snapshooter.call(wrap_config, [[ctx, flow], circuit_options])
 
-        new( # either Before or After.
+        snapshot = new( # either Before or After.
           wrap_config[:task],
           circuit_options[:activity],
-          collected_data
+          collected_ctx_data
         ).freeze
+
+        return snapshot, stack_options
       end
 
       # The original snapshooter methods, used to reside in {Trace}.
@@ -30,9 +35,11 @@ module Trailblazer::Developer
         # @private
         # This function will be removed and is here for benchmarking reasons, only.
         def self.default_input_data_collector(wrap_config, ((ctx, _), _)) # DISCUSS: would it be faster to access ctx via {original_args[0][0]}?
-          {
+          data = {
             ctx_snapshot: ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
           }
+
+          return data, {}
         end
 
         # Called in {#Captured}.
@@ -41,32 +48,42 @@ module Trailblazer::Developer
         def self.default_output_data_collector(wrap_config, ((ctx, _), _))
           returned_ctx, _ = wrap_config[:return_args]
 
-          {
+          data = {
             ctx_snapshot: returned_ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
             signal:       wrap_config[:return_signal]
           }
+
+          return data, {}
         end
       end # Deprecated
 
       # This is run just before {call_task}, after In().
       def self.before_snapshooter(wrap_ctx, ((ctx, flow_options), _))
-        variable_versions = flow_options[:variable_versions]
+        variable_versions = flow_options[:stack].to_h[:variable_versions]
 
-        {
-          ctx_variable_refs:  Ctx.collect_ctx_variable_snapshots!(variable_versions, ctx),
+        version_refs, variable_versions = Ctx.collect_ctx_variable_snapshots!(variable_versions, ctx)
+
+        data = {
+          ctx_variable_refs:  version_refs,
         }
+
+        return data, {variable_versions: variable_versions}
       end
 
       # This is usually run at the very end of taskWrap, after Out().
       def self.after_snapshooter(wrap_ctx, _)
         returned_ctx, flow_options = wrap_ctx[:return_args]
 
-        variable_versions = flow_options[:variable_versions]
+        variable_versions = flow_options[:stack].to_h[:variable_versions]
 
-        {
-          ctx_variable_refs:  Ctx.collect_ctx_variable_snapshots!(variable_versions, returned_ctx),
+        version_refs, variable_versions = Ctx.collect_ctx_variable_snapshots!(variable_versions, returned_ctx)
+
+        data = {
+          ctx_variable_refs:  version_refs,
           signal:             wrap_ctx[:return_signal]
         }
+
+        return data, {variable_versions: variable_versions}
       end
 
       # Snapshot::Ctx keeps an inspected version of each ctx variable.
@@ -90,9 +107,11 @@ module Trailblazer::Developer
       # DISCUSS: speed up by checking mutable, only?
       module Ctx
         def self.collect_ctx_variable_snapshots!(variable_versions, ctx)
-          ctx.collect do |key, value|
+          version_refs = ctx.collect do |key, value|
             variable_versions.add!(key, value)
           end
+
+          return version_refs, variable_versions
         end
 
         class Versions

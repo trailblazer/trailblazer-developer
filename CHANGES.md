@@ -4,6 +4,7 @@
   `Captured::Input`/`Captured::Output` are now `Snapshot::Before` and `Snapshot::After`.
 * Rename `:output_data_collector` and `:input_data_collector` to `:after_snapshooter` and `:before_snapshooter`
   as they both produce instances of `Snapshot`.
+* Change signature of former `:input_data_collectore` and `:output_data_collector`, they return two hashs now.
 * Add `Snapshot::Ctx` which is a new, faster way of capturing variables in ctx before and after a step.
 
 # 0.0.29

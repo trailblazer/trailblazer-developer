@@ -14,6 +14,8 @@ class StackTest < Minitest::Spec
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
+    assert_equal stack.to_h, {}
+
     stack_ary = stack.to_a
 
     # top activity

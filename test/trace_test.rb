@@ -199,7 +199,7 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      variable_versions:      Snapshot::Ctx::Versions.new
+      stack:              Trailblazer::Developer::Trace::Stack.new(variable_versions: Snapshot::Ctx::Versions.new)
     }
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
@@ -217,11 +217,13 @@ class TraceTest < Minitest::Spec
 
     assert_equal ctx[:seq], [:authenticate, :authorize, :model, :screw_params!]
 
-    versions = flow_options[:variable_versions].instance_variable_get(:@variables)
+    stack_object = flow_options[:stack]
+    stack = stack_object.to_a
+
+# pp stack.to_h
+    versions = stack_object.to_h[:variable_versions].instance_variable_get(:@variables)
 
     # pp versions
-
-    stack = flow_options[:stack].to_a
 
     assert_equal stack[0].task, namespace::Endpoint
     assert_snapshot versions, stack[0], current_user: 0, params: 0, seq: 0
@@ -286,8 +288,8 @@ class TraceTest < Minitest::Spec
   end
 
   it "allows to inject custom :data_collector" do
-    input_collector = ->(wrap_config, ((ctx, _), _)) { { ctx: ctx, something: :else } }
-    output_collector = ->(wrap_config, ((ctx, _), _)) { { ctx: ctx, signal: wrap_config[:return_signal] } }
+    input_collector = ->(wrap_config, ((ctx, _), _)) { [{ ctx: ctx, something: :else }, {}] }
+    output_collector = ->(wrap_config, ((ctx, _), _)) { [{ ctx: ctx, signal: wrap_config[:return_signal] }, {}] }
 
     stack, signal, (ctx, _) = Dev::Trace.invoke(
       flat_activity,
