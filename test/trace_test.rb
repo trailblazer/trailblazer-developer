@@ -162,7 +162,7 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      variable_versions:      Snapshot::Ctx::Versions.new
+      stack: Trailblazer::Developer::Trace::Stack.new(variable_versions:      Snapshot::Ctx::Versions.new)
     }
 
     activity = namespace::Endpoint
