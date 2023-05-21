@@ -11,7 +11,7 @@ module Trailblazer
         module Enumerable
           # @private
           def self.nodes_for(node)
-            [node, *node.nodes.collect { |n| nodes_for(n) } ].flatten
+            [node, *node.nodes.flat_map { |n| nodes_for(n) } ]
           end
         end # Enumerable
 
