@@ -120,7 +120,7 @@ class TraceTest < Minitest::Spec
           def model(ctx, current_user:, seq:, **)
             seq << :model
 
-            ctx[:model] = Object.new
+            ctx[:model] = Object
           end
 
           def screw_params!(ctx, params:, seq:, **)
@@ -206,7 +206,7 @@ class TraceTest < Minitest::Spec
       activity,
       [
         {
-          current_user: User.new(1),
+          current_user: current_user = User.new(1),
           params: {name: "Q & I"},
           seq: [],
         },
@@ -222,9 +222,19 @@ class TraceTest < Minitest::Spec
 
 # pp stack.to_h
     versions = stack_object.to_h[:variable_versions].instance_variable_get(:@variables)
-
     # pp versions
 
+    # Check if Ctx.snapshot_at works as expected.
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(stack[11], stack_object),
+      {
+        current_user: current_user.inspect,
+        params:       "{:name=>\"Q & I\"}",
+        seq:          "[:authenticate, :authorize, :model]",
+        model:        "Object"
+      }
+
+
+    # This is a unit test we might not need anymore:
     assert_equal stack[0].task, namespace::Endpoint
     assert_snapshot versions, stack[0], current_user: 0, params: 0, seq: 0
 

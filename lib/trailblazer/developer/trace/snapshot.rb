@@ -114,6 +114,20 @@ module Trailblazer::Developer
           return version_refs, variable_versions
         end
 
+        # DISCUSS: we currently only use this for testing.
+        # DISCUSS: this has knowledge about {Stack} internals.
+        # @private
+        def self.snapshot_ctx_for(snapshot, stack)
+          variable_versions = stack.to_h[:variable_versions].to_h
+
+          snapshot.data[:ctx_variable_refs].collect do |name, hash|
+            [
+              name,
+              variable_versions[name][hash]
+            ]
+          end.to_h
+        end
+
         class Versions
           def initialize()
             @variables = {}
@@ -131,6 +145,10 @@ module Trailblazer::Developer
             end
 
             [name, value_hash].freeze # "Variable version"
+          end
+
+          def to_h
+            @variables
           end
         end
       end # Ctx
