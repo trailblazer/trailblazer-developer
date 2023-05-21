@@ -19,7 +19,7 @@ module Trailblazer
             top_activity = enumerable_tree[0].captured_input.task
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
-            debugger_nodes = enumerable_tree[0..-1].collect do |node|
+            debugger_nodes = enumerable_tree.collect do |node|
               activity      = node.captured_input.activity
               task          = node.captured_input.task
               # it's possible to pass per-node options, like {label: "Yo!"} via {:node_options[<captured_input>]}
@@ -54,6 +54,7 @@ module Trailblazer
             end
           end
 
+          # Called in {Trace::Present}.
           def self.build_for_stack(stack, **options_for_debugger_nodes)
             tree, processed = Trace.Tree(stack.to_a)
 

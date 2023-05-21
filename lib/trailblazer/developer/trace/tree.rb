@@ -50,33 +50,30 @@ module Trailblazer
         processed = []
         nodes     = []
 
-        # for {captured_input} we're gonna build a {Node}!
-        captured_input, remaining = stack_end[0], stack_end[1..-1]
+        # for {snapshot_before} we're gonna build a {Node}!
+        snapshot_before, remaining = stack_end[0], stack_end[1..-1]
 
-            raise unless captured_input.is_a?(Snapshot::Before)
+        # raise unless snapshot_before.is_a?(Snapshot::Before)
 
-        while next_captured = remaining[0]
-          if next_captured.is_a?(Snapshot::Before)
+        while next_snapshot = remaining[0]
+          if next_snapshot.is_a?(Snapshot::Before)
 
             bla, _processed = Tree(remaining, level: level+1)
             nodes += [bla]
             processed += _processed
 
-
             remaining = remaining - processed
 
           else # Snapshot::After
+            # DISCUSS: remove these tests?
+            raise unless next_snapshot.is_a?(Snapshot::After)
+            raise if next_snapshot.activity != snapshot_before.activity
 
-            raise unless next_captured.is_a?(Snapshot::After)
-            raise if next_captured.activity != captured_input.activity
-
-            node = Tree::Node.new(level, captured_input, next_captured, nodes)
+            node = Tree::Node.new(level, snapshot_before, next_snapshot, nodes)
 
             return node,
-              [captured_input, *processed, next_captured] # what nodes did we process here?
-
+              [snapshot_before, *processed, next_snapshot] # what nodes did we process here?
           end
-
         end
 
 
