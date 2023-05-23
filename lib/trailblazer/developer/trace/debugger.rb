@@ -20,10 +20,10 @@ module Trailblazer
 
             # DISCUSS: this might change if we introduce a new Node type for Trace.
             debugger_nodes = enumerable_tree.collect do |node|
-              activity      = node.captured_input.activity
-              task          = node.captured_input.task
+              activity = node.captured_input.activity
+              task     = node.captured_input.task
               # it's possible to pass per-node options, like {label: "Yo!"} via {:node_options[<captured_input>]}
-              options       = node_options[node.captured_input] || {}
+              options  = node_options[node.captured_input] || {}
 
 
               options_for_debugger_node, _ = normalizer.(

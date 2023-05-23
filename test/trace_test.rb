@@ -162,7 +162,7 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      stack: Trailblazer::Developer::Trace::Stack.new(variable_versions:      Snapshot::Ctx::Versions.new)
+      stack: Trailblazer::Developer::Trace::Stack.new
     }
 
     activity = namespace::Endpoint
@@ -199,7 +199,7 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      stack:              Trailblazer::Developer::Trace::Stack.new(variable_versions: Snapshot::Ctx::Versions.new)
+      stack:              Trailblazer::Developer::Trace::Stack.new
     }
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
@@ -221,16 +221,16 @@ class TraceTest < Minitest::Spec
     stack = stack_object.to_a
 
 # pp stack.to_h
-    versions = stack_object.to_h[:variable_versions].instance_variable_get(:@variables)
+    versions = stack_object.variable_versions.instance_variable_get(:@variables)
     # pp versions
 
     # Check if Ctx.snapshot_at works as expected.
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(stack[11], stack_object),
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(stack[11], stack_object), # asserted snapshot is for {After(:model)}.
       {
-        current_user: current_user.inspect,
-        params:       "{:name=>\"Q & I\"}",
-        seq:          "[:authenticate, :authorize, :model]",
-        model:        "Object"
+        current_user: {value: current_user.inspect, has_changed: false},
+        params:       {value: "{:name=>\"Q & I\"}", has_changed: false},
+        seq:          {value: "[:authenticate, :authorize, :model]", has_changed: true},
+        model:        {value: "Object", has_changed: true}
       }
 
 
@@ -286,8 +286,8 @@ class TraceTest < Minitest::Spec
     assert_snapshot versions, stack[18], current_user: 0, params: 1, seq: 4, model: 0
   end
 
-  def assert_snapshot(versions, captured, **expected_variable_names_to_expected_index)
-    captured_refs = captured.data[:ctx_variable_refs] # [[variable_name, hash]]
+  def assert_snapshot(versions, snapshot, **expected_variable_names_to_expected_index)
+    captured_refs = snapshot.data[:ctx_variable_changeset] # [[variable_name, hash]]
 
     assert_equal captured_refs.collect { |name, hash| name }, expected_variable_names_to_expected_index.keys
 

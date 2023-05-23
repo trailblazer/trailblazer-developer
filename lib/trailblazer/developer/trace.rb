@@ -6,7 +6,7 @@ module Trailblazer::Developer
       # It returns the accumulated stack of Snapshots, along with the original return values.
       # Note that {Trace.invoke} does not do any rendering.
       def call(activity, (ctx, flow_options), **circuit_options)
-        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call( activity, [ctx, flow_options], **circuit_options ) # only run once for the entire circuit!
+        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call(activity, [ctx, flow_options], **circuit_options) # only run once for the entire circuit!
 
         signal, (ctx, flow_options) = Trailblazer::Activity::TaskWrap.invoke(activity, [ctx, flow_options], **circuit_options)
 
@@ -56,9 +56,10 @@ module Trailblazer::Developer
     def capture_args(wrap_config, original_args)
       flow_options = original_args[0][1]
 
-      snapshot, stack_options = Snapshot::Before.(flow_options[:before_snapshooter], wrap_config, original_args)
+      snapshot, new_versions = Snapshot::Before.(flow_options[:before_snapshooter], wrap_config, original_args)
 
-      flow_options[:stack].add!(snapshot, stack_options)
+      # We try to be generic here in the taskWrap snapshooting code, where details happen in Snapshot::Before/After and Stack#add!.
+      flow_options[:stack].add!(snapshot, new_versions)
 
       return wrap_config, original_args
     end
@@ -67,9 +68,9 @@ module Trailblazer::Developer
     def capture_return(wrap_config, ((ctx, flow_options), circuit_options))
       original_args = [[ctx, flow_options], circuit_options]
 
-      snapshot, stack_options = Snapshot::After.(flow_options[:after_snapshooter], wrap_config, original_args)
+      snapshot, new_versions = Snapshot::After.(flow_options[:after_snapshooter], wrap_config, original_args)
 
-      flow_options[:stack].add!(snapshot, stack_options)
+      flow_options[:stack].add!(snapshot, new_versions)
 
       return wrap_config, original_args
     end
