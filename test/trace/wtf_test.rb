@@ -120,7 +120,7 @@ class TraceWtfTest < Minitest::Spec
 
   it "accepts {:present_options}" do
     my_renderer = ->(debugger_nodes, **) {
-      return "Nodes: #{debugger_nodes.size}", ["additional", "returned", "args"]
+      return "Nodes: #{debugger_nodes.to_a.size}", ["additional", "returned", "args"]
     }
 
     signal, ctx, flow_options, circuit_options, output, returned_present_args = nil
@@ -142,7 +142,7 @@ class TraceWtfTest < Minitest::Spec
     class PresentCreate < Trailblazer::Activity::Railway
     end
 
-    my_renderer = ->(debugger_nodes, activity:, **) { "Nodes: #{debugger_nodes.size}, started at #{activity}" }
+    my_renderer = ->(debugger_nodes, activity:, **) { "Nodes: #{debugger_nodes.to_a.size}, started at #{activity}" }
 
     signal, (ctx, flow_options), circuit_options, output = Trailblazer::Developer.wtf?(
       PresentCreate,

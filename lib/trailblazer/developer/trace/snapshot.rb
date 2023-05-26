@@ -84,7 +84,7 @@ module Trailblazer::Developer
 
         data = {
           ctx_variable_changeset: changeset,
-          signal:             wrap_ctx[:return_signal]
+          signal:                 wrap_ctx[:return_signal]
         }
 
         return data, new_versions
@@ -115,8 +115,8 @@ module Trailblazer::Developer
         #
         # This is for the "rendering" layer.
         # @private
-        def self.snapshot_ctx_for(snapshot, stack)
-          variable_versions = stack.variable_versions.instance_variable_get(:@variables)
+        def self.snapshot_ctx_for(snapshot, variable_versions)
+          variable_versions = variable_versions.instance_variable_get(:@variables)
 
           snapshot.data[:ctx_variable_changeset].collect do |name, hash, has_changed|
             [

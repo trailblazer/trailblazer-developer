@@ -28,7 +28,7 @@ module Trailblazer::Developer
       end
 
       def apply_style(label, debugger_node, style:, **)
-        return label unless styles = style[debugger_node.captured_input]
+        return label unless styles = style[debugger_node.snapshot_before]
 
         styles.each { |s| label = fmt(label, s) }
         label
@@ -43,7 +43,7 @@ module Trailblazer::Developer
       end
 
       def signal_of(task_node)
-        entity_signal = task_node.captured_output.data[:signal]
+        entity_signal = task_node.snapshot_after.data[:signal]
         entity_klass = entity_signal.is_a?(Class) ? entity_signal : entity_signal.class
 
         SIGNALS_MAP[entity_klass.name.to_sym]

@@ -20,8 +20,8 @@ class DebuggerTest < Minitest::Spec
       ctx[:runtime_id] = compile_id.to_s*9
     end
 
-    captured_input_for_activity     = stack.to_a.find { |captured| captured.task == activity }
-    captured_input_for_sub_activity = stack.to_a.find { |captured| captured.task == sub_activity }
+    snapshot_before_for_activity     = stack.to_a.find { |captured| captured.task == activity }
+    snapshot_before_for_sub_activity = stack.to_a.find { |captured| captured.task == sub_activity }
 
     #@ this is internal API but we're never gonna need this anywhere except for other internals :)
     pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
@@ -32,22 +32,28 @@ class DebuggerTest < Minitest::Spec
     extended_normalizer = pipeline_extension.(Dev::Trace::Debugger::Normalizer::PIPELINES.last)
 
 
-    debugger_nodes = Dev::Trace::Debugger::Node.build_for_stack(
+    nodes = Dev::Trace::Debugger::Node.build_for_stack(
       stack,
       normalizer: extended_normalizer,
       node_options: {
     #@ we can pass particular label "hints".
-        captured_input_for_activity => {
+        snapshot_before_for_activity => {
           label: %{#{activity.superclass} (anonymous)},
         },
   #@ we may pass Node.data options (keyed by Stack::Captured)
-        captured_input_for_sub_activity => {
+        snapshot_before_for_sub_activity => {
           data: {
             exception_source: true
           }
         }
       }, # node_options
     )
+
+    debugger_nodes = nodes.to_a
+
+    # Nodes#variable_versions
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(debugger_nodes[9].snapshot_before, nodes.to_h[:variable_versions]),
+      {:seq=>{:value=>"[:a, :b, :c]", :has_changed=>false}}
 
     assert_equal debugger_nodes[0].task, activity
     assert_equal debugger_nodes[0].activity, Trailblazer::Activity::TaskWrap.container_activity_for(activity)
@@ -60,8 +66,8 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].level, 0
     assert_equal debugger_nodes[0].label, %{Trailblazer::Activity::Railway (anonymous)}
     assert_equal debugger_nodes[0].data, {}
-    assert_equal debugger_nodes[0].captured_input, stack.to_a[0]
-    assert_equal debugger_nodes[0].captured_output, stack.to_a[-1]
+    assert_equal debugger_nodes[0].snapshot_before, stack.to_a[0]
+    assert_equal debugger_nodes[0].snapshot_after, stack.to_a[-1]
 
     assert_equal debugger_nodes[1].activity.class, Trailblazer::Activity # The [activity] field is an Activity.
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
@@ -72,8 +78,8 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].level, 1
     assert_equal debugger_nodes[1].label, %{Start.default}
     assert_equal debugger_nodes[1].data, {}
-    assert_equal debugger_nodes[1].captured_input, stack.to_a[1]
-    assert_equal debugger_nodes[1].captured_output, stack.to_a[2]
+    assert_equal debugger_nodes[1].snapshot_before, stack.to_a[1]
+    assert_equal debugger_nodes[1].snapshot_after, stack.to_a[2]
 
     assert_equal debugger_nodes[3].task, sub_activity
     # the "parent activity" for {sub_activity} is not the Activity::Railway class but instance of Acivity.
@@ -89,17 +95,17 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].level, 3
     assert_equal debugger_nodes[9].label, %{ddddddddd}
     assert_equal debugger_nodes[9].data, {}
-    assert_equal debugger_nodes[9].captured_input, stack.to_a[15]
-    assert_equal debugger_nodes[9].captured_output, stack.to_a[16]
-    assert_equal debugger_nodes[9].captured_input.data[:ctx_snapshot], {:seq=>"[:a, :b, :c]"}
-    assert_equal debugger_nodes[9].captured_output.data[:ctx_snapshot], {:seq=>"[:a, :b, :c, :d]"}
+    assert_equal debugger_nodes[9].snapshot_before, stack.to_a[15]
+    assert_equal debugger_nodes[9].snapshot_after, stack.to_a[16]
+    assert_equal debugger_nodes[9].snapshot_before.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #{:seq=>"[:a, :b, :c]"}
+    assert_equal debugger_nodes[9].snapshot_after.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #, {:seq=>"[:a, :b, :c, :d]"}
   end
 
   it "add {runtime_id} normalizer task" do
     my_compute_runtime_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
       # activity is the host activity
       return compile_id unless activity.to_h[:config][:each] == true
-      index = captured_node.captured_input.data[:ctx].fetch(:index)
+      index = captured_node.snapshot_before.data[:ctx].fetch(:index)
 
       ctx[:runtime_id] = "#{compile_id}.#{index}"
     end

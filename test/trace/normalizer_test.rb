@@ -29,9 +29,9 @@ class TraceNormalizerTest < Minitest::Spec
       stack)
 
     #@ only {:b} got changed, but all of its IDs.
-    assert_equal debugger_nodes[2][:compile_id], :a
-    assert_equal debugger_nodes[3][:compile_id], "bbbbbbbbb"
-    assert_equal debugger_nodes[3][:runtime_id], "bbbbbbbbb"
+    assert_equal debugger_nodes.to_a[2][:compile_id], :a
+    assert_equal debugger_nodes.to_a[3][:compile_id], "bbbbbbbbb"
+    assert_equal debugger_nodes.to_a[3][:runtime_id], "bbbbbbbbb"
 
     # I hate global state.
     Trailblazer::Developer::Trace::Debugger::Normalizer::PIPELINES = original_pipelines

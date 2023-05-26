@@ -71,12 +71,15 @@ class TraceTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
   #@ we get ctx_snapshot for in and out
-    assert_equal stack.to_a[3].data[:ctx_snapshot], {:seq=>"[]"}
-    assert_equal stack.to_a[4].data[:ctx_snapshot], {:seq=>"[:a]"}
+    ctx_for = Trailblazer::Developer::Trace::Snapshot::Ctx.method(:snapshot_ctx_for)
+    variable_versions = stack.variable_versions
 
-    assert_equal stack.to_a[23].data[:ctx_snapshot], {:seq=>"[:a, :b, :c, :d]"}
+    assert_equal ctx_for.(stack.to_a[3], variable_versions), {:seq=>{:value=>"[]", :has_changed=>false}}
+    assert_equal ctx_for.(stack.to_a[4], variable_versions), {:seq=>{:value=>"[:a]", :has_changed=>true}}
+
+    assert_equal ctx_for.(stack.to_a[23], variable_versions), {:seq=>{:value=>"[:a, :b, :c, :d]", :has_changed=>false}}
   #@ we see out snapshot after Out() filters, {:nil_value} in added in {Out()}
-    assert_equal stack.to_a[24].data[:ctx_snapshot], {:seq=>"[:a, :b, :c, :d, :e]", :nil_value=>"nil"}
+    assert_equal ctx_for.(stack.to_a[24], variable_versions), {:seq=>{:value=>"[:a, :b, :c, :d, :e]", :has_changed=>true}, :nil_value=>{:value=>"nil", :has_changed=>true}}
 
 # TODO: test label explicitely
     output = Dev::Trace::Present.(stack,
@@ -162,7 +165,7 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      stack: Trailblazer::Developer::Trace::Stack.new
+      # stack: Trailblazer::Developer::Trace::Stack.new
     }
 
     activity = namespace::Endpoint
@@ -199,7 +202,6 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      stack:              Trailblazer::Developer::Trace::Stack.new
     }
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
@@ -225,7 +227,7 @@ class TraceTest < Minitest::Spec
     # pp versions
 
     # Check if Ctx.snapshot_at works as expected.
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(stack[11], stack_object), # asserted snapshot is for {After(:model)}.
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(stack[11], stack_object.variable_versions), # asserted snapshot is for {After(:model)}.
       {
         current_user: {value: current_user.inspect, has_changed: false},
         params:       {value: "{:name=>\"Q & I\"}", has_changed: false},
@@ -342,7 +344,7 @@ class TraceTest < Minitest::Spec
     stack, _ = Dev::Trace.invoke(nested_activity, [{ seq: [] }, {}])
 
     renderer = ->(debugger_node:, tree:, color:, **) do
-      task = debugger_node.captured_node.captured_input.task
+      task = debugger_node.captured_node.snapshot_before.task
 
       id_label = debugger_node.label
 
@@ -351,7 +353,7 @@ class TraceTest < Minitest::Spec
       end
       [
         debugger_node.level,
-        %{#{debugger_node.level}/#{task}/#{debugger_node.captured_node.captured_output.data[:signal]}/#{id_label}/#{color}}
+        %{#{debugger_node.level}/#{task}/#{debugger_node.captured_node.snapshot_after.data[:signal]}/#{id_label}/#{color}}
       ]
     end
 

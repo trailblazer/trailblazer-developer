@@ -6,8 +6,8 @@ class TraceTreeTest < Minitest::Spec
   end
 
   def assert_tree_node(node, task:, inspect_task: method(:inspect_task))
-    assert_equal inspect_task.(node.captured_input.task), task
-    assert_equal inspect_task.(node.captured_output.task), task
+    assert_equal inspect_task.(node.snapshot_before.task), task
+    assert_equal inspect_task.(node.snapshot_after.task), task
   end
 
   it do
@@ -73,7 +73,7 @@ class TraceTreeTest < Minitest::Spec
     assert_equal array_of_nodes.count, 14
     assert_equal array_of_nodes.collect { |n| n.class }.uniq, [Trailblazer::Developer::Trace::Tree::Node]
 
-    # raise array_of_nodes[1].captured_input.inspect
+    # raise array_of_nodes[1].snapshot_before.inspect
 
     assert_equal array_of_nodes[0], tree                             # activity
     assert_equal array_of_nodes[1], tree.nodes[0]                    #   Start

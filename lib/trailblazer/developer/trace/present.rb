@@ -13,7 +13,7 @@ module Trailblazer::Developer
       # Returns the console output string.
       # @private
       def render(debugger_nodes, renderer: method(:default_renderer), **options_for_renderer)
-        nodes = debugger_nodes.collect do |debugger_node|
+        nodes = debugger_nodes.to_a.collect do |debugger_node|
           renderer.(debugger_node: debugger_node, tree: debugger_nodes, **options_for_renderer)
         end
 
@@ -36,6 +36,7 @@ module Trailblazer::Developer
 
         node_options = top_activity_options.merge(node_options)
 
+        # At this point we already decided that there is a Stack. and that we will have versions of variables???????????????
         debugger_nodes = Debugger::Node.build_for_stack(stack, node_options: node_options, **options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
 
         return render_method.(debugger_nodes, **options)

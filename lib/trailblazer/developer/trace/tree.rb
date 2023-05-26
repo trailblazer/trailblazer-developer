@@ -29,7 +29,7 @@ module Trailblazer
             path = []
 
             while parent = parent_map[node] # DISCUSS: what if the graphs are cached and present, already?
-              node_id = Activity::Introspect.Nodes(node.captured_input.activity, task: node.captured_input.task).id
+              node_id = Activity::Introspect.Nodes(node.snapshot_before.activity, task: node.snapshot_before.task).id
               path << node_id
 
               node = parent
@@ -39,7 +39,7 @@ module Trailblazer
           end
         end
 
-        class Node < Struct.new(:level, :captured_input, :captured_output, :nodes)
+        class Node < Struct.new(:level, :snapshot_before, :snapshot_after, :nodes)
         end
       end # Tree
 
