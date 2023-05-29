@@ -25,14 +25,14 @@ class DebuggerTest < Minitest::Spec
 
     #@ this is internal API but we're never gonna need this anywhere except for other internals :)
     pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
-      Dev::Trace::Debugger::Normalizer.Task(my_compute_runtime_id),
+      Dev::Debugger::Normalizer.Task(my_compute_runtime_id),
       id: :my_compute_runtime_id,
       append: :runtime_id # so that the following {#runtime_path} picks up those changes made here.
     ])
-    extended_normalizer = pipeline_extension.(Dev::Trace::Debugger::Normalizer::PIPELINES.last)
+    extended_normalizer = pipeline_extension.(Dev::Debugger::Normalizer::PIPELINES.last)
 
 
-    nodes = Dev::Trace::Debugger::Node.build_for_stack(
+    nodes = Dev::Debugger.trace_for_stack(
       stack,
       normalizer: extended_normalizer,
       node_options: {
@@ -110,6 +110,6 @@ class DebuggerTest < Minitest::Spec
       ctx[:runtime_id] = "#{compile_id}.#{index}"
     end
 
-    Trailblazer::Developer::Trace::Debugger.add_normalizer_step!(my_compute_runtime_id, id: "compile_id.Each")
+    Trailblazer::Developer::Debugger.add_normalizer_step!(my_compute_runtime_id, id: "compile_id.Each")
   end
 end
