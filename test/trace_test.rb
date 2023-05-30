@@ -165,7 +165,6 @@ class TraceTest < Minitest::Spec
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
-      # stack: Trailblazer::Developer::Trace::Stack.new
     }
 
     activity = namespace::Endpoint
@@ -199,11 +198,6 @@ class TraceTest < Minitest::Spec
 # end
 
 
-    snapshot_flow_options = {
-      before_snapshooter:   Snapshot.method(:before_snapshooter),
-      after_snapshooter:  Snapshot.method(:after_snapshooter),
-    }
-
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
       [
@@ -212,7 +206,6 @@ class TraceTest < Minitest::Spec
           params: {name: "Q & I"},
           seq: [],
         },
-        snapshot_flow_options
       ]
     )
 
@@ -297,6 +290,37 @@ class TraceTest < Minitest::Spec
       assert_equal versions.fetch(variable_name).keys[index], captured_refs.find { |name, hash| name == variable_name }[1], # both hashs have to be identical
         "hash mismatch for `#{variable_name}`"
     end
+  end
+
+  it "snapshot works with {nil} values" do
+    activity = Class.new(Trailblazer::Activity::Railway) do
+      pass :override
+      step :create
+
+      def override(ctx, **)
+        ctx[:model] = nil
+      end
+
+      def create(ctx, **)
+        ctx[:model] = Object
+      end
+    end
+
+    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{}, {}])
+
+    nodes = stack.to_a
+
+    # :override/after
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[4], stack.variable_versions),
+      {
+        model: {value: "nil", has_changed: true},
+      }
+
+    # :create/after
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[6], stack.variable_versions),
+      {
+        model: {value: "Object", has_changed: true},
+      }
   end
 
   it "allows to inject custom :data_collector" do

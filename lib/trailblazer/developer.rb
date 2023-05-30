@@ -21,3 +21,4 @@ require "trailblazer/developer/render/task_wrap"
 require "trailblazer/developer/introspect" # TODO: might get removed, again.
 require "trailblazer/developer/debugger/normalizer"
 require "trailblazer/developer/introspect/graph"
+Trailblazer::Developer::Trace::Debugger = Trailblazer::Developer::Debugger # FIXME: deprecate constant!

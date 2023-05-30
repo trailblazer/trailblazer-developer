@@ -155,6 +155,7 @@ module Trailblazer::Developer
             new_versions = []
 
             changeset_for_snapshot = ctx.collect do |name, value|
+              # DISCUSS: do we have to call that explicitly or does Hash#[] do that for us, anyway?
               value_hash = value.hash # DISCUSS: does this really always change when a deeply nested object changes?
 
               if (variable_versions = @variables[name]) && variable_versions.key?(value_hash) # TODO: test {variable: nil} value
