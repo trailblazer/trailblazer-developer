@@ -323,6 +323,58 @@ class TraceTest < Minitest::Spec
       }
   end
 
+  it "{:value_snapshooter} allows injecting new matcher/inspect tuple" do
+    value_snapshooter = Trailblazer::Developer::Trace::Snapshot::Value.build
+    value_snapshooter.instance_variable_get(:@matchers).unshift [ # TODO: public interface.
+      ->(name, value, ctx:) { value.is_a?(Module) },
+      ->(name, value, ctx:) { "Module class" }
+    ]
+
+    activity = Class.new(Trailblazer::Activity::Railway) do
+      step :create
+
+      def create(ctx, **)
+        ctx[:model] = Module
+      end
+    end
+
+    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{params: {}},
+      {
+        value_snapshooter: value_snapshooter
+      }
+    ])
+
+    nodes = stack.to_a
+
+    # Op/after
+    # :params is params.inspect
+    # :model was serialized with custom inspector.
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[7], stack.variable_versions),
+      {
+        :params=>{:value=>"{}", :has_changed=>false},
+        :model=>{:value=>"Module class", :has_changed=>false}
+      }
+
+
+  # We can also set it via {Trace.value_snapshooter}
+    Trailblazer::Developer::Trace.instance_variable_set(:@value_snapshooter, value_snapshooter)
+
+    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{params: {}}, {}])
+
+    nodes = stack.to_a
+
+    # Op/after
+    # :params is params.inspect
+    # :model was serialized with custom inspector.
+    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[7], stack.variable_versions),
+      {
+        :params=>{:value=>"{}", :has_changed=>false},
+        :model=>{:value=>"Module class", :has_changed=>false}
+      }
+
+    Trailblazer::Developer::Trace.instance_variable_set(:@value_snapshooter, Trailblazer::Developer::Trace::Snapshot::Value.build) # reset to original value.
+  end
+
   it "allows to inject custom :data_collector" do
     input_collector = ->(wrap_config, ((ctx, _), _)) { [{ ctx: ctx, something: :else }, {}] }
     output_collector = ->(wrap_config, ((ctx, _), _)) { [{ ctx: ctx, signal: wrap_config[:return_signal] }, {}] }

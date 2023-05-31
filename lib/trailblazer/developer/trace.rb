@@ -1,6 +1,5 @@
 module Trailblazer::Developer
   module Trace
-
     class << self
       # Public entry point to run an activity with tracing.
       # It returns the accumulated stack of Snapshots, along with the original return values.
@@ -20,8 +19,10 @@ module Trailblazer::Developer
           stack:              Trace::Stack.new,
           # before_snapshooter: Trace::Snapshot::Deprecated.method(:default_input_data_collector),
           # after_snapshooter:  Trace::Snapshot::Deprecated.method(:default_output_data_collector),
+          # TODO: we can prepare static values in a HASH.
           before_snapshooter: Snapshot.method(:before_snapshooter),
-          after_snapshooter:  Snapshot.method(:after_snapshooter)
+          after_snapshooter:  Snapshot.method(:after_snapshooter),
+          value_snapshooter: Trace.value_snapshooter
         }
 
         flow_options = {**default_flow_options, **Hash(original_flow_options)}
@@ -35,6 +36,9 @@ module Trailblazer::Developer
         return activity, [options, flow_options], circuit_options
       end
     end
+
+    @value_snapshooter = Trace::Snapshot::Value.build()
+    singleton_class.attr_reader :value_snapshooter # NOTE: this is semi-private.
 
     module_function
     # Insertions for the trace tasks that capture the arguments just before calling the task,

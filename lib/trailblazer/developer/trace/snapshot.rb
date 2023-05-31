@@ -61,11 +61,13 @@ module Trailblazer::Developer
         end
       end # Deprecated
 
+      # Serialize all ctx variables before {call_task}.
       # This is run just before {call_task}, after In().
       def self.before_snapshooter(wrap_ctx, ((ctx, flow_options), _))
         variable_versions = flow_options[:stack].variable_versions
+        value_snapshooter = flow_options[:value_snapshooter]
 
-        changeset, new_versions = variable_versions.changeset_for(ctx)
+        changeset, new_versions = variable_versions.changeset_for(ctx, value_snapshooter: value_snapshooter)
 
         data = {
           ctx_variable_changeset: changeset,
@@ -74,13 +76,14 @@ module Trailblazer::Developer
         return data, new_versions
       end
 
-      # This is usually run at the very end of taskWrap, after Out().
+      # Serialize all ctx variables at the very end of taskWrap, after Out().
       def self.after_snapshooter(wrap_ctx, _)
         returned_ctx, flow_options = wrap_ctx[:return_args]
 
         variable_versions = flow_options[:stack].variable_versions
+        value_snapshooter = flow_options[:value_snapshooter]
 
-        changeset, new_versions = variable_versions.changeset_for(returned_ctx)
+        changeset, new_versions = variable_versions.changeset_for(returned_ctx, value_snapshooter: value_snapshooter)
 
         data = {
           ctx_variable_changeset: changeset,
@@ -88,6 +91,40 @@ module Trailblazer::Developer
         }
 
         return data, new_versions
+      end
+
+      # {Value} serializes the variable value using with custom logic, e.g. {value.inspect}.
+      # A series of matchers decide which snapshooter is used.
+      class Value
+        def initialize(matchers)
+          @matchers = matchers
+        end
+
+        # DISCUSS: this could be a compiled pattern matching `case/in` block here.
+        def call(name, value, **options)
+          @matchers.each do |matcher, inspect_method|
+            if matcher.(name, value, **options)
+              return inspect_method.(name, value, **options)
+            end
+          end
+
+          raise "no matcher found for #{name.inspect}" # TODO: this should never happen.
+        end
+
+        def self.default_variable_inspect(name, value, ctx:)
+          value.inspect
+        end
+
+        def self.build
+          new(
+            [
+              [
+                ->(*) { true }, # matches everything
+                method(:default_variable_inspect)
+              ]
+            ]
+          )
+        end
       end
 
       # Snapshot::Ctx keeps an inspected version of each ctx variable.
@@ -151,7 +188,7 @@ module Trailblazer::Developer
           end
 
           # DISCUSS: problem with changeset is, we have to go through variables twice.
-          def changeset_for(ctx)
+          def changeset_for(ctx, value_snapshooter:)
             new_versions = []
 
             changeset_for_snapshot = ctx.collect do |name, value|
@@ -161,9 +198,11 @@ module Trailblazer::Developer
               if (variable_versions = @variables[name]) && variable_versions.key?(value_hash) # TODO: test {variable: nil} value
                 [name, value_hash, nil] # nil means it's an existing reference.
               else
-                version = [name, value_hash, value.inspect]
+                value_snapshot = value_snapshooter.(name, value, ctx: ctx)
 
-                new_versions << version # FIXME: don't make it hard-coded {inspect}.
+                version = [name, value_hash, value_snapshot]
+
+                new_versions << version
                 version
               end
             end
