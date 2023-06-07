@@ -5,9 +5,14 @@ class TraceTreeTest < Minitest::Spec
     task.inspect
   end
 
-  def assert_tree_node(node, task:, inspect_task: method(:inspect_task))
+  def assert_trace_node(node, task:, inspect_task: method(:inspect_task), node_class: Trailblazer::Developer::Trace::Tree::Node)
+    assert_equal node.class, node_class
     assert_equal inspect_task.(node.snapshot_before.task), task
-    assert_equal inspect_task.(node.snapshot_after.task), task
+    if node_class == Trailblazer::Developer::Trace::Tree::Node::Incomplete
+      assert_nil node.snapshot_after
+    else
+      assert_equal inspect_task.(node.snapshot_after.task), task
+    end
   end
 
   it do
@@ -28,20 +33,20 @@ class TraceTreeTest < Minitest::Spec
 
     assert_equal 14, trace_nodes.size
 
-    assert_tree_node trace_nodes[0],  task: activity.inspect
-    assert_tree_node trace_nodes[1],    task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_tree_node trace_nodes[2],    task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
-    assert_tree_node trace_nodes[3],    task: sub_activity.inspect
-    assert_tree_node trace_nodes[4],      task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_tree_node trace_nodes[5],      task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
-    assert_tree_node trace_nodes[6],      task: _activity.inspect
-    assert_tree_node trace_nodes[7],        task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_tree_node trace_nodes[8],        task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
-    assert_tree_node trace_nodes[9],        task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
-    assert_tree_node trace_nodes[10],       task: %{#<Trailblazer::Activity::End semantic=:success>}
-    assert_tree_node trace_nodes[11],     task: %{#<Trailblazer::Activity::End semantic=:success>}
-    assert_tree_node trace_nodes[12],   task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
-    assert_tree_node trace_nodes[13],   task: %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_trace_node trace_nodes[0],  task: activity.inspect
+    assert_trace_node trace_nodes[1],    task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[2],    task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
+    assert_trace_node trace_nodes[3],    task: sub_activity.inspect
+    assert_trace_node trace_nodes[4],      task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[5],      task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
+    assert_trace_node trace_nodes[6],      task: _activity.inspect
+    assert_trace_node trace_nodes[7],        task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[8],        task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
+    assert_trace_node trace_nodes[9],        task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+    assert_trace_node trace_nodes[10],       task: %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_trace_node trace_nodes[11],     task: %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_trace_node trace_nodes[12],   task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+    assert_trace_node trace_nodes[13],   task: %{#<Trailblazer::Activity::End semantic=:success>}
 
 
   #@ ParentMap
@@ -114,21 +119,40 @@ class TraceTreeTest < Minitest::Spec
 
     inspect_task = ->(task) { [task.name] }
 
-    assert_tree_node trace_nodes[0], task: activity.inspect
-    assert_tree_node trace_nodes[1], task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_tree_node trace_nodes[2], task: [:a], inspect_task: inspect_task
-    assert_tree_node trace_nodes[3], task: sub_activity.inspect
-    assert_tree_node trace_nodes[4], task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_tree_node trace_nodes[5], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
-    assert_tree_node trace_nodes[6], task: _activity.inspect
-    assert_tree_node trace_nodes[7], task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_tree_node trace_nodes[8], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
-    assert_tree_node trace_nodes[9], task: [:a], inspect_task: inspect_task
-    assert_tree_node trace_nodes[10], task: %{#<Trailblazer::Activity::End semantic=:success>}          # _activity.End.success
-    assert_tree_node trace_nodes[11], task: [:a], inspect_task: inspect_task
-    assert_tree_node trace_nodes[12], task: %{#<Trailblazer::Activity::End semantic=:success>}                   # sub_activity.End.success
-    assert_tree_node trace_nodes[13], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
-    assert_tree_node trace_nodes[14], task: %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_trace_node trace_nodes[0], task: activity.inspect
+    assert_trace_node trace_nodes[1], task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[2], task: [:a], inspect_task: inspect_task
+    assert_trace_node trace_nodes[3], task: sub_activity.inspect
+    assert_trace_node trace_nodes[4], task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[5], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
+    assert_trace_node trace_nodes[6], task: _activity.inspect
+    assert_trace_node trace_nodes[7], task: %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[8], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
+    assert_trace_node trace_nodes[9], task: [:a], inspect_task: inspect_task
+    assert_trace_node trace_nodes[10], task: %{#<Trailblazer::Activity::End semantic=:success>}          # _activity.End.success
+    assert_trace_node trace_nodes[11], task: [:a], inspect_task: inspect_task
+    assert_trace_node trace_nodes[12], task: %{#<Trailblazer::Activity::End semantic=:success>}                   # sub_activity.End.success
+    assert_trace_node trace_nodes[13], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+    assert_trace_node trace_nodes[14], task: %{#<Trailblazer::Activity::End semantic=:success>}
     # assert_nil trace_nodes[5]
+  end
+
+  it "can generate a beautiful tree for incomplete stacks" do
+    # TODO: test multiple successive incomplete tasks.
+    #            exception style where at some point all ascendants are incomplete.
+
+    ctx = {validate: false}
+    stack, _ = Trailblazer::Developer::Trace.invoke(Tracing::ValidateWithRescue, [ctx, {}])
+
+    trace_nodes = Dev::Trace.Tree(stack.to_a)
+
+    assert_trace_node trace_nodes[0], task: Tracing::ValidateWithRescue.inspect
+    assert_trace_node trace_nodes[1], task:   %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[2], task:   Tracing::ValidateWithRescue.method(:rescue).inspect
+    assert_trace_node trace_nodes[3], task:     %{Tracing::ValidateWithRescue::Validate}, node_class: Trailblazer::Developer::Trace::Tree::Node::Incomplete
+    assert_trace_node trace_nodes[4], task:       %{#<Trailblazer::Activity::Start semantic=:default>}
+    assert_trace_node trace_nodes[5], task:       %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=validate>), node_class: Trailblazer::Developer::Trace::Tree::Node::Incomplete
+    assert_trace_node trace_nodes[6], task:   %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_nil trace_nodes[7]
   end
 end
