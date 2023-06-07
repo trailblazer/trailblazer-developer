@@ -59,6 +59,8 @@ module Trailblazer::Developer
     # in case of exceptions we still have a "global" trace - unfortunately Ruby doesn't allow
     # us a better way.
     # taskWrap step to capture incoming arguments of a step.
+    #
+    # Note that we save the created {Snapshot::Before} in the wrap_ctx.
     def capture_args(wrap_config, original_args)
       flow_options = original_args[0][1]
 
@@ -67,7 +69,7 @@ module Trailblazer::Developer
       # We try to be generic here in the taskWrap snapshooting code, where details happen in Snapshot::Before/After and Stack#add!.
       flow_options[:stack].add!(snapshot, new_versions)
 
-      return wrap_config, original_args
+      return wrap_config.merge(snapshot_before: snapshot), original_args
     end
 
     # taskWrap step to capture outgoing arguments from a step.

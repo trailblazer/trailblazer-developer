@@ -55,11 +55,14 @@ module Trailblazer
 
         # raise unless snapshot_before.is_a?(Snapshot::Before)
 
+        # Every time we see a {Before} snapshot, it means a new activity/task starts,
+        # and we discovered a new sub-branch.
         while next_snapshot = remaining[0]
+          puts "@@@@@ #{next_snapshot.inspect}"
           if next_snapshot.is_a?(Snapshot::Before)
 
-            bla, _processed = Tree(remaining, level: level+1)
-            nodes += [bla]
+            branch_node, _processed = Tree(remaining, level: level+1) # new branch
+            nodes += [branch_node]
             processed += _processed
 
             remaining = remaining - processed

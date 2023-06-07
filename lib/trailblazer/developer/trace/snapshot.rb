@@ -78,7 +78,8 @@ module Trailblazer::Developer
 
       # Serialize all ctx variables at the very end of taskWrap, after Out().
       def self.after_snapshooter(wrap_ctx, _)
-        returned_ctx, flow_options = wrap_ctx[:return_args]
+        snapshot_before             = wrap_ctx[:snapshot_before]
+        returned_ctx, flow_options  = wrap_ctx[:return_args]
 
         variable_versions = flow_options[:stack].variable_versions
         value_snapshooter = flow_options[:value_snapshooter]
@@ -87,7 +88,8 @@ module Trailblazer::Developer
 
         data = {
           ctx_variable_changeset: changeset,
-          signal:                 wrap_ctx[:return_signal]
+          signal:                 wrap_ctx[:return_signal],
+          snapshot_before:        snapshot_before,
         }
 
         return data, new_versions
