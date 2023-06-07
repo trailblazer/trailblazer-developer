@@ -485,7 +485,7 @@ class TraceTest < Minitest::Spec
       ctx = {validate: false}
       stack, _ = Trailblazer::Developer::Trace.invoke(activity, [ctx, {}])
 
-      pp stack
+      # pp stack
 
       pp Dev::Trace.Tree(stack.to_a)
     end

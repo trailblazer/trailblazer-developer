@@ -45,30 +45,48 @@ module Trailblazer
         end
       end # Tree
 
-      def self.process_siblings(remaining_snapshots, level:)
-        puts "~~~~~~~~~ #{level} process_siblings #{remaining_snapshots[0].inspect}"
-        nodes = []
-        processed_snapshots = []
+      def self.pop_from_instructions!(instructions)
+        while (level, remaining_snapshots = instructions.pop)
+          next if level.nil?
+          next if remaining_snapshots.empty?
 
-        while snapshot = remaining_snapshots[0]
-          raise unless snapshot.is_a?(Snapshot::Before) # DISCUSS: remove assertion?
-                                                                                                          # FIXME: hm.
-          nodes_from_branch, processed_snapshots_from_branch = process_from_snapshot_before(snapshot, remaining_snapshots[1..-1], level: level)
-
-          nodes += nodes_from_branch
-          processed_snapshots += processed_snapshots_from_branch
-
-          remaining_snapshots = remaining_snapshots - processed_snapshots
+          return level, remaining_snapshots
         end
 
-        return nodes, processed_snapshots
+        false
+      end
+
+      def self.BLA(instructions)
+        instructions.collect do |(level, remaining_snapshots)|
+          [
+            level,
+            remaining_snapshots.collect { |snap| [snap.class, snap.task] }
+          ]
+        end
+      end
+
+      def self.process_instructions(instructions) # FIXME: mutating argument
+        nodes = []
+
+        while (level, remaining_snapshots = pop_from_instructions!(instructions))
+          raise unless remaining_snapshots[0].is_a?(Snapshot::Before) # DISCUSS: remove assertion?
+
+          node, new_instructions = node_and_instructions_for(remaining_snapshots[0], remaining_snapshots[1..-1], level: level)
+          pp BLA(new_instructions)
+
+          nodes << node
+
+          instructions += new_instructions
+        end
+
+        return nodes
       end
 
       # Called per snapshot_before   "process_branch"
       # 1. Find, for snapshot_before, the matching snapshot_after in the stack
       # 2. Extract snapshots inbetween those two. These are min. 1 level deeper in!
       # 3. Run process_siblings for 2.
-      def self.process_from_snapshot_before(snapshot_before, descendants, level:)
+      def self.node_and_instructions_for(snapshot_before, descendants, level:)
         puts "********* snapshot: #{level} / #{snapshot_before.task}"
         # Find closing snapshot for this branch.
         snapshot_after = descendants.find do |snapshot|
@@ -78,113 +96,47 @@ module Trailblazer
         if snapshot_after
           snapshot_after_index = descendants.index(snapshot_after)
 
-          to_be_processed, new_level =
+          instructions =
             if snapshot_after_index == 0 # E.g. before/Start, after/Start
               [
-                descendants[1..-1],
-                level
+                [level, descendants[1..-1]]
               ]
             else
-              [
-                descendants[0..descendants.index(snapshot_after) - 1], # "new descendants"
-                level + 1
+              nested_instructions = [
+                # instruction to go through the remaining, behind this tuple.
+                [
+                  level,
+                  descendants[(snapshot_after_index + 1)..-1]
+                ],
+                # instruction to go through all snapshots between this current tuple.
+                [
+                  level + 1,
+                  descendants[0..snapshot_after_index - 1], # "new descendants"
+                ],
               ]
             end
 
           node            = Tree::Node.new(level, snapshot_before, snapshot_after)
         else # incomplete
-          to_be_processed = descendants
-          new_level       = level + 1
-
-          node            = Tree::Node::Incomplete.new(level, snapshot_before, nil)
+          # to_be_processed = descendants
+          # new_level       = level + 1
+          instructions = [[level+1, descendants]]
+          node         = Tree::Node::Incomplete.new(level, snapshot_before, nil)
         end
 
-        # pp to_be_processed
-
-        nodes, processed_snapshots = process_siblings(to_be_processed, level: new_level)
-
-        return [node, *nodes], [snapshot_before, *processed_snapshots, snapshot_after].compact # what nodes did we process here?
+        return node, instructions
       end
 
       # TODO: rename to stack::tree?
       # Builds a tree graph from a linear stack.
       # Consists of {Tree::Node} structures.
       def self.Tree(descendants, level: 0, parent: nil)
-        # descendants.collect do |snapshot|
-        #   raise snapshot.inspect
-        # end
+        instructions = [
+          [0, descendants]
+        ]
 
-        nodes, _ = process_siblings(descendants, level: 0)
-        # pp nodes
-
-
-
-
-
-        processed = []
-        nodes     = []
-
-        # for {snapshot_before} we're gonna build a {Node}!
-        snapshot_before, remaining = stack_end[0], stack_end[1..-1]
-
-        # raise unless snapshot_before.is_a?(Snapshot::Before)
-
-        # Every time we see a {Before} snapshot, it means a new activity/task starts,
-        # and we discovered a new sub-branch.
-        while next_snapshot = remaining[0]
-          if next_snapshot.is_a?(Snapshot::Before)
-
-            branch_node, _processed = Tree(remaining, level: level+1) # new branch
-            nodes += [branch_node]
-            processed += _processed
-
-            remaining = remaining - processed
-
-          else # Snapshot::After
-            # DISCUSS: remove these tests?
-            raise unless next_snapshot.is_a?(Snapshot::After)
-            raise if next_snapshot.activity != snapshot_before.activity
-
-            node = Tree::Node.new(level, snapshot_before, next_snapshot, nodes)
-
-            return node,
-              [snapshot_before, *processed, next_snapshot] # what nodes did we process here?
-          end
-        end
+        nodes = process_instructions(instructions)
       end # Tree
-
-      def self.Tree_DEPRECATED_thatcanthandleincompletetrees(stack_end, level: 0, parent: nil)
-        processed = []
-        nodes     = []
-
-        # for {snapshot_before} we're gonna build a {Node}!
-        snapshot_before, remaining = stack_end[0], stack_end[1..-1]
-
-        # raise unless snapshot_before.is_a?(Snapshot::Before)
-
-        # Every time we see a {Before} snapshot, it means a new activity/task starts,
-        # and we discovered a new sub-branch.
-        while next_snapshot = remaining[0]
-          if next_snapshot.is_a?(Snapshot::Before)
-
-            branch_node, _processed = Tree(remaining, level: level+1) # new branch
-            nodes += [branch_node]
-            processed += _processed
-
-            remaining = remaining - processed
-
-          else # Snapshot::After
-            # DISCUSS: remove these tests?
-            raise unless next_snapshot.is_a?(Snapshot::After)
-            raise if next_snapshot.activity != snapshot_before.activity
-
-            node = Tree::Node.new(level, snapshot_before, next_snapshot, nodes)
-
-            return node,
-              [snapshot_before, *processed, next_snapshot] # what nodes did we process here?
-          end
-        end
-      end # Tree_DEPRECATED_thatcanthandleincompletetrees
     end
   end # Developer
 end
