@@ -2,7 +2,7 @@ require "hirb"
 
 module Trailblazer::Developer
   module Trace
-    module Present
+    module Present # TODO: rename to Debugger?
       module_function
 
       # @private

@@ -42,8 +42,8 @@ module Trailblazer::Developer
         String.send(style, line)
       end
 
-      def signal_of(task_node)
-        entity_signal = task_node.snapshot_after.data[:signal]
+      def signal_of(debugger_node)
+        entity_signal = debugger_node.incomplete? ? nil : debugger_node.snapshot_after.data[:signal]
         entity_klass = entity_signal.is_a?(Class) ? entity_signal : entity_signal.class
 
         SIGNALS_MAP[entity_klass.name.to_sym]

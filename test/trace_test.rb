@@ -420,7 +420,7 @@ class TraceTest < Minitest::Spec
     stack, _ = Dev::Trace.invoke(nested_activity, [{ seq: [] }, {}])
 
     renderer = ->(debugger_node:, tree:, color:, **) do
-      task = debugger_node.captured_node.snapshot_before.task
+      task = debugger_node.trace_node.snapshot_before.task
 
       id_label = debugger_node.label
 
@@ -429,7 +429,7 @@ class TraceTest < Minitest::Spec
       end
       [
         debugger_node.level,
-        %{#{debugger_node.level}/#{task}/#{debugger_node.captured_node.snapshot_after.data[:signal]}/#{id_label}/#{color}}
+        %{#{debugger_node.level}/#{task}/#{debugger_node.trace_node.snapshot_after.data[:signal]}/#{id_label}/#{color}}
       ]
     end
 
@@ -483,11 +483,11 @@ class TraceTest < Minitest::Spec
       #            exception style where at some point all ascendants are incomplete.
 
       ctx = {validate: false}
-      stack, _ = Trailblazer::Developer::Trace.invoke(activity, [ctx, {}])
+      stack, _ = Trailblazer::Developer::Trace.invoke(Tracing::ValidateWithRescue, [ctx, {}])
 
-      # pp stack
+      trace_nodes = Dev::Trace.Tree(stack.to_a)
 
-      pp Dev::Trace.Tree(stack.to_a)
+
     end
   end
 end

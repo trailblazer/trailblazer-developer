@@ -1,4 +1,4 @@
-# 0.0.30
+# 0.1.0
 
 * Introduce the concept of `Snapshot` which can be a moment in time before or after a step.
   `Captured::Input`/`Captured::Output` are now `Snapshot::Before` and `Snapshot::After`.
@@ -6,6 +6,9 @@
   as they both produce instances of `Snapshot`.
 * Change signature of former `:input_data_collectore` and `:output_data_collector`, they return two hashs now.
 * Add `Snapshot::Ctx` which is a new, faster way of capturing variables in ctx before and after a step.
+* Rename `:captured_node` to `:trace_node` # FIXME.
+* Remove the concept of `:runtime_path` and `:compile_path`. You can always compute paths
+  after or during the debug rendering yourself. However, we simply don't need it for IDE or wtf?.
 
 # 0.0.29
 

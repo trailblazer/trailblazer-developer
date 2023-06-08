@@ -34,6 +34,7 @@ module Trailblazer::Developer
       end
 
       # The original snapshooter methods, used to reside in {Trace}.
+      # TODO: remove/
       module Deprecated
         # Called in {#Captured}.
         # @private

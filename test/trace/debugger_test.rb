@@ -14,7 +14,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
   #@ particular nodes need a special {runtime_id}
-    my_compute_runtime_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
+    my_compute_runtime_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
       return compile_id unless activity.instance_variable_get(:@special)
 
       ctx[:runtime_id] = compile_id.to_s*9
@@ -60,9 +60,7 @@ class DebuggerTest < Minitest::Spec
 
     assert_equal debugger_nodes[0].task, activity
     assert_equal debugger_nodes[0].compile_id, nil
-    assert_equal debugger_nodes[0].compile_path, []
     assert_equal debugger_nodes[0].runtime_id, nil
-    assert_equal debugger_nodes[0].runtime_path, []
     assert_equal debugger_nodes[0].level, 0
     assert_equal debugger_nodes[0].label, %{Trailblazer::Activity::Railway (anonymous)}
     assert_equal debugger_nodes[0].data, {}
@@ -72,8 +70,6 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].activity.class, Trailblazer::Activity # The [activity] field is an Activity.
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_equal debugger_nodes[1].compile_id, %{Start.default}
-    assert_equal debugger_nodes[1].compile_path, ["Start.default"]
-    assert_equal debugger_nodes[1].runtime_path, ["Start.default"]
     assert_equal debugger_nodes[1].runtime_id, %{Start.default}
     assert_equal debugger_nodes[1].level, 1
     assert_equal debugger_nodes[1].label, %{Start.default}
@@ -86,12 +82,9 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[3].activity.class, Trailblazer::Activity
     assert_equal debugger_nodes[3].activity, debugger_nodes[1].activity
     assert_equal debugger_nodes[3].data, {exception_source: true}
-    assert_equal debugger_nodes[3].runtime_path, ["B"]
 
     assert_equal debugger_nodes[9].compile_id, :d
-    assert_equal debugger_nodes[9].compile_path, ["B", "C", :d]
     assert_equal debugger_nodes[9].runtime_id, "ddddddddd"
-    assert_equal debugger_nodes[9].runtime_path, ["B", "C", "ddddddddd"]
     assert_equal debugger_nodes[9].level, 3
     assert_equal debugger_nodes[9].label, %{ddddddddd}
     assert_equal debugger_nodes[9].data, {}
@@ -99,17 +92,5 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].snapshot_after, stack.to_a[16]
     assert_equal debugger_nodes[9].snapshot_before.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #{:seq=>"[:a, :b, :c]"}
     assert_equal debugger_nodes[9].snapshot_after.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #, {:seq=>"[:a, :b, :c, :d]"}
-  end
-
-  it "add {runtime_id} normalizer task" do
-    my_compute_runtime_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
-      # activity is the host activity
-      return compile_id unless activity.to_h[:config][:each] == true
-      index = captured_node.snapshot_before.data[:ctx].fetch(:index)
-
-      ctx[:runtime_id] = "#{compile_id}.#{index}"
-    end
-
-    Trailblazer::Developer::Debugger.add_normalizer_step!(my_compute_runtime_id, id: "compile_id.Each")
   end
 end

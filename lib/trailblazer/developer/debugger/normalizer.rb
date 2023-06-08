@@ -15,6 +15,7 @@ module Trailblazer
         Normalizer::PIPELINES << pipeline_extension.(normalizer)
       end
 
+      # Run at runtime when preparing a Trace::Nodes for presentation.
       module Normalizer
         def self.Task(user_step) # TODO: we could keep this in the {activity} gem.
           Activity::TaskWrap::Pipeline::TaskAdapter.for_step(user_step, option: false) # we don't need Option as we don't have ciruit_options here, and no {:exec_context}
@@ -26,18 +27,8 @@ module Trailblazer
             ctx[:compile_id] = Activity::Introspect.Nodes(activity, task: task)[:id]
           end
 
-          def self.compile_path(ctx, parent_map:, captured_node:, **)
-            ctx[:compile_path] = Developer::Trace::Tree::ParentMap.path_for(parent_map, captured_node)
-          end
-
           def self.runtime_id(ctx, compile_id:, **)
             ctx[:runtime_id] = compile_id
-          end
-
-          def self.runtime_path(ctx, runtime_id:, compile_path:, **)
-            return ctx[:runtime_path] = compile_path if compile_path.empty? # FIXME: this currently only applies to root.
-
-            ctx[:runtime_path] = compile_path[0..-2] + [runtime_id]
           end
 
           def self.label(ctx, label: nil, runtime_id:, **)
@@ -47,15 +38,18 @@ module Trailblazer
           def self.data(ctx, data: {}, **)
             ctx[:data] = data
           end
+
+          def self.incomplete?(ctx, trace_node:, **)
+            ctx[:incomplete?] = trace_node.is_a?(Developer::Trace::Tree::Node::Incomplete)
+          end
         end
 
         default_steps = {
           compile_id:       Normalizer.Task(Default.method(:compile_id)),
-          compile_path:     Normalizer.Task(Default.method(:compile_path)),
           runtime_id:       Normalizer.Task(Default.method(:runtime_id)),
-          runtime_path:     Normalizer.Task(Default.method(:runtime_path)),
           label:            Normalizer.Task(Default.method(:label)),
           data:             Normalizer.Task(Default.method(:data)),
+          incomplete?:      Normalizer.Task(Default.method(:incomplete?)),
         }.
         collect { |id, task| Activity::TaskWrap::Pipeline.Row(id, task) }
 

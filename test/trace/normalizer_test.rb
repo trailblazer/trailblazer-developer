@@ -11,7 +11,7 @@ class TraceNormalizerTest < Minitest::Spec
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{seq: []}, {}])
 
   #@ particular nodes need a special {runtime_id}
-    change_compile_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
+    change_compile_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
       return compile_id unless compile_id == :b
 
       ctx[:compile_id] = compile_id.to_s*9

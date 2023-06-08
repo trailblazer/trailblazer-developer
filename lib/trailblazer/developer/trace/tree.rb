@@ -32,14 +32,14 @@ module Trailblazer
           false
         end
 
-        def self.BLA(instructions)
-          instructions.collect do |(level, remaining_snapshots)|
-            [
-              level,
-              remaining_snapshots.collect { |snap| [snap.class, snap.task] }
-            ]
-          end
-        end
+        # def self.BLA(instructions)
+        #   instructions.collect do |(level, remaining_snapshots)|
+        #     [
+        #       level,
+        #       remaining_snapshots.collect { |snap| [snap.class, snap.task] }
+        #     ]
+        #   end
+        # end
 
         def self.process_instructions(instructions) # FIXME: mutating argument
           nodes = []
@@ -48,7 +48,7 @@ module Trailblazer
             raise unless remaining_snapshots[0].is_a?(Snapshot::Before) # DISCUSS: remove assertion?
 
             node, new_instructions = node_and_instructions_for(remaining_snapshots[0], remaining_snapshots[1..-1], level: level)
-            pp BLA(new_instructions)
+            # pp BLA(new_instructions)
 
             nodes << node
 
@@ -91,12 +91,13 @@ module Trailblazer
                 ]
               end
 
-            node            = Tree::Node.new(level, snapshot_before, snapshot_after)
+            node = Tree::Node.new(level, snapshot_before, snapshot_after)
           else # incomplete
-            # to_be_processed = descendants
-            # new_level       = level + 1
-            instructions = [[level+1, descendants]]
-            node         = Tree::Node::Incomplete.new(level, snapshot_before, nil)
+            instructions = [
+              [level + 1, descendants]
+            ]
+
+            node = Tree::Node::Incomplete.new(level, snapshot_before, nil)
           end
 
           return node, instructions
