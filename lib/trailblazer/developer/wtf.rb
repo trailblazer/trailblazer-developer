@@ -30,7 +30,8 @@ module Trailblazer::Developer
       rescue
         raise_exception = $! # TODO: will this show the very same stacktrace?
 
-        complete_stack, exception_source = Exception.complete_stack_for_exception(stack, $!)
+        exception_source  = Exception.find_exception_source(stack, $!)
+        complete_stack    = stack
 
         local_present_options = {
           # we can hand in options per node, identified by their captured_input part.
@@ -58,14 +59,10 @@ module Trailblazer::Developer
     end
 
     module Exception
-      def self.complete_stack_for_exception(incomplete_stack, exception)
+      def self.find_exception_source(incomplete_stack, exception)
         # in 99%, exception_source is a {Snapshot::Before}.
         exception_source = incomplete_stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
                                                   #   However, what if an error happens in, say, an input filter? TODO: test this
-
-        complete_stack = incomplete_stack
-
-        return complete_stack, exception_source
       end
     end
   end
