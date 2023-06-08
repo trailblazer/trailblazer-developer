@@ -3,13 +3,12 @@ module Trailblazer
     # Code in Debugger is only executed if the user wants to render the stack.
     module Debugger
       ATTRS = [
+        :id,
         :trace_node,
         :task,
         :activity,
         :compile_id,
-        :compile_path,
         :runtime_id,
-        :runtime_path,
         :label,
         :data,
         :snapshot_before,
@@ -36,6 +35,7 @@ module Trailblazer
             options_from_trace_node = trace_node
               .to_h # :level, :snapshot_before, :snapshot_after
               .merge(
+                id:           trace_node.object_id,
                 trace_node:   trace_node,
                 activity:     trace_node.snapshot_before.activity,
                 task:         trace_node.snapshot_before.task,

@@ -80,6 +80,7 @@ class DebuggerTest < Minitest::Spec
 
     assert_equal debugger_nodes[0].task, activity
     assert_equal debugger_nodes[0].activity, Trailblazer::Activity::TaskWrap.container_activity_for(activity)
+    assert_equal debugger_nodes[0].id, debugger_nodes[0].trace_node.object_id
 
     assert_equal debugger_nodes[0].task, activity
     assert_equal debugger_nodes[0].compile_id, nil
@@ -89,6 +90,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].data, {}
     assert_equal debugger_nodes[0].snapshot_before, stack.to_a[0]
     assert_equal debugger_nodes[0].snapshot_after, stack.to_a[-1]
+    assert_equal debugger_nodes[0].id, debugger_nodes[0].trace_node.object_id
 
     assert_equal debugger_nodes[1].activity.class, Trailblazer::Activity # The [activity] field is an Activity.
     assert_equal debugger_nodes[1].task.inspect, %{#<Trailblazer::Activity::Start semantic=:default>}
@@ -99,12 +101,14 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].data, {}
     assert_equal debugger_nodes[1].snapshot_before, stack.to_a[1]
     assert_equal debugger_nodes[1].snapshot_after, stack.to_a[2]
+    assert_equal debugger_nodes[1].id, debugger_nodes[1].trace_node.object_id
 
     assert_equal debugger_nodes[3].task, sub_activity
     # the "parent activity" for {sub_activity} is not the Activity::Railway class but instance of Acivity.
     assert_equal debugger_nodes[3].activity.class, Trailblazer::Activity
     assert_equal debugger_nodes[3].activity, debugger_nodes[1].activity
     assert_equal debugger_nodes[3].data, {exception_source: true}
+    assert_equal debugger_nodes[3].id, debugger_nodes[3].trace_node.object_id
 
     assert_equal debugger_nodes[9].compile_id, :d
     assert_equal debugger_nodes[9].runtime_id, "ddddddddd"
@@ -115,5 +119,6 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].snapshot_after, stack.to_a[16]
     assert_equal debugger_nodes[9].snapshot_before.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #{:seq=>"[:a, :b, :c]"}
     assert_equal debugger_nodes[9].snapshot_after.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #, {:seq=>"[:a, :b, :c, :d]"}
+    assert_equal debugger_nodes[9].id, debugger_nodes[9].trace_node.object_id
   end
 end
