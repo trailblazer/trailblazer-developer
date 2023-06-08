@@ -452,42 +452,4 @@ class TraceTest < Minitest::Spec
 |-- 1/#<Method: Trailblazer::Activity::Testing::Assertions::Implementing.e>/Trailblazer::Activity::Right/E/pink
 `-- 1/#<Trailblazer::Activity::End semantic=:success>/#<Trailblazer::Activity::End semantic=:success>/End.success/pink}
   end
-
-  class IncompleteTreeTest < Minitest::Spec
-    it "what" do
-      activity = Class.new(Trailblazer::Activity::Railway) do
-        def self.rescue((ctx, flow_options), runner:, **circuit_options)
-          begin
-            signal, (ctx, flow_options) = runner.(Validate, [ctx, flow_options], runner: runner, **circuit_options)
-          rescue
-
-          end
-
-          return Trailblazer::Activity::Right, [ctx, flow_options]
-        end
-
-        step task: method(:rescue)
-
-
-        class Validate < Trailblazer::Activity::Railway
-          step :validate
-          def validate(ctx, validate: false, seq:, **)
-            seq << :validate
-            raise unless validate
-            validate
-          end
-        end
-      end
-
-      # TODO: test multiple successive incomplete tasks.
-      #            exception style where at some point all ascendants are incomplete.
-
-      ctx = {validate: false}
-      stack, _ = Trailblazer::Developer::Trace.invoke(Tracing::ValidateWithRescue, [ctx, {}])
-
-      trace_nodes = Dev::Trace.Tree(stack.to_a)
-
-
-    end
-  end
 end
