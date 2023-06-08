@@ -1,7 +1,7 @@
 module Trailblazer
   module Developer
+    # Code in Debugger is only executed if the user wants to render the stack.
     module Debugger
-
       ATTRS = [
         :trace_node,
         :task,
@@ -63,27 +63,26 @@ module Trailblazer
         end
       end # Node
 
-      # Called in {Trace::Present}.
-      # Design note: goal here is to have as little computation as possible, e.g. not sure
-      #              if we should calculate pathes here all times.
-      # DISCUSS: name this {Trace.build}?
-      def self.trace_for_stack(stack, **options_for_debugger_nodes)
-        trace_nodes = Developer::Trace.Tree(stack.to_a)
-
-        nodes = Debugger::Node.build(
-          trace_nodes,
-          **options_for_debugger_nodes,
-        )
-
-        Debugger::Trace.new(nodes: nodes, variable_versions: stack.variable_versions) # after this, the concept of "Stack" doesn't exist anymore.
-      end
-
       # Interface for data (nodes, versions, etc) between tracing code and presentation layer.
       # We have no concept of {Stack} here anymore. Nodes and arbitrary objects such as "versions".
       # Debugger::Trace interface abstracts away the fact we have two snapshots. Here,
       # we only have a node per task.
       #
       class Trace
+        # Called in {Trace::Present}.
+        # Design note: goal here is to have as little computation as possible, e.g. not sure
+        #              if we should calculate pathes here all times.
+        def self.build(stack, **options_for_debugger_nodes)
+          trace_nodes = Developer::Trace.build_nodes(stack.to_a)
+
+          nodes = Debugger::Node.build(
+            trace_nodes,
+            **options_for_debugger_nodes,
+          )
+
+          new(nodes: nodes, variable_versions: stack.variable_versions) # after this, the concept of "Stack" doesn't exist anymore.
+        end
+
         def initialize(nodes:, variable_versions:)
           @options = {nodes: nodes, variable_versions: variable_versions}
         end

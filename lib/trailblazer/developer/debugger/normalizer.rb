@@ -40,7 +40,7 @@ module Trailblazer
           end
 
           def self.incomplete?(ctx, trace_node:, **)
-            ctx[:incomplete?] = trace_node.is_a?(Developer::Trace::Tree::Node::Incomplete)
+            ctx[:incomplete?] = trace_node.is_a?(Developer::Trace::Node::Incomplete)
           end
         end
 

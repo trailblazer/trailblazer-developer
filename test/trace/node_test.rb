@@ -1,14 +1,14 @@
 require "test_helper"
 
-class TraceTreeTest < Minitest::Spec
+class TraceNodeTest < Minitest::Spec
   def inspect_task(task)
     task.inspect
   end
 
-  def assert_trace_node(node, task:, inspect_task: method(:inspect_task), node_class: Trailblazer::Developer::Trace::Tree::Node)
+  def assert_trace_node(node, task:, inspect_task: method(:inspect_task), node_class: Trailblazer::Developer::Trace::Node)
     assert_equal node.class, node_class
     assert_equal inspect_task.(node.snapshot_before.task), task
-    if node_class == Trailblazer::Developer::Trace::Tree::Node::Incomplete
+    if node_class == Trailblazer::Developer::Trace::Node::Incomplete
       assert_nil node.snapshot_after
     else
       assert_equal inspect_task.(node.snapshot_after.task), task
@@ -29,7 +29,7 @@ class TraceTreeTest < Minitest::Spec
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
-    trace_nodes = Dev::Trace.Tree(stack.to_a)
+    trace_nodes = Dev::Trace.build_nodes(stack.to_a)
 
     assert_equal 14, trace_nodes.size
 
@@ -50,7 +50,7 @@ class TraceTreeTest < Minitest::Spec
 
 
   #@ ParentMap
-    parent_map = Dev::Trace::Tree::ParentMap.build(trace_nodes)
+    parent_map = Dev::Trace::ParentMap.build(trace_nodes)
 
     assert_equal parent_map[trace_nodes[0]], nil
     assert_equal parent_map[trace_nodes[1]], trace_nodes[0]
@@ -70,11 +70,11 @@ class TraceTreeTest < Minitest::Spec
     assert_equal parent_map[trace_nodes[15]], nil
 
   #@ Tree::ParentMap.path_for()
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, trace_nodes[0]), []
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, trace_nodes[2]), [:a]
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, trace_nodes[3]), ["B"]
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, trace_nodes[5]), ["B", :b]
-    assert_equal Dev::Trace::Tree::ParentMap.path_for(parent_map, trace_nodes[9]), ["B", "C", :d]
+    assert_equal Dev::Trace::ParentMap.path_for(parent_map, trace_nodes[0]), []
+    assert_equal Dev::Trace::ParentMap.path_for(parent_map, trace_nodes[2]), [:a]
+    assert_equal Dev::Trace::ParentMap.path_for(parent_map, trace_nodes[3]), ["B"]
+    assert_equal Dev::Trace::ParentMap.path_for(parent_map, trace_nodes[5]), ["B", :b]
+    assert_equal Dev::Trace::ParentMap.path_for(parent_map, trace_nodes[9]), ["B", "C", :d]
 
     # this test is to make sure the computed path and {#find_path} play along nicely.
     assert_equal Trailblazer::Developer::Introspect.find_path(activity, ["B", "C", :d])[0].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
@@ -115,7 +115,7 @@ class TraceTreeTest < Minitest::Spec
 
     assert_equal ctx[:seq], [:a, :b, :c, :a, :a, :e]
 
-    trace_nodes = Dev::Trace.Tree(stack.to_a)
+    trace_nodes = Dev::Trace.build_nodes(stack.to_a)
 
     inspect_task = ->(task) { [task.name] }
 
@@ -144,14 +144,14 @@ class TraceTreeTest < Minitest::Spec
     ctx = {validate: false}
     stack, _ = Trailblazer::Developer::Trace.invoke(Tracing::ValidateWithRescue, [ctx, {}])
 
-    trace_nodes = Dev::Trace.Tree(stack.to_a)
+    trace_nodes = Dev::Trace.build_nodes(stack.to_a)
 
     assert_trace_node trace_nodes[0], task: Tracing::ValidateWithRescue.inspect
     assert_trace_node trace_nodes[1], task:   %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_trace_node trace_nodes[2], task:   Tracing::ValidateWithRescue.method(:rescue).inspect
-    assert_trace_node trace_nodes[3], task:     %{Tracing::ValidateWithRescue::Validate}, node_class: Trailblazer::Developer::Trace::Tree::Node::Incomplete
+    assert_trace_node trace_nodes[3], task:     %{Tracing::ValidateWithRescue::Validate}, node_class: Trailblazer::Developer::Trace::Node::Incomplete
     assert_trace_node trace_nodes[4], task:       %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[5], task:       %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=validate>), node_class: Trailblazer::Developer::Trace::Tree::Node::Incomplete
+    assert_trace_node trace_nodes[5], task:       %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=validate>), node_class: Trailblazer::Developer::Trace::Node::Incomplete
     assert_trace_node trace_nodes[6], task:   %{#<Trailblazer::Activity::End semantic=:success>}
     assert_nil trace_nodes[7]
   end

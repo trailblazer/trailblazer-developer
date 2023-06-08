@@ -20,13 +20,10 @@ module Trailblazer
           # why we don't have to re-set it here. I'm not a huge fan of mutating it
           # in a deeply nested scenario but everything else we played with added huge amounts
           # or runtime code.
-          # @variable_versions = variable_versions
           @variable_versions.add_changes!(new_variable_versions)
 
           @snapshots << snapshot
-        end # TODO: do we like this options merging?
-
-        # DISCUSS: re-introduce #<< with one arg?
+        end
 
         def to_a
           @snapshots

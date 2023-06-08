@@ -1,24 +1,18 @@
 module Trailblazer
   module Developer
     module Trace
-
-      # TODO: rename to stack::tree?
-      # Builds a tree graph from a linear stack.
-      # Consists of {Tree::Node} structures.
-      def self.Tree(descendants)
+      # Build array of {Trace::Node} from a snapshots stack.
+      def self.build_nodes(snapshots)
         instructions = [
-          [0, descendants]
+          [0, snapshots]
         ]
 
-        _nodes = Tree.process_instructions(instructions)
-      end # Tree()
-
+        _nodes = Node.process_instructions(instructions)
+      end
 
       # Datastructure representing a trace.
-      class Tree # TODO: rename, this is not a tree anymore.
-        class Node < Struct.new(:level, :snapshot_before, :snapshot_after)
-          class Incomplete < Node
-          end
+      class Node < Struct.new(:level, :snapshot_before, :snapshot_after)
+        class Incomplete < Node
         end
 
         def self.pop_from_instructions!(instructions)
@@ -91,45 +85,18 @@ module Trailblazer
                 ]
               end
 
-            node = Tree::Node.new(level, snapshot_before, snapshot_after)
+            node = new(level, snapshot_before, snapshot_after)
           else # incomplete
             instructions = [
               [level + 1, descendants]
             ]
 
-            node = Tree::Node::Incomplete.new(level, snapshot_before, nil)
+            node = Incomplete.new(level, snapshot_before, nil)
           end
 
           return node, instructions
         end
-
-        # Map each {Node} instance to its parent {Node}.
-        module ParentMap
-          def self.build(trace_nodes)
-            levels = {}
-            trace_nodes.collect do |node|
-              level = node.level
-              levels[level] = node
-
-              [node, levels[level - 1]]
-            end.to_h
-          end
-
-          # @public
-          def self.path_for(parent_map, node)
-            path = []
-
-            while parent = parent_map[node] # DISCUSS: what if the graphs are cached and present, already?
-              node_id = Activity::Introspect.Nodes(node.snapshot_before.activity, task: node.snapshot_before.task).id
-              path << node_id
-
-              node = parent
-            end
-
-            path.reverse
-          end
-        end # ParentMap
-      end # Tree
+      end # Node
     end
   end # Developer
 end

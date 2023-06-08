@@ -20,26 +20,27 @@ module Trailblazer::Developer
         Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
       end
 
-      # Entry point for rendering a Stack as a "tree branch" the way we do it in {#wtf?}.
+      # Entry point for rendering a {Trace::Stack}.
+      # Used in `#wtf?`.
       def call(stack, render_method: method(:render), node_options: {}, **options)
         # The top activity doesn't have an ID, hence we need to compute a default label.
         # TODO: maybe we should deep-merge here.
-        captured_input_for_top_activity = stack.to_a[0]
+        snapshot_before_for_top_activity = stack.to_a[0]
 
         top_activity_options = {
           # we can pass particular label "hints".
-          captured_input_for_top_activity => {
-            # label: %{#{captured_input_for_top_activity.task.superclass} (anonymous)},
-            label: captured_input_for_top_activity.task.inspect,
+          snapshot_before_for_top_activity => {
+            # label: %{#{snapshot_before_for_top_activity.task.superclass} (anonymous)},
+            label: snapshot_before_for_top_activity.task.inspect,
           },
         }
 
         node_options = top_activity_options.merge(node_options)
 
-        # At this point we already decided that there is a Stack. and that we will have versions of variables???????????????
-        debugger_nodes = Debugger.trace_for_stack(stack, node_options: node_options, **options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
+        # At this point we already decided that there is a Stack.
+        debugger_trace = Debugger::Trace.build(stack, node_options: node_options, **options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
 
-        return render_method.(debugger_nodes, **options)
+        return render_method.(debugger_trace, **options)
       end
     end # Present
   end

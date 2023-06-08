@@ -25,7 +25,7 @@ class TraceNormalizerTest < Minitest::Spec
       append: :compile_id, #@ we can change how compile_path and runtime_id are computed.
     )
 
-    debugger_nodes = Trailblazer::Developer::Debugger.trace_for_stack(
+    debugger_nodes = Trailblazer::Developer::Debugger::Trace.build(
       stack)
 
     #@ only {:b} got changed, but all of its IDs.

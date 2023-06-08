@@ -55,7 +55,7 @@ class DebuggerTest < Minitest::Spec
     extended_normalizer = pipeline_extension.(Dev::Debugger::Normalizer::PIPELINES.last)
 
 
-    nodes = Dev::Debugger.trace_for_stack(
+    nodes = Dev::Debugger::Trace.build(
       stack,
       normalizer: extended_normalizer,
       node_options: {
