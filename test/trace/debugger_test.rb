@@ -1,6 +1,29 @@
 require "test_helper"
 
 class DebuggerTest < Minitest::Spec
+  it "deprecates {:captured_node}" do
+    my_compute_runtime_id = ->(ctx, captured_node:, **) do
+      captured_node.snapshot_after # throw an exception.
+    end
+
+    pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
+      Dev::Debugger::Normalizer.Task(my_compute_runtime_id),
+      id: :my_compute_runtime_id,
+      append: :data
+    ])
+    extended_normalizer = pipeline_extension.(Dev::Debugger::Normalizer::PIPELINES.last)
+
+    activity = Class.new(Trailblazer::Activity::Railway) do
+      step :create
+    end
+
+    exception = assert_raises do
+      Dev.wtf?(activity, [{}, {}], present_options: {normalizer: extended_normalizer})
+    end
+
+    assert_equal exception.message, %([Trailblazer] The `:captured_node` argument is deprecated, please upgrade to `trailblazer-developer-0.1.0` and use `:trace_node` if the upgrade doesn't fix it.)
+  end
+
   it "what" do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity(
       sub_activity_options: {id: "B"}, _activity_options: {id: "C"})
