@@ -59,9 +59,9 @@ module Trailblazer::Developer
     end
 
     module Exception
-      def self.find_exception_source(incomplete_stack, exception)
+      def self.find_exception_source(stack, exception)
         # in 99%, exception_source is a {Snapshot::Before}.
-        exception_source = incomplete_stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
+        exception_source = stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
                                                   #   However, what if an error happens in, say, an input filter? TODO: test this
       end
     end

@@ -2,6 +2,7 @@ module Trailblazer
   module Developer
     module Trace
       # Build array of {Trace::Node} from a snapshots stack.
+      # @private
       def self.build_nodes(snapshots)
         instructions = [
           [0, snapshots]

@@ -57,6 +57,7 @@ class DebuggerTest < Minitest::Spec
 
     nodes = Dev::Debugger::Trace.build(
       stack,
+      Dev::Trace.build_nodes(stack.to_a),
       normalizer: extended_normalizer,
       node_options: {
     #@ we can pass particular label "hints".

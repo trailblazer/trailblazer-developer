@@ -72,9 +72,7 @@ module Trailblazer
         # Called in {Trace::Present}.
         # Design note: goal here is to have as little computation as possible, e.g. not sure
         #              if we should calculate pathes here all times.
-        def self.build(stack, **options_for_debugger_nodes)
-          trace_nodes = Developer::Trace.build_nodes(stack.to_a)
-
+        def self.build(stack, trace_nodes, **options_for_debugger_nodes)
           nodes = Debugger::Node.build(
             trace_nodes,
             **options_for_debugger_nodes,

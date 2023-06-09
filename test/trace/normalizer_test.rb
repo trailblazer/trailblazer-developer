@@ -26,7 +26,7 @@ class TraceNormalizerTest < Minitest::Spec
     )
 
     debugger_nodes = Trailblazer::Developer::Debugger::Trace.build(
-      stack)
+      stack, Dev::Trace.build_nodes(stack.to_a))
 
     #@ only {:b} got changed, but all of its IDs.
     assert_equal debugger_nodes.to_a[2][:compile_id], :a

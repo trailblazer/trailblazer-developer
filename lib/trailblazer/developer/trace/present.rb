@@ -35,10 +35,14 @@ module Trailblazer::Developer
           },
         }
 
+        # Build a generic array of {Trace::Node}s.
+        trace_nodes = Trace.build_nodes(stack.to_a)
+
+        # specific rendering.
         node_options = top_activity_options.merge(node_options)
 
         # At this point we already decided that there is a Stack.
-        debugger_trace = Debugger::Trace.build(stack, node_options: node_options, **options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
+        debugger_trace = Debugger::Trace.build(stack, trace_nodes, node_options: node_options, **options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
 
         return render_method.(debugger_trace, **options)
       end
