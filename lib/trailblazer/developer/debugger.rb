@@ -70,8 +70,7 @@ module Trailblazer
       #
       class Trace
         # Called in {Trace::Present}.
-        # Design note: goal here is to have as little computation as possible, e.g. not sure
-        #              if we should calculate pathes here all times.
+        # Design note: goal here is to have as little computation as possible.
         def self.build(stack, trace_nodes, **options_for_debugger_nodes)
           nodes = Debugger::Node.build(
             trace_nodes,

@@ -65,10 +65,7 @@ module Trailblazer::Developer
       # Serialize all ctx variables before {call_task}.
       # This is run just before {call_task}, after In().
       def self.before_snapshooter(wrap_ctx, ((ctx, flow_options), _))
-        variable_versions = flow_options[:stack].variable_versions
-        value_snapshooter = flow_options[:value_snapshooter]
-
-        changeset, new_versions = variable_versions.changeset_for(ctx, value_snapshooter: value_snapshooter)
+        changeset, new_versions = snapshot_for(ctx, **flow_options)
 
         data = {
           ctx_variable_changeset: changeset,
@@ -82,18 +79,21 @@ module Trailblazer::Developer
         snapshot_before             = wrap_ctx[:snapshot_before]
         returned_ctx, flow_options  = wrap_ctx[:return_args]
 
-        variable_versions = flow_options[:stack].variable_versions
-        value_snapshooter = flow_options[:value_snapshooter]
-
-        changeset, new_versions = variable_versions.changeset_for(returned_ctx, value_snapshooter: value_snapshooter)
+        changeset, new_versions = snapshot_for(returned_ctx, **flow_options)
 
         data = {
           ctx_variable_changeset: changeset,
           signal:                 wrap_ctx[:return_signal],
-          snapshot_before:        snapshot_before,
+          snapshot_before:        snapshot_before, # add this so we know who belongs together.
         }
 
         return data, new_versions
+      end
+
+      def self.snapshot_for(ctx, value_snapshooter:, stack:, **)
+        variable_versions = stack.variable_versions
+
+        variable_versions.changeset_for(ctx, value_snapshooter: value_snapshooter) # return {changeset, new_versions}
       end
 
       # {Value} serializes the variable value using with custom logic, e.g. {value.inspect}.
