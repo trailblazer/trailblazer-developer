@@ -106,97 +106,60 @@ class TraceTest < Minitest::Spec
 `-- End.success}
   end
 
-  it "nested tracing with better-snapshot" do
     # Test custom classes without explicit {#hash} implementation.
-    class User
-      def initialize(id)
-        @id = id
+  class User
+    def initialize(id)
+      @id = id
+    end
+  end
+
+  class Endpoint < Trailblazer::Activity::Railway
+    class Create < Trailblazer::Activity::Railway
+      step :model
+      step :screw_params! # unfortunately, people do that.
+
+      def model(ctx, current_user:, seq:, **)
+        seq << :model
+
+        ctx[:model] = Object
+      end
+
+      def screw_params!(ctx, params:, seq:, **)
+        seq << :screw_params!
+
+        # DISCUSS: this sucks, of course!
+        params[:song] = params
       end
     end
 
-    namespace = Module.new do
-      class self::Endpoint < Trailblazer::Activity::Railway
-        class Create < Trailblazer::Activity::Railway
-          step :model
-          step :screw_params! # unfortunately, people do that.
 
-          def model(ctx, current_user:, seq:, **)
-            seq << :model
+    step :authenticate
+    step :authorize,
+      Inject(:current_user, override: true) => ->(ctx, **) { User.new(2) }, #
+      Inject() => [:seq],
+      Out() => []
+    step Subprocess(Create),
+      In() => [:current_user, :params, :seq],
+      Out() => [:model]
 
-            ctx[:model] = Object
-          end
-
-          def screw_params!(ctx, params:, seq:, **)
-            seq << :screw_params!
-
-            # DISCUSS: this sucks, of course!
-            params[:song] = params
-          end
-        end
-
-
-        step :authenticate
-        step :authorize,
-          Inject(:current_user, override: true) => ->(ctx, **) { User.new(2) }, #
-          Inject() => [:seq],
-          Out() => []
-        step Subprocess(Create),
-          In() => [:current_user, :params, :seq],
-          Out() => [:model]
-
-        def authenticate(ctx, current_user:, seq:, **)
-          seq << :authenticate
-        end
-
-        def authorize(ctx, current_user:, seq:, **)
-          seq << :authorize
-        end
-      end
+    def authenticate(ctx, current_user:, seq:, **)
+      seq << :authenticate
     end
 
+    def authorize(ctx, current_user:, seq:, **)
+      seq << :authorize
+    end
+  end
+
+  it "nested tracing with better-snapshot" do
     Snapshot = Trailblazer::Developer::Trace::Snapshot
-
-    inspect_only_flow_options = {
-      before_snapshooter:   Snapshot::Deprecated.method(:default_input_data_collector),
-      after_snapshooter:  Snapshot::Deprecated.method(:default_output_data_collector),
-    }
-
 
     snapshot_flow_options = {
       before_snapshooter:   Snapshot.method(:before_snapshooter),
       after_snapshooter:  Snapshot.method(:after_snapshooter),
     }
 
-    activity = namespace::Endpoint
-
-
-# require "benchmark/ips"
-# Benchmark.ips do |x|
-#     x.report("inspect-only") do ||
-
-#       stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
-#         activity,
-#         [
-#           {seq: [], current_user: Object.new, params: {name: "Q & I"}},
-#           inspect_only_flow_options
-#         ]
-#       )
-#     end
-
-#     x.report("snapshot") do ||
-
-#       stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
-#         activity,
-#         [
-#           {seq: [], current_user: Object.new, params: {name: "Q & I"}},
-#           snapshot_flow_options
-#         ]
-#       )
-#     end
-
-#     x.compare!
-# end
-
+    activity = ::TraceTest::Endpoint
 
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
       activity,
@@ -230,7 +193,7 @@ class TraceTest < Minitest::Spec
 
 
     # This is a unit test we might not need anymore:
-    assert_equal stack[0].task, namespace::Endpoint
+    assert_equal stack[0].task, ::TraceTest::Endpoint
     assert_snapshot versions, stack[0], current_user: 0, params: 0, seq: 0
 
     assert_equal stack[1].task.inspect, %(#<Trailblazer::Activity::Start semantic=:default>)
@@ -251,7 +214,7 @@ class TraceTest < Minitest::Spec
     assert_snapshot versions, stack[6], current_user: 0, params: 0, seq: 2
 
     # Create {in}
-    assert_equal stack[7].task, namespace::Endpoint::Create
+    assert_equal stack[7].task, ::TraceTest::Endpoint::Create
     assert_snapshot versions, stack[7], current_user: 0, params: 0, seq: 2
 
       # Create :model
@@ -271,7 +234,7 @@ class TraceTest < Minitest::Spec
       assert_snapshot versions, stack[15], current_user: 0, params: 1, seq: 4, model: 0
 
     # Create {out}
-    assert_equal stack[16].task, namespace::Endpoint::Create
+    assert_equal stack[16].task, ::TraceTest::Endpoint::Create
     assert_snapshot versions, stack[16], current_user: 0, params: 1, seq: 4, model: 0
 
     # Endpoint End.success
