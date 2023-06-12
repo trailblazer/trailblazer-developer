@@ -39,15 +39,10 @@ module Trailblazer::Developer
     singleton_class.attr_reader :value_snapshooter # NOTE: this is semi-private.
 
     module_function
-    # Insertions for the trace tasks that capture the arguments just before calling the task,
-    # and before the TaskWrap is finished.
-    #
+
     # @private
     def task_wrap_extensions
-      Trailblazer::Activity::TaskWrap.Extension(
-        [Trace.method(:capture_args),   id: "task_wrap.capture_args",   prepend: "task_wrap.call_task"],
-        [Trace.method(:capture_return), id: "task_wrap.capture_return", append: nil], # append to the very end of tW.
-      )
+      TASK_WRAP_EXTENSION
     end
 
     # Snapshot::Before and After are a generic concept of Trace, as
@@ -80,5 +75,12 @@ module Trailblazer::Developer
 
       return wrap_config, original_args
     end
+
+    # Insertions for the trace tasks that capture the arguments just before calling the task,
+    # and before the TaskWrap is finished.
+    TASK_WRAP_EXTENSION = Trailblazer::Activity::TaskWrap.Extension(
+      [Trace.method(:capture_args),   id: "task_wrap.capture_args",   prepend: "task_wrap.call_task"],
+      [Trace.method(:capture_return), id: "task_wrap.capture_return", append: nil], # append to the very end of tW.
+    )
   end
 end
