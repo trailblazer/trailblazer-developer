@@ -1,14 +1,44 @@
 # 0.1.0
 
-* Introduce the concept of `Snapshot` which can be a moment in time before or after a step.
-  `Captured::Input`/`Captured::Output` are now `Snapshot::Before` and `Snapshot::After`.
+## Adding `Debugger` layer
+
+* Introduce `Debugger::Trace` with `Trace::Node`s and `variable_versions` field
+  to maintain all data produced by tracing in one entity.
+
+## `Trace::Node`
+
+* `Node.build_for_stack` is now called in `Trace::Present` and produces a list
+  of `Trace::Node` instances that are containers for  matching before and after snapshots.
+* Add `Node::Incomplete` nodes that have no `snapshot_after` as they represent
+  a part of the flow that was canceled.
+
+## Debugger::Normalizer
+
+* Deprecate `:captured_node` keyword argument in normalizer steps and
+  rename it to `:trace_node`.
+* Remove the concept of `:runtime_path` and `:compile_path`. You can always
+  compute paths after or during the debug rendering yourself. However, we simply
+  don't need it for IDE or wtf?.
+
+## `Trace.wtf?`
+
 * Rename `:output_data_collector` and `:input_data_collector` to `:after_snapshooter` and `:before_snapshooter`
-  as they both produce instances of `Snapshot`.
-* Change signature of former `:input_data_collectore` and `:output_data_collector`, they return two hashs now.
-* Add `Snapshot::Ctx` which is a new, faster way of capturing variables in ctx before and after a step.
-* Rename `:captured_node` to `:trace_node` # FIXME.
-* Remove the concept of `:runtime_path` and `:compile_path`. You can always compute paths
-  after or during the debug rendering yourself. However, we simply don't need it for IDE or wtf?.
+  as they both produce instances of `Snapshot`. The return signature has changed, the snapshooters
+  return two values now: the data object and an object representing the variable versioning.
+
+## Snapshot
+
+* Introduce the concept of `Snapshot` which can be a moment in time before or after a step.
+  The `Snapshot::Before` and `Snapshot::After` (renamed from `Captured::Input` and `Captured::Output`)
+  are created during the tracing and after tracing associated to a specific `Trace::Node`.
+* Add `Snapshot::Ctx` and `Snapshot::Versions` which is a new, faster way of capturing variables.
+  Instead of always calling `ctx.inspect` for every trace step, only variables that have changed
+  are snapshooted using the (configurable) `:value_snapshooter`. This improves `#wtf?` performance
+  up to factor 10.
+
+* Change signature of former `:input_data_collector` and `:output_data_collector`, they return two hashs now.
+
+
 
 # 0.0.29
 
