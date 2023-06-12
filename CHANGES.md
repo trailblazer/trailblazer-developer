@@ -36,10 +36,6 @@
   are snapshooted using the (configurable) `:value_snapshooter`. This improves `#wtf?` performance
   up to factor 10.
 
-* Change signature of former `:input_data_collector` and `:output_data_collector`, they return two hashs now.
-
-
-
 # 0.0.29
 
 * The `:render_method` callable can now return output along with additional returned values.

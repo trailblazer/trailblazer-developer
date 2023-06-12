@@ -71,7 +71,7 @@ class TraceTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
   #@ we get ctx_snapshot for in and out
-    ctx_for = Trailblazer::Developer::Trace::Snapshot::Ctx.method(:snapshot_ctx_for)
+    ctx_for = Trailblazer::Developer::Trace::Snapshot.method(:snapshot_ctx_for)
     variable_versions = stack.variable_versions
 
     assert_equal ctx_for.(stack.to_a[3], variable_versions), {:seq=>{:value=>"[]", :has_changed=>false}}
@@ -183,7 +183,7 @@ class TraceTest < Minitest::Spec
     # pp versions
 
     # Check if Ctx.snapshot_at works as expected.
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(stack[11], stack_object.variable_versions), # asserted snapshot is for {After(:model)}.
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(stack[11], stack_object.variable_versions), # asserted snapshot is for {After(:model)}.
       {
         current_user: {value: current_user.inspect, has_changed: false},
         params:       {value: "{:name=>\"Q & I\"}", has_changed: false},
@@ -274,13 +274,13 @@ class TraceTest < Minitest::Spec
     nodes = stack.to_a
 
     # :override/after
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[4], stack.variable_versions),
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(nodes[4], stack.variable_versions),
       {
         model: {value: "nil", has_changed: true},
       }
 
     # :create/after
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[6], stack.variable_versions),
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(nodes[6], stack.variable_versions),
       {
         model: {value: "Object", has_changed: true},
       }
@@ -312,7 +312,7 @@ class TraceTest < Minitest::Spec
     # Op/after
     # :params is params.inspect
     # :model was serialized with custom inspector.
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[7], stack.variable_versions),
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(nodes[7], stack.variable_versions),
       {
         :params=>{:value=>"{}", :has_changed=>false},
         :model=>{:value=>"Module class", :has_changed=>false}
@@ -329,7 +329,7 @@ class TraceTest < Minitest::Spec
     # Op/after
     # :params is params.inspect
     # :model was serialized with custom inspector.
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(nodes[7], stack.variable_versions),
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(nodes[7], stack.variable_versions),
       {
         :params=>{:value=>"{}", :has_changed=>false},
         :model=>{:value=>"Module class", :has_changed=>false}

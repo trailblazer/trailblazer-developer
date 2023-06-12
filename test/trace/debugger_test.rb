@@ -76,7 +76,7 @@ class DebuggerTest < Minitest::Spec
     debugger_nodes = nodes.to_a
 
     # Nodes#variable_versions
-    assert_equal Trailblazer::Developer::Trace::Snapshot::Ctx.snapshot_ctx_for(debugger_nodes[9].snapshot_before, nodes.to_h[:variable_versions]),
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(debugger_nodes[9].snapshot_before, nodes.to_h[:variable_versions]),
       {:seq=>{:value=>"[:a, :b, :c]", :has_changed=>false}}
 
     assert_equal debugger_nodes[0].task, activity

@@ -17,10 +17,9 @@ module Trailblazer::Developer
       def arguments_for_call(activity, (options, original_flow_options), **original_circuit_options)
         default_flow_options = {
           stack:              Trace::Stack.new,
-          # TODO: we can prepare static values in a HASH.
           before_snapshooter: Snapshot.method(:before_snapshooter),
           after_snapshooter:  Snapshot.method(:after_snapshooter),
-          value_snapshooter: Trace.value_snapshooter
+          value_snapshooter:  Trace.value_snapshooter
         }
 
         flow_options = {**default_flow_options, **Hash(original_flow_options)}
