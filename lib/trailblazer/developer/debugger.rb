@@ -30,7 +30,7 @@ module Trailblazer
           # DISCUSS: this might change if we introduce a new Node type for Trace.
           _debugger_nodes = trace_nodes.collect do |trace_node|
             # it's possible to pass per-node options, like {label: "Yo!"} via {:node_options[<snapshot_before>]}
-            options_from_user  = node_options[trace_node.snapshot_before] || {} # FIXME: why not use Trace::Node to identify?
+            options_from_user  = node_options[trace_node] || {}
 
             options_from_trace_node = trace_node
               .to_h # :level, :snapshot_before, :snapshot_after
@@ -38,7 +38,7 @@ module Trailblazer
                 id:           trace_node.object_id,
                 trace_node:   trace_node,
                 activity:     trace_node.snapshot_before.activity,
-                task:         trace_node.snapshot_before.task,
+                task:         trace_node.task,
                 captured_node: DeprecatedCapturedNode, # TODO: remove once macro is 2.2
               )
 

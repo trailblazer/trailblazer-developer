@@ -16,7 +16,7 @@ module Trailblazer::Developer
     # This allows to display the trace even when an exception happened
     def invoke(activity, (ctx, flow_options), present_options: {}, **circuit_options)
       flow_options ||= {}
-      local_present_options = {}
+      local_present_options_block = ->(*) { {} }
 
       stack = Trace::Stack.new # unfortunately, we need this mutable object before things break.
       raise_exception = false
@@ -33,12 +33,16 @@ module Trailblazer::Developer
         exception_source  = Exception.find_exception_source(stack, $!)
         complete_stack    = stack
 
-        local_present_options = {
-          # we can hand in options per node, identified by their captured_input part.
-          node_options: {
-            exception_source => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
-          },
-          style: {exception_source => [:red, :bold]},
+        local_present_options_block = ->(trace_nodes:, **) {
+          {
+            # we can hand in options per node, identified by their captured_input part.
+            node_options: {
+              exception_source => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
+            },
+            style: {
+              exception_source => [:red, :bold]
+            },
+          }
         }
       end
 
@@ -48,8 +52,8 @@ module Trailblazer::Developer
         renderer:   Wtf::Renderer,
         color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge(flow_options[:color_map] || {}),
         activity:   activity,
-        **local_present_options,
         **present_options,
+        &local_present_options_block
       )
 
       puts output

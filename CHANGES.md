@@ -4,6 +4,29 @@
 
 * Introduce `Debugger::Trace` with `Trace::Node`s and `variable_versions` field
   to maintain all data produced by tracing in one entity.
+* In `Trace::Present.call`, you need to pass a block with options for customization instead
+  of passing `:node_options`. Further on, the per-node customization is now keyed by
+  `Trace::Node` instance and not a Stack element anymore.
+
+  ```ruby
+  output = Dev::Trace::Present.(
+    stack,
+    node_options: {
+      stack.to_a[0] => {label: "Create"}
+    }
+  )
+  ```
+  is now
+
+  ```ruby
+   Dev::Trace::Present.(stack) do |trace_nodes:, **|
+    {
+      node_options: {
+        trace_nodes[0] => {label: "Create"}
+      }
+    }
+  end
+  ```
 
 ## `Trace::Node`
 

@@ -43,8 +43,6 @@ class DebuggerTest < Minitest::Spec
       ctx[:runtime_id] = compile_id.to_s*9
     end
 
-    snapshot_before_for_activity     = stack.to_a.find { |captured| captured.task == activity }
-    snapshot_before_for_sub_activity = stack.to_a.find { |captured| captured.task == sub_activity }
 
     #@ this is internal API but we're never gonna need this anywhere except for other internals :)
     pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
@@ -54,29 +52,35 @@ class DebuggerTest < Minitest::Spec
     ])
     extended_normalizer = pipeline_extension.(Dev::Debugger::Normalizer::PIPELINES.last)
 
+    present_call_options = {
+      normalizer:     extended_normalizer,
+      render_method:  ->(debugger_trace, **) { debugger_trace } # that way, Present.call returns the {Debugger::Trace} instance.
+    }
 
-    nodes = Dev::Debugger::Trace.build(
-      stack,
-      Dev::Trace.build_nodes(stack.to_a),
-      normalizer: extended_normalizer,
-      node_options: {
-    #@ we can pass particular label "hints".
-        snapshot_before_for_activity => {
-          label: %{#{activity.superclass} (anonymous)},
-        },
-  #@ we may pass Node.data options (keyed by Stack::Captured)
-        snapshot_before_for_sub_activity => {
-          data: {
-            exception_source: true
+    debugger_trace = Dev::Trace::Present.(stack, **present_call_options) do |trace_nodes:, **|
+      trace_node_for_activity     = trace_nodes.find { |trace_node| trace_node.task == activity }
+      trace_node_for_sub_activity = trace_nodes.find { |trace_node| trace_node.task == sub_activity }
+
+      {
+        node_options: {
+      #@ we can pass particular label "hints".
+          trace_node_for_activity => {
+            label: %{#{activity.superclass} (anonymous)},
+          },
+      #@ we may pass Node.data options (keyed by Stack::Captured)
+          trace_node_for_sub_activity => {
+            data: {
+              exception_source: true
+            }
           }
         }
-      }, # node_options
-    )
+      }
+    end
 
-    debugger_nodes = nodes.to_a
+    debugger_nodes = debugger_trace.to_a
 
     # Nodes#variable_versions
-    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(debugger_nodes[9].snapshot_before, nodes.to_h[:variable_versions]),
+    assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(debugger_nodes[9].snapshot_before, debugger_trace.to_h[:variable_versions]),
       {:seq=>{:value=>"[:a, :b, :c]", :has_changed=>false}}
 
     assert_equal debugger_nodes[0].task, activity

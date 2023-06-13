@@ -12,7 +12,7 @@ module Trailblazer
       end
 
       # Datastructure representing a trace.
-      class Node < Struct.new(:level, :snapshot_before, :snapshot_after)
+      class Node < Struct.new(:level, :task, :snapshot_before, :snapshot_after)
         class Incomplete < Node
         end
 
@@ -86,13 +86,13 @@ module Trailblazer
                 ]
               end
 
-            node = new(level, snapshot_before, snapshot_after)
+            node = new(level, snapshot_before.task, snapshot_before, snapshot_after)
           else # incomplete
             instructions = [
               [level + 1, descendants]
             ]
 
-            node = Incomplete.new(level, snapshot_before, nil)
+            node = Incomplete.new(level, snapshot_before.task, snapshot_before, nil)
           end
 
           return node, instructions
