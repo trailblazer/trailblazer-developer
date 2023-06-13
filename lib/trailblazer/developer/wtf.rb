@@ -35,7 +35,7 @@ module Trailblazer::Developer
 
         local_present_options_block = ->(trace_nodes:, **) {
           exception_source_node = trace_nodes.reverse.find do |trace_node|
-            [trace_node.snapshot_after, trace_node.snapshot_before].include?(exception_source)
+            trace_node.snapshot_after == exception_source || trace_node.snapshot_before == exception_source
           end
 
           {

@@ -14,7 +14,7 @@ module Trailblazer::Developer
 
       module_function
 
-      # {options} can be {style: {#<Captured::Input> => [:red, :bold]}}
+      # {options} can be {style: {#<Debugger::Node> => [:red, :bold]}}
       def call(debugger_trace:, debugger_node:, style: {}, **options)
         label = styled_label(debugger_trace, debugger_node, style: style, **options)
 
