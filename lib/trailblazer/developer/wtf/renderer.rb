@@ -15,20 +15,20 @@ module Trailblazer::Developer
       module_function
 
       # {options} can be {style: {#<Captured::Input> => [:red, :bold]}}
-      def call(tree:, debugger_node:, style: {}, **options)
-        label = styled_label(tree, debugger_node, style: style, **options)
+      def call(debugger_trace:, debugger_node:, style: {}, **options)
+        label = styled_label(debugger_trace, debugger_node, style: style, **options)
 
         [debugger_node.level, label]
       end
 
-      def styled_label(tree, debugger_node, color_map:, **options)
+      def styled_label(debugger_trace, debugger_node, color_map:, **options)
         label = apply_style(debugger_node.label, debugger_node, **options)
 
-        %{#{fmt(label, color_map[ signal_of(debugger_node) ])}}
+        %{#{fmt(label, color_map[signal_of(debugger_node)])}}
       end
 
       def apply_style(label, debugger_node, style:, **)
-        return label unless styles = style[debugger_node.snapshot_before]
+        return label unless styles = style[debugger_node.trace_node]
 
         styles.each { |s| label = fmt(label, s) }
         label

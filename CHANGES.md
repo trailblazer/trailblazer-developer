@@ -7,6 +7,9 @@
 * In `Trace::Present.call`, you need to pass a block with options for customization instead
   of passing `:node_options`. Further on, the per-node customization is now keyed by
   `Trace::Node` instance and not a Stack element anymore.
+* In `render_method`, remove `:tree` keyword argument, use `:debugger_trace`.
+* The `render_method` is called with keyword arguments, only. The first positional argument
+  `debugger_nodes` is now `:debugger_trace`.
 
   ```ruby
   output = Dev::Trace::Present.(

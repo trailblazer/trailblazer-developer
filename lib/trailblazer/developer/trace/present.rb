@@ -2,7 +2,7 @@ require "hirb"
 
 module Trailblazer::Developer
   module Trace
-    module Present # TODO: rename to Debugger?
+    module Present # DISCUSS: rename to Debugger?
       module_function
 
       # @private
@@ -12,9 +12,9 @@ module Trailblazer::Developer
 
       # Returns the console output string.
       # @private
-      def render(debugger_nodes, renderer: method(:default_renderer), **options_for_renderer)
-        nodes = debugger_nodes.to_a.collect do |debugger_node|
-          renderer.(debugger_node: debugger_node, tree: debugger_nodes, **options_for_renderer)
+      def render(debugger_trace:, renderer: method(:default_renderer), **options_for_renderer)
+        nodes = debugger_trace.to_a.collect do |debugger_node|
+          renderer.(debugger_node: debugger_node, debugger_trace: debugger_trace, **options_for_renderer)
         end
 
         Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
@@ -29,7 +29,7 @@ module Trailblazer::Developer
         trace_nodes = Trace.build_nodes(stack.to_a)
 
         # The top activity doesn't have an ID, hence we need to compute a default label.
-        top_activity_trace_node = trace_nodes.to_a[0]
+        top_activity_trace_node = trace_nodes[0]
 
         build_options = {
           node_options: {
@@ -48,10 +48,10 @@ module Trailblazer::Developer
 
         build_options = merge_local_options(options_from_block, build_options)
 
-        # At this point we already decided that there is a Stack.
-        debugger_trace = Debugger::Trace.build(stack, trace_nodes, **build_options) # currently, we agree on using a Debugger::Node list as the presentation data structure.
+        # currently, we agree on using a Debugger::Node list as the presentation data structure.
+        debugger_trace = Debugger::Trace.build(stack, trace_nodes, **build_options)
 
-        return render_method.(debugger_trace, **build_options)
+        return render_method.(debugger_trace: debugger_trace, **build_options)
       end
 
       # @private

@@ -34,13 +34,17 @@ module Trailblazer::Developer
         complete_stack    = stack
 
         local_present_options_block = ->(trace_nodes:, **) {
+          exception_source_node = trace_nodes.reverse.find do |trace_node|
+            [trace_node.snapshot_after, trace_node.snapshot_before].include?(exception_source)
+          end
+
           {
             # we can hand in options per node, identified by their captured_input part.
             node_options: {
-              exception_source => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
+              exception_source_node => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
             },
             style: {
-              exception_source => [:red, :bold]
+              exception_source_node => [:red, :bold]
             },
           }
         }

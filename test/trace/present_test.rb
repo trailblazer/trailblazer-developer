@@ -36,10 +36,29 @@ class TracePresentTest < Minitest::Spec
     assert_equal exception.message, %([Trailblazer] The `:node_options` option for `Trace::Present` is deprecated. Please use the block style as described here: #FIXME)
   end
 
-  it "allows to inject :renderer and pass through additional arguments to the renderer (e.g. {:color})" do
+  it "accepts {:render_method}" do
+    stack, _ = Dev::Trace.invoke(nested_activity, [{seq: []}, {}])
+
+    my_render_method = ->(debugger_trace:, **options) do
+      [
+        debugger_trace.to_a.size,
+        options.keys
+      ]
+    end
+
+    output = Dev::Trace::Present.(
+      stack,
+      render_method: my_render_method,
+      color:    "pink", # additional options.
+    )
+
+    assert_equal output, [10, [:node_options, :color]]
+  end
+
+  it "accepts {:renderer} and pass through additional arguments to the renderer (e.g. {:color})" do
     stack, _ = Dev::Trace.invoke(nested_activity, [{ seq: [] }, {}])
 
-    renderer = ->(debugger_node:, tree:, color:, **) do
+    renderer = ->(debugger_node:, debugger_trace:, color:, **) do
       task = debugger_node.trace_node.snapshot_before.task
 
       id_label = debugger_node.label

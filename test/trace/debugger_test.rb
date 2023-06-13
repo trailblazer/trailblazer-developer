@@ -54,7 +54,7 @@ class DebuggerTest < Minitest::Spec
 
     present_call_options = {
       normalizer:     extended_normalizer,
-      render_method:  ->(debugger_trace, **) { debugger_trace } # that way, Present.call returns the {Debugger::Trace} instance.
+      render_method:  ->(debugger_trace:, **) { debugger_trace } # that way, Present.call returns the {Debugger::Trace} instance.
     }
 
     debugger_trace = Dev::Trace::Present.(stack, **present_call_options) do |trace_nodes:, **|
