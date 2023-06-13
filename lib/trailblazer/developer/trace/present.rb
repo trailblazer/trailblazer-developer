@@ -41,10 +41,11 @@ module Trailblazer::Developer
           }
         }
 
-        build_options = merge_local_options(options, build_options)
+        build_options = build_options.merge(options) # since we only have {:node_options} in {build_options}, we can safely merge here.
 
         # specific rendering.
         options_from_block = block_given? ? block.call(trace_nodes: trace_nodes, stack: stack, **build_options) : {}
+
         build_options = merge_local_options(options_from_block, build_options)
 
         # At this point we already decided that there is a Stack.
