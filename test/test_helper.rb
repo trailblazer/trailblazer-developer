@@ -64,5 +64,29 @@ Minitest::Spec.class_eval do
 
       return activity, sub_activity, _activity
     end
+
+    class ValidateWithRescue < Trailblazer::Activity::Railway
+      def self.rescue((ctx, flow_options), runner:, **circuit_options)
+        begin
+          signal, (ctx, flow_options) = runner.(Validate, [ctx, flow_options], runner: runner, **circuit_options)
+        rescue
+
+        end
+
+        return Trailblazer::Activity::Right, [ctx, flow_options]
+      end
+
+      step task: method(:rescue)
+
+
+      class Validate < Trailblazer::Activity::Railway
+        step :validate
+        def validate(ctx, validate: false, seq:, **)
+          seq << :validate
+          raise unless validate
+          validate
+        end
+      end
+    end
   end # Tracing
 end

@@ -1,10 +1,11 @@
 module Trailblazer::Developer
   module Trace
-
     class << self
-      # Public entry point to activate tracing when running {activity}.
+      # Public entry point to run an activity with tracing.
+      # It returns the accumulated stack of Snapshots, along with the original return values.
+      # Note that {Trace.invoke} does not do any rendering.
       def call(activity, (ctx, flow_options), **circuit_options)
-        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call( activity, [ctx, flow_options], **circuit_options ) # only run once for the entire circuit!
+        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call(activity, [ctx, flow_options], **circuit_options) # only run once for the entire circuit!
 
         signal, (ctx, flow_options) = Trailblazer::Activity::TaskWrap.invoke(activity, [ctx, flow_options], **circuit_options)
 
@@ -15,9 +16,10 @@ module Trailblazer::Developer
 
       def arguments_for_call(activity, (options, original_flow_options), **original_circuit_options)
         default_flow_options = {
-          stack:                  Trace::Stack.new,
-          input_data_collector:   Trace.method(:default_input_data_collector),
-          output_data_collector:  Trace.method(:default_output_data_collector),
+          stack:              Trace::Stack.new,
+          before_snapshooter: Snapshot.method(:before_snapshooter),
+          after_snapshooter:  Snapshot.method(:after_snapshooter),
+          value_snapshooter:  Trace.value_snapshooter
         }
 
         flow_options = {**default_flow_options, **Hash(original_flow_options)}
@@ -32,79 +34,52 @@ module Trailblazer::Developer
       end
     end
 
+    @value_snapshooter = Trace::Snapshot::Value.build()
+    singleton_class.attr_reader :value_snapshooter # NOTE: this is semi-private.
+
     module_function
-    # Insertions for the trace tasks that capture the arguments just before calling the task,
-    # and before the TaskWrap is finished.
-    #
+
     # @private
     def task_wrap_extensions
-      Trailblazer::Activity::TaskWrap.Extension(
-        [Trace.method(:capture_args),   id: "task_wrap.capture_args",   prepend: "task_wrap.call_task"],
-        [Trace.method(:capture_return), id: "task_wrap.capture_return", append: nil], # append to the very end of tW.
-      )
+      TASK_WRAP_EXTENSION
     end
+
+    # Snapshot::Before and After are a generic concept of Trace, as
+    # they're the interface to Trace::Present, WTF, and Debugger.
 
     # It's important to understand that {flow[:stack]} is mutated by design. This is needed so
     # in case of exceptions we still have a "global" trace - unfortunately Ruby doesn't allow
     # us a better way.
     # taskWrap step to capture incoming arguments of a step.
-    def capture_args(wrap_config, ((ctx, flow), circuit_options))
-      original_args = [[ctx, flow], circuit_options]
+    #
+    # Note that we save the created {Snapshot::Before} in the wrap_ctx.
+    def capture_args(wrap_config, original_args)
+      flow_options = original_args[0][1]
 
-      captured_input = Captured(Captured::Input, flow[:input_data_collector], wrap_config, original_args)
+      snapshot, new_versions = Snapshot::Before.(flow_options[:before_snapshooter], wrap_config, original_args)
 
-      flow[:stack] << captured_input
+      # We try to be generic here in the taskWrap snapshooting code, where details happen in Snapshot::Before/After and Stack#add!.
+      flow_options[:stack].add!(snapshot, new_versions)
 
-      return wrap_config, original_args
+      return wrap_config.merge(snapshot_before: snapshot), original_args
     end
 
     # taskWrap step to capture outgoing arguments from a step.
-    def capture_return(wrap_config, ((ctx, flow), circuit_options))
-      original_args = [[ctx, flow], circuit_options]
+    def capture_return(wrap_config, ((ctx, flow_options), circuit_options))
+      original_args = [[ctx, flow_options], circuit_options]
 
-      captured_output = Captured(Captured::Output, flow[:output_data_collector], wrap_config, original_args)
+      snapshot, new_versions = Snapshot::After.(flow_options[:after_snapshooter], wrap_config, original_args)
 
-      flow[:stack] << captured_output
+      flow_options[:stack].add!(snapshot, new_versions)
 
       return wrap_config, original_args
     end
 
-    def Captured(captured_class, data_collector, wrap_config, ((ctx, flow), circuit_options))
-      collected_data = data_collector.call(wrap_config, [[ctx, flow], circuit_options])
-
-      captured_class.new( # either Input or Output
-        wrap_config[:task],
-        circuit_options[:activity],
-        collected_data
-      ).freeze
-    end
-
-    # Called in {#Captured}.
-    # DISCUSS: this is where to start for a new {Inspector} implementation.
-    def default_input_data_collector(wrap_config, ((ctx, _), _)) # DISCUSS: would it be faster to access ctx via {original_args[0][0]}?
-      # mutable, old_ctx = ctx.decompose
-      # mutable, old_ctx = ctx, nil
-
-      {
-        # ctx: ctx.to_h.freeze,
-        ctx_snapshot: ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
-      } # TODO: proper snapshot!
-    end
-
-    # Called in {#Captured}.
-    def default_output_data_collector(wrap_config, ((ctx, _), _))
-      returned_ctx, _ = wrap_config[:return_args]
-
-      # FIXME: snapshot!
-      {
-        # ctx: ctx.to_h.freeze,
-        ctx_snapshot: returned_ctx.to_h.collect { |k,v| [k, v.inspect] }.to_h,
-        signal: wrap_config[:return_signal]
-      }
-    end
-
-    Captured         = Struct.new(:task, :activity, :data)
-    Captured::Input  = Class.new(Captured)
-    Captured::Output = Class.new(Captured)
+    # Insertions for the trace tasks that capture the arguments just before calling the task,
+    # and before the TaskWrap is finished.
+    TASK_WRAP_EXTENSION = Trailblazer::Activity::TaskWrap.Extension(
+      [Trace.method(:capture_args),   id: "task_wrap.capture_args",   prepend: "task_wrap.call_task"],
+      [Trace.method(:capture_return), id: "task_wrap.capture_return", append: nil], # append to the very end of tW.
+    )
   end
 end

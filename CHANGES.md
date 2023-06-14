@@ -1,3 +1,67 @@
+# 0.1.0
+
+## Adding `Debugger` layer
+
+* Introduce `Debugger::Trace` with `Trace::Node`s and `variable_versions` field
+  to maintain all data produced by tracing in one entity.
+* In `Trace::Present.call`, you need to pass a block with options for customization instead
+  of passing `:node_options`. Further on, the per-node customization is now keyed by
+  `Trace::Node` instance and not a Stack element anymore.
+* In `render_method`, remove `:tree` keyword argument, use `:debugger_trace`.
+* The `render_method` is called with keyword arguments, only. The first positional argument
+  `debugger_nodes` is now `:debugger_trace`.
+
+  ```ruby
+  output = Dev::Trace::Present.(
+    stack,
+    node_options: {
+      stack.to_a[0] => {label: "Create"}
+    }
+  )
+  ```
+  is now
+
+  ```ruby
+   Dev::Trace::Present.(stack) do |trace_nodes:, **|
+    {
+      node_options: {
+        trace_nodes[0] => {label: "Create"}
+      }
+    }
+  end
+  ```
+
+## `Trace::Node`
+
+* `Node.build_for_stack` is now called in `Trace::Present` and produces a list
+  of `Trace::Node` instances that are containers for  matching before and after snapshots.
+* Add `Node::Incomplete` nodes that have no `snapshot_after` as they represent
+  a part of the flow that was canceled.
+
+## Debugger::Normalizer
+
+* Deprecate `:captured_node` keyword argument in normalizer steps and
+  rename it to `:trace_node`.
+* Remove the concept of `:runtime_path` and `:compile_path`. You can always
+  compute paths after or during the debug rendering yourself. However, we simply
+  don't need it for IDE or wtf?.
+
+## `Trace.wtf?`
+
+* Rename `:output_data_collector` and `:input_data_collector` to `:after_snapshooter` and `:before_snapshooter`
+  as they both produce instances of `Snapshot`. The return signature has changed, the snapshooters
+  return two values now: the data object and an object representing the variable versioning.
+
+## Snapshot
+
+* Introduce the concept of `Snapshot` which can be a moment in time before or after a step.
+  The `Snapshot::Before` and `Snapshot::After` (renamed from `Captured::Input` and `Captured::Output`)
+  are created during the tracing and after tracing associated to a specific `Trace::Node`.
+* Add `Snapshot::Ctx` and `Snapshot::Versions` which is a new, faster way of capturing variables.
+  Instead of always calling `ctx.inspect` for every trace step, only variables that have changed
+  are snapshooted using the (configurable) `:value_snapshooter`. This improves `#wtf?` performance
+  up to factor 10.
+
 # 0.0.29
 
 * The `:render_method` callable can now return output along with additional returned values.

@@ -14,21 +14,21 @@ module Trailblazer::Developer
 
       module_function
 
-      # {options} can be {style: {#<Captured::Input> => [:red, :bold]}}
-      def call(tree:, debugger_node:, style: {}, **options)
-        label = styled_label(tree, debugger_node, style: style, **options)
+      # {options} can be {style: {#<Debugger::Node> => [:red, :bold]}}
+      def call(debugger_trace:, debugger_node:, style: {}, **options)
+        label = styled_label(debugger_trace, debugger_node, style: style, **options)
 
         [debugger_node.level, label]
       end
 
-      def styled_label(tree, debugger_node, color_map:, **options)
+      def styled_label(debugger_trace, debugger_node, color_map:, **options)
         label = apply_style(debugger_node.label, debugger_node, **options)
 
-        %{#{fmt(label, color_map[ signal_of(debugger_node) ])}}
+        %{#{fmt(label, color_map[signal_of(debugger_node)])}}
       end
 
       def apply_style(label, debugger_node, style:, **)
-        return label unless styles = style[debugger_node.captured_input]
+        return label unless styles = style[debugger_node.trace_node]
 
         styles.each { |s| label = fmt(label, s) }
         label
@@ -42,8 +42,8 @@ module Trailblazer::Developer
         String.send(style, line)
       end
 
-      def signal_of(task_node)
-        entity_signal = task_node.captured_output.data[:signal]
+      def signal_of(debugger_node)
+        entity_signal = debugger_node.incomplete? ? nil : debugger_node.snapshot_after.data[:signal]
         entity_klass = entity_signal.is_a?(Class) ? entity_signal : entity_signal.class
 
         SIGNALS_MAP[entity_klass.name.to_sym]

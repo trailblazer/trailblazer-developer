@@ -11,29 +11,29 @@ class TraceNormalizerTest < Minitest::Spec
     stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{seq: []}, {}])
 
   #@ particular nodes need a special {runtime_id}
-    change_compile_id = ->(ctx, captured_node:, activity:, compile_id:, **) do
+    change_compile_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
       return compile_id unless compile_id == :b
 
       ctx[:compile_id] = compile_id.to_s*9
     end
 
-    original_pipelines = Trailblazer::Developer::Trace::Debugger::Normalizer::PIPELINES.clone
+    original_pipelines = Trailblazer::Developer::Debugger::Normalizer::PIPELINES.clone
 
-    Trailblazer::Developer::Trace::Debugger.add_normalizer_step!(
+    Trailblazer::Developer::Debugger.add_normalizer_step!(
       change_compile_id,
       id:     "My.runtime_id",
       append: :compile_id, #@ we can change how compile_path and runtime_id are computed.
     )
 
-    debugger_nodes = Trailblazer::Developer::Trace::Debugger::Node.build_for_stack(
-      stack)
+    debugger_nodes = Trailblazer::Developer::Debugger::Trace.build(
+      stack, Dev::Trace.build_nodes(stack.to_a))
 
     #@ only {:b} got changed, but all of its IDs.
-    assert_equal debugger_nodes[2][:compile_id], :a
-    assert_equal debugger_nodes[3][:compile_id], "bbbbbbbbb"
-    assert_equal debugger_nodes[3][:runtime_id], "bbbbbbbbb"
+    assert_equal debugger_nodes.to_a[2][:compile_id], :a
+    assert_equal debugger_nodes.to_a[3][:compile_id], "bbbbbbbbb"
+    assert_equal debugger_nodes.to_a[3][:runtime_id], "bbbbbbbbb"
 
     # I hate global state.
-    Trailblazer::Developer::Trace::Debugger::Normalizer::PIPELINES = original_pipelines
+    Trailblazer::Developer::Debugger::Normalizer::PIPELINES = original_pipelines
   end
 end

@@ -16,7 +16,7 @@ module Trailblazer::Developer
     # This allows to display the trace even when an exception happened
     def invoke(activity, (ctx, flow_options), present_options: {}, **circuit_options)
       flow_options ||= {}
-      local_present_options = {}
+      local_present_options_block = ->(*) { {} }
 
       stack = Trace::Stack.new # unfortunately, we need this mutable object before things break.
       raise_exception = false
@@ -30,14 +30,23 @@ module Trailblazer::Developer
       rescue
         raise_exception = $! # TODO: will this show the very same stacktrace?
 
-        complete_stack, exception_source = Exception.complete_stack_for_exception(stack, $!)
+        exception_source  = Exception.find_exception_source(stack, $!)
+        complete_stack    = stack
 
-        local_present_options = {
-          # we can hand in options per node, identified by their captured_input part.
-          node_options: {
-            exception_source => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
-          },
-          style: {exception_source => [:red, :bold]},
+        local_present_options_block = ->(trace_nodes:, **) {
+          exception_source_node = trace_nodes.reverse.find do |trace_node|
+            trace_node.snapshot_after == exception_source || trace_node.snapshot_before == exception_source
+          end
+
+          {
+            # we can hand in options per node, identified by their captured_input part.
+            node_options: {
+              exception_source_node => {data: {exception_source: true}}, # goes to {Debugger::Node.build}
+            },
+            style: {
+              exception_source_node => [:red, :bold]
+            },
+          }
         }
       end
 
@@ -47,8 +56,8 @@ module Trailblazer::Developer
         renderer:   Wtf::Renderer,
         color_map:  Wtf::Renderer::DEFAULT_COLOR_MAP.merge(flow_options[:color_map] || {}),
         activity:   activity,
-        **local_present_options,
         **present_options,
+        &local_present_options_block
       )
 
       puts output
@@ -58,34 +67,10 @@ module Trailblazer::Developer
     end
 
     module Exception
-      # When an exception occurs the Stack instance is incomplete - it is missing Captured::Output instances
-      # for Inputs still open. This method adds the missing elements so the Trace::Tree algorithm doesn't crash.
-      module Stack
-        def self.complete(incomplete_stack)
-          processed = []
-
-          incomplete_stack.to_a.each do |captured|
-            if captured.is_a?(Trace::Captured::Input)
-              processed << captured
-            else
-              processed.pop
-            end
-          end
-
-          missing_captured = processed.reverse.collect { |captured| Trace::Captured::Output.new(captured.task, captured.activity, {}) }
-
-          Trace::Stack.new(incomplete_stack.to_a + missing_captured)
-        end
-      end # Stack
-
-      def self.complete_stack_for_exception(incomplete_stack, exception)
-        # in 99%, exception_source is a {Captured::Input}.
-        exception_source = incomplete_stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
+      def self.find_exception_source(stack, exception)
+        # in 99%, exception_source is a {Snapshot::Before}.
+        exception_source = stack.to_a.last  # DISCUSS: in most cases, this is where the problem has happened.
                                                   #   However, what if an error happens in, say, an input filter? TODO: test this
-
-        complete_stack = Stack.complete(incomplete_stack)
-
-        return complete_stack, exception_source
       end
     end
   end
