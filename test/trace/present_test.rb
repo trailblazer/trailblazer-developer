@@ -33,7 +33,8 @@ class TracePresentTest < Minitest::Spec
       )
     end
 
-    assert_equal exception.message, %([Trailblazer] The `:node_options` option for `Trace::Present` is deprecated. Please use the block style as described here: #FIXME)
+    assert_equal exception.message, %([Trailblazer] The `:node_options` option for `Trace::Present` is deprecated.
+  Please use the block style as described here: https://trailblazer.to/2.1/docs/internals.html#internals-developer-trace-present)
   end
 
   it "accepts {:render_method}" do

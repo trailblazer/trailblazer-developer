@@ -22,8 +22,8 @@ module Trailblazer::Developer
 
       # Entry point for rendering a {Trace::Stack}.
       # Used in `#wtf?`.
-      def call(stack, render_method: method(:render), node_options: nil, **options, &block)
-        raise "[Trailblazer] The `:node_options` option for `Trace::Present` is deprecated. Please use the block style as described here: #FIXME" if node_options
+      def call(stack, render_method: method(:render), **options, &block)
+        deprecate_node_options!(**options) # TODO: remove in 0.2.0.
 
         # Build a generic array of {Trace::Node}s.
         trace_nodes = Trace.build_nodes(stack.to_a)
@@ -52,6 +52,13 @@ module Trailblazer::Developer
         debugger_trace = Debugger::Trace.build(stack, trace_nodes, **build_options)
 
         return render_method.(debugger_trace: debugger_trace, **build_options)
+      end
+
+      def deprecate_node_options!(node_options: nil, **) # TODO: remove in 0.2.0.
+        return unless node_options
+
+        raise "[Trailblazer] The `:node_options` option for `Trace::Present` is deprecated.
+  Please use the block style as described here: https://trailblazer.to/2.1/docs/internals.html#internals-developer-trace-present"
       end
 
       # @private
