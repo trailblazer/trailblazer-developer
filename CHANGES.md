@@ -1,5 +1,8 @@
 # 0.1.0
 
+* Improvement of tracing performance: factor ~4.
+* Consistent interface for tracing and presentation.
+
 ## Adding `Debugger` layer
 
 * Introduce `Debugger::Trace` with `Trace::Node`s and `variable_versions` field
