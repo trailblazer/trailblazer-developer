@@ -95,6 +95,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[0].data, {}
     assert_equal debugger_nodes[0].snapshot_before, stack.to_a[0]
     assert_equal debugger_nodes[0].snapshot_after, stack.to_a[-1]
+    assert_equal debugger_nodes[0].snapshot_after.to_h[:data][:signal].inspect, "#<Trailblazer::Activity::End semantic=:success>"
     assert_equal debugger_nodes[0].id, debugger_nodes[0].trace_node.object_id
 
     assert_equal debugger_nodes[1].activity.class, Trailblazer::Activity # The [activity] field is an Activity.
@@ -106,6 +107,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[1].data, {}
     assert_equal debugger_nodes[1].snapshot_before, stack.to_a[1]
     assert_equal debugger_nodes[1].snapshot_after, stack.to_a[2]
+    assert_equal debugger_nodes[1].snapshot_after.to_h[:data][:signal].inspect, "Trailblazer::Activity::Right"
     assert_equal debugger_nodes[1].id, debugger_nodes[1].trace_node.object_id
 
     assert_equal debugger_nodes[3].task, sub_activity
@@ -124,6 +126,7 @@ class DebuggerTest < Minitest::Spec
     assert_equal debugger_nodes[9].snapshot_after, stack.to_a[16]
     assert_equal debugger_nodes[9].snapshot_before.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #{:seq=>"[:a, :b, :c]"}
     assert_equal debugger_nodes[9].snapshot_after.data[:ctx_variable_changeset].collect{ |name, _| name }, [:seq] #, {:seq=>"[:a, :b, :c, :d]"}
+    assert_equal debugger_nodes[9].snapshot_after.to_h[:data][:signal].inspect, "Trailblazer::Activity::Right"
     assert_equal debugger_nodes[9].id, debugger_nodes[9].trace_node.object_id
   end
 end
