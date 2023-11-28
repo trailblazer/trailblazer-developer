@@ -72,7 +72,7 @@ module Trailblazer
                   [level, descendants[1..-1]]
                 ]
               else
-                nested_instructions = [
+                [
                   # instruction to go through the remaining, behind this tuple.
                   [
                     level,
