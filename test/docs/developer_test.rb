@@ -71,7 +71,7 @@ class DocsDeveloperTest < Minitest::Spec
 
 
   it "#wtf?" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       result = Memo::Operation::Create.wtf?(seq: [], params: {})
     end
 
@@ -95,7 +95,7 @@ result = Memo::Operation::Create.wtf?(params: {title: "Remember me..."})
 =end
 
   #@ exception
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       assert_raises ArgumentError do
         result = Memo::Operation::Create.wtf?(seq: [], raise_exception: true)
       end
@@ -138,7 +138,7 @@ ArgumentError: wrong number of arguments (given 0, expected 1)
   end
 
   it "{#wtf?} with {Activity}" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       result = Trailblazer::Developer.wtf?(B::Memo::Operation::Create, [{seq: [], params: {}}, {}])
     end
 

@@ -1,8 +1,18 @@
 require "trailblazer/developer/version"
+require "logger"
 
 module Trailblazer
   module Developer
     # Your code goes here...
+    class << self
+      attr_writer :logger
+
+      def logger
+        @logger ||= Logger.new($stdout, formatter: proc { |*, msg| "#{msg}\n" }).tap do |log|
+          log.progname = self.name
+        end
+      end
+    end
   end
 end
 

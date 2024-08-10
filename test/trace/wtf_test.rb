@@ -42,7 +42,7 @@ class TraceWtfTest < Minitest::Spec
     exception = nil
     returned_args = nil
 
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       exception = assert_raises RuntimeError do
         returned_args = Trailblazer::Developer.wtf?(alpha, [{ seq: Raiser.new(raise_in: :c) }])
       end
@@ -66,7 +66,7 @@ class TraceWtfTest < Minitest::Spec
   it "traces until charlie, 3-level and step takes left track" do
     returned_args = nil
 
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       returned_args = Trailblazer::Developer.wtf?(alpha, [{ seq: [], c: false }])
     end
 
@@ -96,7 +96,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "traces alpha and it's subprocesses, for successful execution" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(alpha, [{ seq: [] }])
     end
 
@@ -125,7 +125,7 @@ class TraceWtfTest < Minitest::Spec
 
     signal, ctx, flow_options, circuit_options, output, returned_present_args = nil
 
-    captured_output, _ = capture_io do
+    captured_output, _ = capture_subprocess_io do
       signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(alpha, [{seq: []}],
         present_options: {render_method: my_renderer})
     end
@@ -153,7 +153,7 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "overrides default color map of entities" do
-    output, _ = capture_io do
+    output, _ = capture_subprocess_io do
       Trailblazer::Developer.wtf?(
         alpha,
         [

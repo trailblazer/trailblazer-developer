@@ -60,7 +60,7 @@ module Trailblazer::Developer
         &local_present_options_block
       )
 
-      puts output
+      Trailblazer::Developer.logger.debug(output)
 
       raise raise_exception if raise_exception
       return signal, [ctx, flow_options], circuit_options, output, returned_args
