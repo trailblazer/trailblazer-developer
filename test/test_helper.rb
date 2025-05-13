@@ -12,6 +12,10 @@ puts "Running in Ruby #{RUBY_VERSION}"
 T = Trailblazer::Activity::Testing
 
 Minitest::Spec.class_eval do
+  def assert_equal(asserted, expected, *args)
+    super(expected, asserted, *args)
+  end
+
   Dev = Trailblazer::Developer
   include Trailblazer::Activity::Testing::Assertions
 
@@ -68,7 +72,9 @@ Minitest::Spec.class_eval do
     class ValidateWithRescue < Trailblazer::Activity::Railway
       def self.rescue((ctx, flow_options), runner:, **circuit_options)
         begin
-          signal, (ctx, flow_options) = runner.(Validate, [ctx, flow_options], runner: runner, **circuit_options)
+          signal, (ctx, flow_options) = runner.(Validate, [ctx, flow_options],
+            runner: runner,
+            **circuit_options.merge(activity: Trailblazer::Activity::TaskWrap.container_activity_for(Validate)))
         rescue
 
         end

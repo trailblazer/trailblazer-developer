@@ -141,11 +141,12 @@ class TraceNodeTest < Minitest::Spec
     # TODO: test multiple successive incomplete tasks.
     #            exception style where at some point all ascendants are incomplete.
 
-    ctx = {validate: false}
+    ctx = {validate: false, seq: []}
     stack, _ = Trailblazer::Developer::Trace.invoke(Tracing::ValidateWithRescue, [ctx, {}])
 
     trace_nodes = Dev::Trace.build_nodes(stack.to_a)
 
+    assert_equal trace_nodes.size, 7
     assert_trace_node trace_nodes[0], task: Tracing::ValidateWithRescue.inspect
     assert_trace_node trace_nodes[1], task:   %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_trace_node trace_nodes[2], task:   Tracing::ValidateWithRescue.method(:rescue).inspect

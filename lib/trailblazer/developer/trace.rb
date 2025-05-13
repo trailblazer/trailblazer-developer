@@ -24,8 +24,9 @@ module Trailblazer::Developer
 
         flow_options = {**default_flow_options, **Hash(original_flow_options)}
 
+        # TODO: we should, at this point, merge all runtime Ext() objects instead of overriding.
         default_circuit_options = {
-          wrap_runtime:  ::Hash.new(Trace.task_wrap_extensions), # DISCUSS: this overrides existing {:wrap_runtime}.
+          wrap_runtime:  ::Hash.new(Trace.task_wrap_extensions), # FIXME: this overrides existing {:wrap_runtime}.
         }
 
         circuit_options = {**original_circuit_options, **default_circuit_options}

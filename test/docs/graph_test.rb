@@ -52,7 +52,7 @@ class GraphTest < Minitest::Spec
     _(node.task.inspect).must_equal %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=validate>}
 
     #:find-block
-    node = graph.find { |node| node.task.class == Trailblazer::Activity::TaskBuilder }
+    node = graph.find { |node| node.task.class == Trailblazer::Activity::Circuit::TaskAdapter }
     #:find-block end
 
     pp graph.stop_events

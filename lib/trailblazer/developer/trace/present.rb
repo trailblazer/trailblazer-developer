@@ -10,6 +10,7 @@ module Trailblazer::Developer
         [debugger_node.level, debugger_node.label]
       end
 
+      # whatever we return from {:render_method} is available as {returned_args}
       # Returns the console output string.
       # @private
       def render(debugger_trace:, renderer: method(:default_renderer), **options_for_renderer)
