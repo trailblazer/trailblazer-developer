@@ -1,37 +1,39 @@
 module Trailblazer::Developer
   module Trace
     class << self
-      # Public entry point to run an activity with tracing.
-      # It returns the accumulated stack of Snapshots, along with the original return values.
-      # Note that {Trace.invoke} does not do any rendering.
-      def call(activity, (ctx, flow_options), **circuit_options)
-        activity, (ctx, flow_options), circuit_options = Trace.arguments_for_call(activity, [ctx, flow_options], **circuit_options) # only run once for the entire circuit!
-
-        signal, (ctx, flow_options) = Trailblazer::Activity::TaskWrap.invoke(activity, [ctx, flow_options], **circuit_options)
-
-        return flow_options[:stack], signal, [ctx, flow_options]
-      end
-
-      alias_method :invoke, :call
-
-      def arguments_for_call(activity, (options, original_flow_options), **original_circuit_options)
-        default_flow_options = {
+      # Follows the interface for options-compiler.
+      # @private
+      def invoke_options_compiler_step(activity, options, **)
+        flow_options = {
           stack:              Trace::Stack.new,
           before_snapshooter: Snapshot.method(:before_snapshooter),
           after_snapshooter:  Snapshot.method(:after_snapshooter),
           value_snapshooter:  Trace.value_snapshooter
         }
 
-        flow_options = {**default_flow_options, **Hash(original_flow_options)}
-
-        # TODO: we should, at this point, merge all runtime Ext() objects instead of overriding.
-        default_circuit_options = {
+        circuit_options = {
           wrap_runtime:  ::Hash.new(Trace.task_wrap_extensions), # FIXME: this overrides existing {:wrap_runtime}.
         }
 
-        circuit_options = {**original_circuit_options, **default_circuit_options}
+        # those will be deep_merged in invoke's options-compiler?
+        {
+          flow_options:     flow_options,
+          circuit_options:  circuit_options
+        }
+      end
 
-        return activity, [options, flow_options], circuit_options
+      # Public entry point to run an activity with tracing.
+      # It returns the accumulated stack of Snapshots, along with the original return values.
+      # Note that {Trace.invoke} does not do any rendering.
+
+      # DISCUSS: could this be a constant?
+      # @public
+      def options_for_canonical_invoke(adds_for_options_compiler: [], **options) # TODO: can be a constant.
+        {
+          adds_for_options_compiler: [
+            [Trailblazer::Invoke::Options::HeuristicMerge.build(method(:invoke_options_compiler_step)), id: "developer.trace", append: nil],
+          ] + adds_for_options_compiler
+        }
       end
     end
 

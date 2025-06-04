@@ -1,12 +1,12 @@
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "trailblazer/developer"
+require "trailblazer/core"
 
 require "minitest/autorun"
 require "pp"
 
-require "trailblazer/activity"
-require "trailblazer/activity/testing"
 require "trailblazer/activity/dsl/linear"
+require "trailblazer/activity/testing"
 puts "Running in Ruby #{RUBY_VERSION}"
 
 T = Trailblazer::Activity::Testing
@@ -15,6 +15,8 @@ Minitest::Spec.class_eval do
   def assert_equal(asserted, expected, *args)
     super(expected, asserted, *args)
   end
+
+  CU = Trailblazer::Core::Utils
 
   Dev = Trailblazer::Developer
   include Trailblazer::Activity::Testing::Assertions

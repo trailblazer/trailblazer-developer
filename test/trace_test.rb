@@ -1,49 +1,40 @@
 require "test_helper"
 
-# Test {Trace.call} and {Trace::Present.call}
-class TraceTest < Minitest::Spec
-  it "traces flat strategy" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {flow: true}])
+require "trailblazer/invoke"
+class TraceInvokeTest < Minitest::Spec
+  let(:kernel) do
+    Class.new do
+      Trailblazer::Invoke.module!(self)
+    end.new
+  end
 
-    assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
+  it "traces a flat activity" do
+    signal, (ctx, flow_options), _ = kernel.__(
+      flat_activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
 
-    assert_equal ctx.inspect, %{{:seq=>[:B, :C]}}
-    assert_equal flow_options[:flow].inspect, %{true}
+    assert_equal signal.to_h[:semantic], :success
+    assert_equal CU.inspect(ctx.to_h), %({:seq=>[:B, :C]})
 
-    output = Dev::Trace::Present.(stack)
+    stack = flow_options[:stack]
+    output = Trailblazer::Developer::Trace::Present.(stack)
     output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 
-    assert_equal output, %{#<Class:>
+    assert_equal output, %(#<Class:>
 |-- Start.default
 |-- B
 |-- C
-`-- End.success}
+`-- End.success)
   end
 
-  it "traces flat activity" do
-    activity = flat_activity.to_h[:activity]
+  # TODO: can we add more {:wrap_runtime}?
 
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(activity, [{seq: []}, {flow: true}])
+  it "{Present}: you can pass an explicit task label via {:label}" do
+    signal, (ctx, flow_options), _ = kernel.__(flat_activity, {seq: []}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
-    assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
-
-    assert_equal ctx.inspect, %{{:seq=>[:B, :C]}}
-    assert_equal flow_options[:flow].inspect, %{true}
-
-    output = Dev::Trace::Present.(stack)
-    output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
-
-    assert_equal output, %{#<Trailblazer::Activity:>
-|-- Start.default
-|-- B
-|-- C
-`-- End.success}
-  end
-
-  it "you can pass an explicit task label via {:label}" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {}])
-
-    output = Dev::Trace::Present.(stack) do |trace_nodes:, **|
+    output = Dev::Trace::Present.(flow_options[:stack]) do |trace_nodes:, **|
       {
         node_options: {
           trace_nodes[0] => {label: "#{flat_activity.class} (anonymous)"}
@@ -61,13 +52,9 @@ class TraceTest < Minitest::Spec
   it "nested tracing" do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
-      activity,
-      [
-        {seq: []},
-        {flow: true}
-      ]
-    )
+    signal, (ctx, flow_options) = kernel.__(activity, {seq: []}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
+
+    stack = flow_options[:stack]
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
@@ -109,8 +96,45 @@ class TraceTest < Minitest::Spec
 |-- e
 `-- End.success}
   end
+end
 
-    # Test custom classes without explicit {#hash} implementation.
+# Test {Trace.call} and {Trace::Present.call}
+class TraceTest < Minitest::Spec
+  # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
+  it "allows tracing by manually passing the options" do
+    trace_args = Trailblazer::Developer::Trace.invoke_options_compiler_step(flat_activity, {})
+
+    signal, (ctx, flow_options), _ = Trailblazer::Activity::TaskWrap.invoke(
+      flat_activity,
+      [
+        {seq: []},
+        trace_args[:flow_options]
+      ],
+      **trace_args[:circuit_options]
+    )
+
+    assert_equal signal.to_h[:semantic], :success
+    assert_equal CU.inspect(ctx.to_h), %({:seq=>[:B, :C]})
+
+    stack = flow_options[:stack]
+    output = Trailblazer::Developer::Trace::Present.(stack)
+    output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
+
+    assert_equal output, %(#<Class:>
+|-- Start.default
+|-- B
+|-- C
+`-- End.success)
+  end
+end
+
+# Test specific options such as {:snapshooter}.
+class TraceAPITest < Minitest::Spec
+  let(:kernel) do
+    Class.new { Trailblazer::Invoke.module!(self) }.new
+  end
+
+  # Test custom classes without explicit {#hash} implementation.
   class User
     def initialize(id)
       @id = id
@@ -163,17 +187,14 @@ class TraceTest < Minitest::Spec
       after_snapshooter:  Snapshot.method(:after_snapshooter),
     }
 
-    activity = ::TraceTest::Endpoint
-
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
-      activity,
-      [
-        {
-          current_user: current_user = User.new(1),
-          params: {name: "Q & I"},
-          seq: [],
-        },
-      ]
+    signal, (ctx, flow_options) = kernel.__(
+      Endpoint,
+      {
+        current_user: current_user = User.new(1),
+        params: {name: "Q & I"},
+        seq: [],
+      },
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
     )
 
 
@@ -197,7 +218,7 @@ class TraceTest < Minitest::Spec
 
 
     # This is a unit test we might not need anymore:
-    assert_equal stack[0].task, ::TraceTest::Endpoint
+    assert_equal stack[0].task, Endpoint
     assert_snapshot versions, stack[0], current_user: 0, params: 0, seq: 0
 
     assert_equal stack[1].task.inspect, %(#<Trailblazer::Activity::Start semantic=:default>)
@@ -218,7 +239,7 @@ class TraceTest < Minitest::Spec
     assert_snapshot versions, stack[6], current_user: 0, params: 0, seq: 2
 
     # Create {in}
-    assert_equal stack[7].task, ::TraceTest::Endpoint::Create
+    assert_equal stack[7].task, Endpoint::Create
     assert_snapshot versions, stack[7], current_user: 0, params: 0, seq: 2
 
       # Create :model
@@ -238,7 +259,7 @@ class TraceTest < Minitest::Spec
       assert_snapshot versions, stack[15], current_user: 0, params: 1, seq: 4, model: 0
 
     # Create {out}
-    assert_equal stack[16].task, ::TraceTest::Endpoint::Create
+    assert_equal stack[16].task, Endpoint::Create
     assert_snapshot versions, stack[16], current_user: 0, params: 1, seq: 4, model: 0
 
     # Endpoint End.success
@@ -273,8 +294,9 @@ class TraceTest < Minitest::Spec
       end
     end
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{}, {}])
+    signal, (ctx, flow_options) = kernel.__(activity, {}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
+    stack = flow_options[:stack]
     nodes = stack.to_a
 
     # :override/after
@@ -305,12 +327,26 @@ class TraceTest < Minitest::Spec
       end
     end
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{params: {}},
-      {
-        value_snapshooter: value_snapshooter
-      }
-    ])
+    trace_args_for_invoke = Trailblazer::Developer::Trace.options_for_canonical_invoke(
+      adds_for_options_compiler: [
+        [
+          Trailblazer::Invoke::Options::HeuristicMerge.build(
+            ->(*) do
+              {
+                flow_options: {
+                  value_snapshooter: value_snapshooter
+                }
+              }
+            end
+          ),
+          id: "user.trace.value_snapshooter_options", append: nil
+        ]
+      ]
+    )
 
+    signal, (ctx, flow_options) = kernel.__(activity, {params: {}}, **trace_args_for_invoke)
+
+    stack = flow_options[:stack]
     nodes = stack.to_a
 
     # Op/after
@@ -326,8 +362,9 @@ class TraceTest < Minitest::Spec
   # We can also set it via {Trace.value_snapshooter}
     Trailblazer::Developer::Trace.instance_variable_set(:@value_snapshooter, value_snapshooter)
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{params: {}}, {}])
+    signal, (ctx, flow_options) = kernel.__(activity, {params: {}}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
+    stack = flow_options[:stack]
     nodes = stack.to_a
 
     # Op/after
@@ -342,25 +379,41 @@ class TraceTest < Minitest::Spec
     Trailblazer::Developer::Trace.instance_variable_set(:@value_snapshooter, Trailblazer::Developer::Trace::Snapshot::Value.build) # reset to original value.
   end
 
-  it "allows to inject custom :data_collector" do
-    input_collector = ->(wrap_config, ((ctx, _), _)) { [{ ctx: ctx, something: :else }, {}] }
-    output_collector = ->(wrap_config, ((ctx, _), _)) { [{ ctx: ctx, signal: wrap_config[:return_signal] }, {}] }
+  it "allows to inject custom data collector" do
+    input_collector = ->(wrap_ctx, ((ctx, _), _)) { [{ ctx: ctx.to_h, something: :else }, {}] }
+    output_collector = ->(wrap_ctx, ((ctx, _), _)) { [{ ctx: ctx.to_h, signal: wrap_ctx[:return_signal] }, {}] }
 
-    stack, signal, (ctx, _) = Dev::Trace.invoke(
-      flat_activity,
-      [
-        { seq: [] },
-        {
-          before_snapshooter: input_collector,
-          after_snapshooter: output_collector,
-        }
+    trace_args_for_invoke = Trailblazer::Developer::Trace.options_for_canonical_invoke(
+      adds_for_options_compiler: [
+        [
+          Trailblazer::Invoke::Options::HeuristicMerge.build(
+            ->(*) do
+              {
+                flow_options: {
+                  before_snapshooter: input_collector,
+                  after_snapshooter: output_collector,
+                }
+              }
+            end
+          ),
+          id: "user.trace.snapshooter_options", append: nil
+        ]
       ]
+    )
+
+    signal, (ctx, flow_options) = kernel.__(
+      flat_activity,
+        { seq: [] },
+        **trace_args_for_invoke
     )
 
     assert_equal ctx[:seq], [:B, :C]
 
-    captured_input  = stack.to_a[0]
-    captured_output = stack.to_a[-1]
+    stack = flow_options[:stack].to_a
+    captured_input  = stack[0]
+    captured_output = stack[-1]
+
+    # pp stack
 
     assert_equal captured_input.data, { ctx: { seq: [:B, :C] }, something: :else }
     assert_equal captured_output.data, { ctx: { seq: [:B, :C] }, signal: signal }

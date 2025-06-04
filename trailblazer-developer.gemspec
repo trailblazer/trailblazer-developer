@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest-line"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "trailblazer-operation", ">= 0.10.0"
+  spec.add_development_dependency "trailblazer-core-utils"
 
   spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.2.0", "< 1.3.0"
   spec.add_dependency "hirb"
