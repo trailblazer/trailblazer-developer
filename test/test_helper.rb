@@ -5,6 +5,8 @@ require "trailblazer/core"
 require "minitest/autorun"
 require "pp"
 
+require "trailblazer/invoke" # FIXME: remove me, this should be done on library level.
+
 require "trailblazer/activity/dsl/linear"
 require "trailblazer/activity/testing"
 puts "Running in Ruby #{RUBY_VERSION}"

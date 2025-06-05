@@ -1,8 +1,8 @@
 module Trailblazer::Developer
   module_function
 
-  def wtf(activity, *args, **circuit_options)
-    Wtf.invoke(activity, *args, **circuit_options)
+  def wtf(activity, *args, **kws)
+    Wtf.call_with_canonical_invoke(activity, *args, **kws)
   end
 
   class << self
@@ -12,21 +12,55 @@ module Trailblazer::Developer
   module Wtf
     module_function
 
-    # Run {activity} with tracing enabled and inject a mutable {Stack} instance.
-    # This allows to display the trace even when an exception happened
-    def invoke(activity, (ctx, flow_options), present_options: {}, **circuit_options)
-      flow_options ||= {}
-      local_present_options_block = ->(*) { {} }
+    def call_with_canonical_invoke(activity, options, canonical_invoke: activity.method(:__), **kws)
+      raise if options.is_a?(Array) # FIXME: deprecate old signature?
 
-      stack = Trace::Stack.new # unfortunately, we need this mutable object before things break.
+      # we activate tracing/wtf behavior via {:adds_for_options_compiler}.
+      canonical_invoke.(activity, options, **options_for_canonical_invoke(**kws)) # Call activity.__()
+    end
+
+    def options_for_canonical_invoke(adds_for_options_compiler: [], **kws) # TODO: parts can be a constant.
+      {
+        **kws,
+        adds_for_options_compiler: [
+          [Trailblazer::Invoke::Options::HeuristicMerge.build(Trailblazer::Developer::Trace.method(:invoke_options_compiler_step)), id: "developer.trace", append: nil],
+          [Trailblazer::Invoke::Options::HeuristicMerge.build(method(:wtf_adds)), id: "developer.wtf", append: nil]
+        ] + adds_for_options_compiler,
+      }
+    end
+
+    def wtf_adds(*)
+      {
+        invoke_method: Trailblazer::Developer::Wtf.method(:invoke_with_rescue),
+      }
+    end
+
+    # FIXME: this is a helper for canonical invoke options compiler steps.
+    # DISCUSS: isn't there a cooler way to add those options *within* an options-compiler step?
+    def options_for_invoke(circuit_options: {}, flow_options: {}, **options)
+      wtf_options = Trailblazer::Developer::Trace.invoke_options_compiler_step(nil, nil)
+
+      options.merge(
+        invoke_method:    Trailblazer::Developer::Wtf.method(:invoke_with_rescue), # DISCUSS: could {:invoke_method} be part of {invoke_options_for}?
+        circuit_options:  circuit_options.merge(wtf_options[:circuit_options]),
+        flow_options:     flow_options.merge(wtf_options[:flow_options]),
+      )
+    end
+
+    def invoke_with_rescue(activity, (ctx, flow_options), present_options: {}, **circuit_options)
+      local_present_options_block = ->(*) { {} }
+      stack = flow_options.fetch(:stack) # DISCUSS: should we really use {fetch}?
       raise_exception = false
 
       begin
-        complete_stack, signal, (ctx, flow_options) = Trace.invoke(
+        # complete_stack, signal, (ctx, flow_options) = Trace.invoke(
+        signal, (ctx, flow_options) = Trailblazer::Activity::TaskWrap.invoke( # DISCUSS: this won't work with the traditional WTF.(Activity)
           activity,
-          [ctx, flow_options.merge(stack: stack)],
+          [ctx, flow_options],
           **circuit_options
         )
+
+        complete_stack = flow_options[:stack]
       rescue
         raise_exception = $! # TODO: will this show the very same stacktrace?
 

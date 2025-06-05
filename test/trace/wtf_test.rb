@@ -39,44 +39,47 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "traces until charlie, 3-level and exception occurs" do
-    exception = nil
-    returned_args = nil
+    Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
+
+    exception, returned_args = nil
 
     output, _ = capture_io do
       exception = assert_raises RuntimeError do
-        returned_args = Trailblazer::Developer.wtf?(alpha, [{ seq: Raiser.new(raise_in: :c) }])
+        returned_args = Trailblazer::Developer.wtf?(alpha, {seq: Raiser.new(raise_in: :c)})
       end
     end
 
-    assert_equal exception.message, %{hello from c!}
+    assert_equal exception.message, %(hello from c!)
     assert_nil returned_args
 
-    assert_equal output.gsub(/0x\w+/, ""), %{#<Class:>
+    assert_equal CU.strip(output), %(#<Class:0x>
 |-- \e[32mStart.default\e[0m
 |-- \e[32m#<Method: #<Class:>.a>\e[0m
-`-- #<Class:>
+`-- #<Class:0x>
     |-- \e[32mStart.default\e[0m
     |-- \e[32m#<Method: #<Class:>.b>\e[0m
-    `-- #<Class:>
+    `-- #<Class:0x>
         |-- \e[32mStart.default\e[0m
         `-- \e[1m\e[31m#<Method: #<Class:>.c>\e[0m\e[22m
-}
+)
   end
 
   it "traces until charlie, 3-level and step takes left track" do
+    Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
+
     returned_args = nil
 
     output, _ = capture_io do
-      returned_args = Trailblazer::Developer.wtf?(alpha, [{ seq: [], c: false }])
+      returned_args = Trailblazer::Developer.wtf?(alpha, {seq: [], c: false})
     end
 
-    trace_output = %(#<Class:>
+    trace_output = %(#<Class:0x>
 |-- \e[32mStart.default\e[0m
 |-- \e[32m#<Method: #<Class:>.a>\e[0m
-|-- #<Class:>
+|-- #<Class:0x>
 |   |-- \e[32mStart.default\e[0m
 |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-|   |-- #<Class:>
+|   |-- #<Class:0x>
 |   |   |-- \e[32mStart.default\e[0m
 |   |   |-- \e[33m#<Method: #<Class:>.c>\e[0m
 |   |   `-- End.failure
@@ -86,27 +89,29 @@ class TraceWtfTest < Minitest::Spec
     # test returned values for #wtf?
     assert_equal returned_args.size, 5
     assert_equal returned_args[0].inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
-    assert_equal returned_args[1][0].inspect, %({:seq=>[:a, :b, :c], :c=>false})
+    assert_equal CU.inspect(returned_args[1][0].to_h), %({:seq=>[:a, :b, :c], :c=>false})
     assert_equal returned_args[1][1].class, Hash # flow_options
-    assert_equal returned_args[2].inspect, %({}) # circuit_options
+    assert_equal returned_args[2].keys.inspect, %([:container_activity, :exec_context, :wrap_runtime]) # circuit_options
     assert_equal returned_args[3].chomp, output.chomp # fourth returned value is the trace output.
     assert_equal returned_args[4].inspect, %(nil)
 
-    assert_equal output.gsub(/0x\w+/, "").chomp, trace_output
+    assert_equal CU.strip(output).chomp, trace_output
   end
 
-  it "traces alpha and it's subprocesses, for successful execution" do
+  it "traces alpha and its subprocesses, for successful execution" do
+    Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
+
     output, _ = capture_io do
-      Trailblazer::Developer.wtf?(alpha, [{ seq: [] }])
+      Trailblazer::Developer.wtf?(alpha, {seq: []})
     end
 
-    assert_equal output.gsub(/0x\w+/, ""), %(#<Class:>
+    assert_equal CU.strip(output), %(#<Class:0x>
 |-- \e[32mStart.default\e[0m
 |-- \e[32m#<Method: #<Class:>.a>\e[0m
-|-- #<Class:>
+|-- #<Class:0x>
 |   |-- \e[32mStart.default\e[0m
 |   |-- \e[32m#<Method: #<Class:>.b>\e[0m
-|   |-- #<Class:>
+|   |-- #<Class:0x>
 |   |   |-- \e[32mStart.default\e[0m
 |   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
 |   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
@@ -119,6 +124,8 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "accepts {:present_options}" do
+    Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
+
     my_renderer = ->(debugger_trace:, **) {
       return "Nodes: #{debugger_trace.to_a.size}", ["additional", "returned", "args"]
     }
@@ -126,14 +133,31 @@ class TraceWtfTest < Minitest::Spec
     signal, ctx, flow_options, circuit_options, output, returned_present_args = nil
 
     captured_output, _ = capture_io do
-      signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(alpha, [{seq: []}],
-        present_options: {render_method: my_renderer})
+      signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(
+        alpha,
+        {seq: []},
+        adds_for_options_compiler: [
+        [
+          Trailblazer::Invoke::Options::HeuristicMerge.build(
+            ->(*) do
+              {
+                circuit_options: {
+                  present_options: {render_method: my_renderer}
+                }
+              }
+            end
+          ),
+          id: "user.wtf.present_options", append: nil
+        ]
+      ],
+
+      )
     end
 
     assert_equal captured_output.chomp, %(Nodes: 15)
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
-    assert_equal ctx.inspect, %({:seq=>[:a, :b, :c, :cc, :bb, :aa]})
-    assert_equal circuit_options, {}
+    assert_equal CU.inspect(ctx.to_h), %({:seq=>[:a, :b, :c, :cc, :bb, :aa]})
+    assert_equal circuit_options.keys.inspect, %([:container_activity, :exec_context, :wrap_runtime])
     assert_equal output, captured_output.chomp
     assert_equal returned_present_args, ["additional", "returned", "args"]
   end
@@ -198,5 +222,9 @@ class TraceWtfTest < Minitest::Spec
 
   it "has alias to `wtf` as `wtf?`" do
     assert_equal Dev.method(:wtf), Dev.method(:wtf?)
+  end
+
+  it "we can add to {:wrap_runtime" do
+    raise
   end
 end
