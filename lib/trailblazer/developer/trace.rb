@@ -28,11 +28,11 @@ module Trailblazer::Developer
 
       # DISCUSS: could this be a constant?
       # @public
-      def options_for_canonical_invoke(adds_for_options_compiler: [], **options) # TODO: can be a constant.
+      def options_for_canonical_invoke # TODO: can be a constant.
         {
           adds_for_options_compiler: [
             [Trailblazer::Invoke::Options::HeuristicMerge.build(method(:invoke_options_compiler_step)), id: "developer.trace", append: nil],
-          ] + adds_for_options_compiler
+          ]
         }
       end
     end

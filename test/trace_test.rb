@@ -327,24 +327,14 @@ class TraceAPITest < Minitest::Spec
       end
     end
 
-    trace_args_for_invoke = Trailblazer::Developer::Trace.options_for_canonical_invoke(
-      adds_for_options_compiler: [
-        [
-          Trailblazer::Invoke::Options::HeuristicMerge.build(
-            ->(*) do
-              {
-                flow_options: {
-                  value_snapshooter: value_snapshooter
-                }
-              }
-            end
-          ),
-          id: "user.trace.value_snapshooter_options", append: nil
-        ]
-      ]
+    signal, (ctx, flow_options) = kernel.__(
+      activity,
+      {params: {}},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke,
+      flow_options: {
+        value_snapshooter: value_snapshooter
+      }
     )
-
-    signal, (ctx, flow_options) = kernel.__(activity, {params: {}}, **trace_args_for_invoke)
 
     stack = flow_options[:stack]
     nodes = stack.to_a
@@ -382,6 +372,30 @@ class TraceAPITest < Minitest::Spec
   it "allows to inject custom data collector" do
     input_collector = ->(wrap_ctx, ((ctx, _), _)) { [{ ctx: ctx.to_h, something: :else }, {}] }
     output_collector = ->(wrap_ctx, ((ctx, _), _)) { [{ ctx: ctx.to_h, signal: wrap_ctx[:return_signal] }, {}] }
+
+    signal, (ctx, flow_options) = kernel.__(
+      flat_activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke(),
+      flow_options: { # those are merged by options-compiler.
+        before_snapshooter: input_collector,
+        after_snapshooter: output_collector,
+      }
+    )
+
+    assert_equal ctx[:seq], [:B, :C]
+
+    stack = flow_options[:stack].to_a
+    captured_input  = stack[0]
+    captured_output = stack[-1]
+    # pp stack
+
+    assert_equal captured_input.data, { ctx: { seq: [:B, :C] }, something: :else }
+    assert_equal captured_output.data, { ctx: { seq: [:B, :C] }, signal: signal }
+  end
+
+  it "{#options_for_canonical_invoke} allows additional {:adds_for_options_compiler} option" do
+    raise
 
     trace_args_for_invoke = Trailblazer::Developer::Trace.options_for_canonical_invoke(
       adds_for_options_compiler: [
