@@ -136,20 +136,28 @@ class TraceWtfTest < Minitest::Spec
       signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(
         alpha,
         {seq: []},
-        adds_for_options_compiler: [
-        [
-          Trailblazer::Invoke::Options::HeuristicMerge.build(
-            ->(*) do
-              {
-                circuit_options: {
-                  present_options: {render_method: my_renderer}
-                }
-              }
-            end
-          ),
-          id: "user.wtf.present_options", append: nil
-        ]
-      ],
+
+        # Merged by options-compiler:
+        circuit_options: {
+          present_options: {render_method: my_renderer}
+        }
+
+        # This is an alternative API to squeeze your options into invoke:
+        #
+        # adds_for_options_compiler: [
+        # [
+        #   Trailblazer::Invoke::Options::HeuristicMerge.build(
+        #     ->(*) do
+        #       {
+        #         circuit_options: {
+        #           present_options: {render_method: my_renderer}
+        #         }
+        #       }
+        #     end
+        #   ),
+        #   id: "user.wtf.present_options", append: nil
+        # ]
+        # ],
 
       )
     end
@@ -165,66 +173,86 @@ class TraceWtfTest < Minitest::Spec
   it "passes {activity} to {Present}" do
     class PresentCreate < Trailblazer::Activity::Railway
     end
+    Trailblazer::Invoke.module!(PresentCreate.singleton_class) # FIXME: do this for all Strategy subs.
 
     my_renderer = ->(debugger_trace:, activity:, **) { "Nodes: #{debugger_trace.to_a.size}, started at #{activity}" }
 
     signal, (ctx, flow_options), circuit_options, output = Trailblazer::Developer.wtf?(
       PresentCreate,
-      [{}],
-      present_options: {render_method: my_renderer})
+      {},
+      circuit_options: {
+        present_options: {render_method: my_renderer}
+      }
+    )
 
     assert_equal output, %(Nodes: 3, started at TraceWtfTest::PresentCreate)
   end
 
   it "overrides default color map of entities" do
+    Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
+
     output, _ = capture_io do
       Trailblazer::Developer.wtf?(
         alpha,
-        [
-          { seq: [], c: false },
-          { color_map: { pass: :cyan, fail: :red } }
-        ]
+        {seq: [], c: false},
+        flow_options: {color_map: { pass: :cyan, fail: :red } }
       )
     end
 
-    _(output.gsub(/0x\w+/, "")).must_equal %{#<Class:>
+    assert_equal CU.strip(output), %(#<Class:0x>
 |-- \e[36mStart.default\e[0m
 |-- \e[36m#<Method: #<Class:>.a>\e[0m
-|-- #<Class:>
+|-- #<Class:0x>
 |   |-- \e[36mStart.default\e[0m
 |   |-- \e[36m#<Method: #<Class:>.b>\e[0m
-|   |-- #<Class:>
+|   |-- #<Class:0x>
 |   |   |-- \e[36mStart.default\e[0m
 |   |   |-- \e[31m#<Method: #<Class:>.c>\e[0m
 |   |   `-- End.failure
 |   `-- End.failure
 `-- End.failure
-}
-  end
-
-  it "supports circuit interface call definition and doesn't mutate any passed options" do
-    ctx = { seq: [] }
-    flow_options = { flow: true }
-    circuit_options = { circuit: true }
-
-    capture_io do
-      Trailblazer::Developer.wtf?(
-        alpha,
-        [ctx, flow_options],
-        **circuit_options
-      )
-    end
-
-    _(ctx).must_equal({ seq: [:a, :b, :c, :cc, :bb, :aa] })
-    _(flow_options).must_equal({ flow: true })
-    _(circuit_options).must_equal({ circuit: true })
+)
   end
 
   it "has alias to `wtf` as `wtf?`" do
     assert_equal Dev.method(:wtf), Dev.method(:wtf?)
   end
 
-  it "we can add to {:wrap_runtime" do
-    raise
+  it "we can add to {:wrap_runtime} even with {wtf?}'s :wrap_runtime being set" do
+    def add_1(wrap_ctx, original_args)
+      ctx, = original_args[0]
+      ctx[:seq] << 1
+
+      return wrap_ctx, original_args # yay to mutable state. not.
+    end
+
+    Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
+    ctx = nil
+
+    output, _ = capture_io do
+      signal, (ctx, _) = Trailblazer::Developer.wtf?(
+        alpha,
+        {seq: []},
+        circuit_options: {wrap_runtime: Hash.new(Trailblazer::Activity::TaskWrap::Extension([method(:add_1), id: "my.add_1", append: nil]))}
+      )
+    end
+
+    assert_equal CU.inspect(ctx.to_h), %({:seq=>[1, :a, 1, 1, :b, 1, 1, :c, 1, :cc, 1, 1, 1, :bb, 1, 1, 1, :aa, 1, 1, 1]})
+    assert_equal CU.strip(output), %(#<Class:0x>
+|-- \e[32mStart.default\e[0m
+|-- \e[32m#<Method: #<Class:>.a>\e[0m
+|-- #<Class:0x>
+|   |-- \e[32mStart.default\e[0m
+|   |-- \e[32m#<Method: #<Class:>.b>\e[0m
+|   |-- #<Class:0x>
+|   |   |-- \e[32mStart.default\e[0m
+|   |   |-- \e[32m#<Method: #<Class:>.c>\e[0m
+|   |   |-- \e[32m#<Method: #<Class:>.cc>\e[0m
+|   |   `-- End.success
+|   |-- \e[32m#<Method: #<Class:>.bb>\e[0m
+|   `-- End.success
+|-- \e[32m#<Method: #<Class:>.aa>\e[0m
+`-- End.success
+)
   end
 end
