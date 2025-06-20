@@ -14,6 +14,12 @@ puts "Running in Ruby #{RUBY_VERSION}"
 T = Trailblazer::Activity::Testing
 
 Minitest::Spec.class_eval do
+  let(:kernel) do
+    Class.new do
+      Trailblazer::Invoke.module!(self)
+    end.new
+  end
+
   def assert_equal(asserted, expected, *args)
     super(expected, asserted, *args)
   end

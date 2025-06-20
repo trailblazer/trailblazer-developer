@@ -138,8 +138,10 @@ ArgumentError: wrong number of arguments (given 0, expected 1)
   end
 
   it "{#wtf?} with {Activity}" do
+    Trailblazer::Invoke.module!(B::Memo::Operation::Create.singleton_class) # FIXME: do this for all Strategy subs.
+
     output, _ = capture_io do
-      result = Trailblazer::Developer.wtf?(B::Memo::Operation::Create, [{seq: [], params: {}}, {}])
+      result = Trailblazer::Developer.wtf?(B::Memo::Operation::Create, {seq: [], params: {}})
     end
 
     assert_equal output, %{DocsDeveloperTest::B::Memo::Operation::Create

@@ -15,7 +15,6 @@ module Trailblazer
         :snapshot_after,
         :level,
         :incomplete?,
-        :captured_node, # TODO: remove once macro is 2.2
       ]
 
       # The {Debugger::Node} is an abstraction between Trace::Node and the actual rendering layer (why?)
@@ -39,7 +38,6 @@ module Trailblazer
                 trace_node:   trace_node,
                 activity:     trace_node.snapshot_before.activity,
                 task:         trace_node.task,
-                captured_node: DeprecatedCapturedNode, # TODO: remove once macro is 2.2
               )
 
             options_for_debugger_node, _ = normalizer.(
@@ -52,13 +50,6 @@ module Trailblazer
 
             # these attributes are not changing with the presentation
             Debugger::Node.new(**options_for_debugger_node).freeze
-          end
-        end
-
-        # TODO: remove once macro is 2.2
-        class DeprecatedCapturedNode
-          def self.method_missing(*)
-            raise "[Trailblazer] The `:captured_node` argument is deprecated, please upgrade to `trailblazer-developer-0.1.0` and use `:trace_node` if the upgrade doesn't fix it."
           end
         end
       end # Node

@@ -1,29 +1,6 @@
 require "test_helper"
 
 class DebuggerTest < Minitest::Spec
-  it "deprecates {:captured_node}" do
-    my_compute_runtime_id = ->(ctx, captured_node:, **) do
-      captured_node.snapshot_after # throw an exception.
-    end
-
-    pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
-      Dev::Debugger::Normalizer.Task(my_compute_runtime_id),
-      id: :my_compute_runtime_id,
-      append: :data
-    ])
-    extended_normalizer = pipeline_extension.(Dev::Debugger::Normalizer::PIPELINES.last)
-
-    activity = Class.new(Trailblazer::Activity::Railway) do
-      step :create
-    end
-
-    exception = assert_raises do
-      Dev.wtf?(activity, [{}, {}], present_options: {normalizer: extended_normalizer})
-    end
-
-    assert_equal exception.message, %([Trailblazer] The `:captured_node` argument is deprecated, please upgrade to `trailblazer-developer-0.1.0` and use `:trace_node` if the upgrade doesn't fix it.)
-  end
-
   it "what" do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity(
       sub_activity_options: {id: "B"}, _activity_options: {id: "C"})
@@ -32,7 +9,13 @@ class DebuggerTest < Minitest::Spec
     _activity.to_h[:activity].instance_variable_set(:@special, true) # FIXME: don't kill me for this horrible flag.
 
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(activity, [{seq: []}, {}])
+    signal, (ctx, flow_options), _ = kernel.__(
+      activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
+
+    stack = flow_options[:stack]
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
@@ -84,7 +67,8 @@ class DebuggerTest < Minitest::Spec
       {:seq=>{:value=>"[:a, :b, :c]", :has_changed=>false}}
 
     assert_equal debugger_nodes[0].task, activity
-    assert_equal debugger_nodes[0].activity, Trailblazer::Activity::TaskWrap.container_activity_for(activity)
+    assert_equal debugger_nodes[0].activity.keys, [:config, :nodes] # this is {container_activity_for(activity)}.
+    assert_equal debugger_nodes[0].activity[:config][:wrap_static].keys, [activity]
     assert_equal debugger_nodes[0].id, debugger_nodes[0].trace_node.object_id
 
     assert_equal debugger_nodes[0].task, activity

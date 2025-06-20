@@ -3,8 +3,13 @@ require "test_helper"
 # Test {Trace::Present.call}
 class TracePresentTest < Minitest::Spec
    it "accepts block to produce options that are merged with internal options" do
-    stack, signal, (ctx, flow_options), _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {flow: true}])
+    signal, (ctx, flow_options), _ = kernel.__(
+      flat_activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
 
+    stack = flow_options[:stack]
 
     output = Dev::Trace::Present.(stack) do |trace_nodes:, **|
       {
@@ -22,7 +27,13 @@ class TracePresentTest < Minitest::Spec
   end
 
   it "deprecates {:node_options}" do
-    stack, _ = Dev::Trace.invoke(flat_activity, [{seq: []}, {}])
+    signal, (ctx, flow_options), _ = kernel.__(
+      flat_activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
+
+    stack = flow_options[:stack]
 
     exception = assert_raises do
       output = Dev::Trace::Present.(
@@ -38,7 +49,13 @@ class TracePresentTest < Minitest::Spec
   end
 
   it "accepts {:render_method}" do
-    stack, _ = Dev::Trace.invoke(nested_activity, [{seq: []}, {}])
+    signal, (ctx, flow_options), _ = kernel.__(
+      nested_activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
+
+    stack = flow_options[:stack]
 
     my_render_method = ->(debugger_trace:, **options) do
       [
@@ -57,7 +74,13 @@ class TracePresentTest < Minitest::Spec
   end
 
   it "accepts {:renderer} and pass through additional arguments to the renderer (e.g. {:color})" do
-    stack, _ = Dev::Trace.invoke(nested_activity, [{ seq: [] }, {}])
+    signal, (ctx, flow_options), _ = kernel.__(
+      nested_activity,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
+
+    stack = flow_options[:stack]
 
     renderer = ->(debugger_node:, debugger_trace:, color:, **) do
       task = debugger_node.trace_node.snapshot_before.task

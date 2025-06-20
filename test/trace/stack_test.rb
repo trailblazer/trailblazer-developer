@@ -4,13 +4,13 @@ class StackTest < Minitest::Spec
   it do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+    signal, (ctx, flow_options), _ = kernel.__(
       activity,
-      [
-        {seq: []},
-        {}
-      ]
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
     )
+
+    stack = flow_options[:stack]
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 

@@ -2,12 +2,6 @@ require "test_helper"
 
 require "trailblazer/invoke"
 class TraceInvokeTest < Minitest::Spec
-  let(:kernel) do
-    Class.new do
-      Trailblazer::Invoke.module!(self)
-    end.new
-  end
-
   it "traces a flat activity" do
     signal, (ctx, flow_options), _ = kernel.__(
       flat_activity,
@@ -130,10 +124,6 @@ end
 
 # Test specific options such as {:snapshooter}.
 class TraceAPITest < Minitest::Spec
-  let(:kernel) do
-    Class.new { Trailblazer::Invoke.module!(self) }.new
-  end
-
   # Test custom classes without explicit {#hash} implementation.
   class User
     def initialize(id)
@@ -388,45 +378,6 @@ class TraceAPITest < Minitest::Spec
     stack = flow_options[:stack].to_a
     captured_input  = stack[0]
     captured_output = stack[-1]
-    # pp stack
-
-    assert_equal captured_input.data, { ctx: { seq: [:B, :C] }, something: :else }
-    assert_equal captured_output.data, { ctx: { seq: [:B, :C] }, signal: signal }
-  end
-
-  it "{#options_for_canonical_invoke} allows additional {:adds_for_options_compiler} option" do
-    raise
-
-    trace_args_for_invoke = Trailblazer::Developer::Trace.options_for_canonical_invoke(
-      adds_for_options_compiler: [
-        [
-          Trailblazer::Invoke::Options::HeuristicMerge.build(
-            ->(*) do
-              {
-                flow_options: {
-                  before_snapshooter: input_collector,
-                  after_snapshooter: output_collector,
-                }
-              }
-            end
-          ),
-          id: "user.trace.snapshooter_options", append: nil
-        ]
-      ]
-    )
-
-    signal, (ctx, flow_options) = kernel.__(
-      flat_activity,
-        { seq: [] },
-        **trace_args_for_invoke
-    )
-
-    assert_equal ctx[:seq], [:B, :C]
-
-    stack = flow_options[:stack].to_a
-    captured_input  = stack[0]
-    captured_output = stack[-1]
-
     # pp stack
 
     assert_equal captured_input.data, { ctx: { seq: [:B, :C] }, something: :else }

@@ -19,13 +19,13 @@ class TraceNodeTest < Minitest::Spec
     activity, sub_activity, _activity = Tracing.three_level_nested_activity(
       sub_activity_options: {id: "B"}, _activity_options: {id: "C"})
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+    signal, (ctx, flow_options), _ = kernel.__(
       activity,
-      [
-        {seq: []},
-        {}
-      ]
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
     )
+
+    stack = flow_options[:stack]
 
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
@@ -105,13 +105,13 @@ class TraceNodeTest < Minitest::Spec
       step :e
     end
 
-    stack, signal, (ctx, flow_options) = Dev::Trace.invoke(
+    signal, (ctx, flow_options), _ = kernel.__(
       activity,
-      [
-        {seq: []},
-        {}
-      ]
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
     )
+
+    stack = flow_options[:stack]
 
     assert_equal ctx[:seq], [:a, :b, :c, :a, :a, :e]
 
@@ -142,7 +142,15 @@ class TraceNodeTest < Minitest::Spec
     #            exception style where at some point all ascendants are incomplete.
 
     ctx = {validate: false, seq: []}
-    stack, _ = Trailblazer::Developer::Trace.invoke(Tracing::ValidateWithRescue, [ctx, {}])
+
+    signal, (ctx, flow_options), _ = kernel.__(
+      Tracing::ValidateWithRescue,
+      {seq: []},
+      **Trailblazer::Developer::Trace.options_for_canonical_invoke
+    )
+
+    stack = flow_options[:stack]
+
 
     trace_nodes = Dev::Trace.build_nodes(stack.to_a)
 
