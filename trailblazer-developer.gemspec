@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "trailblazer/developer/version"
@@ -25,5 +26,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "trailblazer-operation", ">= 0.10.0"
 
   spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.2.0", "< 1.3.0"
-  spec.add_dependency "hirb"
+  spec.add_dependency "hirber"
 end

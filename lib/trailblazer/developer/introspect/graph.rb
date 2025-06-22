@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # NOTE: The Graph API might get deprecated and replaced.
 module Trailblazer
   module Developer

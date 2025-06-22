@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "test_helper"
 
 class TraceWtfTest < Minitest::Spec
@@ -86,7 +87,7 @@ class TraceWtfTest < Minitest::Spec
     # test returned values for #wtf?
     assert_equal returned_args.size, 5
     assert_equal returned_args[0].inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
-    assert_equal returned_args[1][0].inspect, %({:seq=>[:a, :b, :c], :c=>false})
+    assert_hash_inspect returned_args[1][0].inspect, "{seq: [:a, :b, :c], c: false}"
     assert_equal returned_args[1][1].class, Hash # flow_options
     assert_equal returned_args[2].inspect, %({}) # circuit_options
     assert_equal returned_args[3].chomp, output.chomp # fourth returned value is the trace output.
@@ -132,7 +133,7 @@ class TraceWtfTest < Minitest::Spec
 
     assert_equal captured_output.chomp, %(Nodes: 15)
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
-    assert_equal ctx.inspect, %({:seq=>[:a, :b, :c, :cc, :bb, :aa]})
+    assert_hash_inspect ctx.inspect, "{seq: [:a, :b, :c, :cc, :bb, :aa]}"
     assert_equal circuit_options, {}
     assert_equal output, captured_output.chomp
     assert_equal returned_present_args, ["additional", "returned", "args"]

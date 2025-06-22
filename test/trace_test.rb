@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "test_helper"
 
 # Test {Trace.call} and {Trace::Present.call}
@@ -7,7 +8,7 @@ class TraceTest < Minitest::Spec
 
     assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
 
-    assert_equal ctx.inspect, %{{:seq=>[:B, :C]}}
+    assert_hash_inspect ctx.inspect, "{seq: [:B, :C]}"
     assert_equal flow_options[:flow].inspect, %{true}
 
     output = Dev::Trace::Present.(stack)
@@ -27,7 +28,7 @@ class TraceTest < Minitest::Spec
 
     assert_equal signal.class.inspect, %{Trailblazer::Activity::End}
 
-    assert_equal ctx.inspect, %{{:seq=>[:B, :C]}}
+    assert_hash_inspect ctx.inspect, "{seq: [:B, :C]}"
     assert_equal flow_options[:flow].inspect, %{true}
 
     output = Dev::Trace::Present.(stack)
@@ -190,7 +191,7 @@ class TraceTest < Minitest::Spec
     assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(stack[11], stack_object.variable_versions), # asserted snapshot is for {After(:model)}.
       {
         current_user: {value: current_user.inspect, has_changed: false},
-        params:       {value: "{:name=>\"Q & I\"}", has_changed: false},
+        params:       {value: RUBY_VERSION >= "3.4" ? "{:name=>\"Q & I\"}" : "{name: \"Q & I\"}", has_changed: false},
         seq:          {value: "[:authenticate, :authorize, :model]", has_changed: true},
         model:        {value: "Object", has_changed: true}
       }

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Trailblazer
   # Operation-specific circuit rendering. This is optimized for a linear railway circuit.
   #

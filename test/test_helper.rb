@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "trailblazer/developer"
 
@@ -16,6 +17,18 @@ Minitest::Spec.class_eval do
   include Trailblazer::Activity::Testing::Assertions
 
   Implementing = T.def_tasks(:b, :e, :B, :C)
+
+  # Helper to check hash inspect output across Ruby versions
+  # Ruby >= 3.4 uses {:key=>value} syntax, older versions use {key: value}
+  def assert_hash_inspect(actual, expected_old_syntax)
+    if RUBY_VERSION >= "3.4"
+      # Convert old syntax to new syntax for comparison
+      expected_new_syntax = expected_old_syntax.gsub(/(\w+): /, ':\1=>')
+      assert_equal actual, expected_new_syntax
+    else
+      assert_equal actual, expected_old_syntax
+    end
+  end
 
   let(:flat_activity) do
     Class.new(Trailblazer::Activity::Path) do

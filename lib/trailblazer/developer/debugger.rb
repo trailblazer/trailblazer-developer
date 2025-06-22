@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Trailblazer
   module Developer
     # Code in Debugger is only executed if the user wants to render the stack.

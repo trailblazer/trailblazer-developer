@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Trailblazer::Developer
   module Trace
     # WARNING:  the interfaces here are subject to change, we're still experimenting

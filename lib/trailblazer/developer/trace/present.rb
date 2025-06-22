@@ -1,4 +1,5 @@
-require "hirb"
+# frozen_string_literal: true
+require "hirber"
 
 module Trailblazer::Developer
   module Trace
