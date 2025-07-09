@@ -55,7 +55,7 @@ class GraphTest < Minitest::Spec
     node = graph.find { |node| node.task.class == Trailblazer::Activity::Circuit::TaskAdapter }
     #:find-block end
 
-    pp graph.stop_events
+    pp graph.termini
   end
 
 end

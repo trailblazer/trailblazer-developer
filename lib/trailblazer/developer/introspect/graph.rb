@@ -29,8 +29,8 @@ module Trailblazer
           @map.keys.each_with_index.collect { |task, i| yield find_with_block { |node| node.task == task }, i }
         end
 
-        def stop_events
-          @circuit.to_h[:end_events]
+        def termini
+          @circuit.to_h[:termini]
         end
 
         private

@@ -58,8 +58,8 @@ class IntrospectGraphTest < Minitest::Spec
       end
     end
 
-    describe "#stop_events" do
-      it { expect(graph.stop_events.inspect).must_equal %{[#<Trailblazer::Activity::End semantic=:success>]} }
+    describe "#termini" do
+      it { expect(graph.termini.inspect).must_equal %{[#<Trailblazer::Activity::End semantic=:success>]} }
     end
 
     def assert_outputs(node, map)
