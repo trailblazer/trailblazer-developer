@@ -8,10 +8,10 @@ require "pp"
 require "trailblazer/invoke" # FIXME: remove me, this should be done on library level.
 
 require "trailblazer/activity/dsl/linear"
-require "trailblazer/activity/testing"
+require "trailblazer/core"
 puts "Running in Ruby #{RUBY_VERSION}"
 
-T = Trailblazer::Activity::Testing
+T = Trailblazer::Core
 
 Minitest::Spec.class_eval do
   let(:kernel) do
@@ -27,7 +27,7 @@ Minitest::Spec.class_eval do
   CU = Trailblazer::Core::Utils
 
   Dev = Trailblazer::Developer
-  include Trailblazer::Activity::Testing::Assertions
+  include Trailblazer::Core::Utils::Assertions
 
   Implementing = T.def_tasks(:b, :e, :B, :C)
 
