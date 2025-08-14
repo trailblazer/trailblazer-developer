@@ -85,7 +85,7 @@ class TraceNodeTest < Minitest::Spec
       _activity    = nil
 
     activity = Class.new(Trailblazer::Activity::Railway) do
-      MyCallable = T.def_task(:a)
+      MyCallable = Trailblazer::Core::Utils::DefSteps.def_task(:a)
       include T.def_steps(:e)
 
       sub_activity = Class.new(Trailblazer::Activity::Railway) do
