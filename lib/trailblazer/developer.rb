@@ -6,7 +6,7 @@ module Trailblazer
   end
 end
 
-require "trailblazer/activity"
+require "trailblazer/activity/dsl/linear"
 require "trailblazer/developer/wtf"
 require "trailblazer/developer/wtf/renderer"
 require "trailblazer/developer/trace/snapshot"

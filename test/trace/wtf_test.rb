@@ -170,6 +170,42 @@ class TraceWtfTest < Minitest::Spec
     assert_equal returned_present_args, ["additional", "returned", "args"]
   end
 
+  it "internally uses canonical invoke and creates a {Context}" do
+    activity = Class.new(Trailblazer::Activity::Railway) do
+      step :model
+
+      def model(ctx, record:, **)
+        ctx[:record_in_model] = record.inspect
+      end
+    end
+
+    Trailblazer::Invoke.module!(activity.singleton_class) do # FIXME: do this for all Strategy subs.
+      {
+        flow_options: {
+          context_options: {
+            aliases: {"model": :record},
+            container_class: Trailblazer::Context::Container::WithAliases,
+          },
+        }
+      }
+    end
+
+    signal, ctx, flow_options, circuit_options, output, returned_present_args = nil
+
+    captured_output, _ = capture_io do
+      signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(
+        activity,
+        {seq: [], model: Module},
+      )
+    end
+
+    assert_equal CU.inspect(ctx.to_h), %({:seq=>[], :model=>Module, :record=>Module, :record_in_model=>\"Module\"})
+    assert_equal CU.strip(captured_output), %(#<Class:0x>
+|-- \e[32mStart.default\e[0m
+|-- \e[32mmodel\e[0m
+`-- End.success\n)
+  end
+
   it "passes {activity} to {Present}" do
     class PresentCreate < Trailblazer::Activity::Railway
     end

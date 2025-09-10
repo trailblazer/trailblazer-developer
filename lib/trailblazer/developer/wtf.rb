@@ -1,7 +1,7 @@
 module Trailblazer::Developer
   module_function
 
-  def wtf(activity, *args, **kws)
+  def wtf(activity, *args, **kws) # TODO: allow kws only as {ctx}.
     Wtf.call_with_canonical_invoke(activity, *args, **kws)
   end
 
@@ -23,13 +23,13 @@ module Trailblazer::Developer
       {
         **kws,
         adds_for_options_compiler: [
-          [Trailblazer::Invoke::Options::HeuristicMerge.build(Trailblazer::Developer::Trace.method(:invoke_options_compiler_step)), id: "developer.trace", append: nil],
-          [Trailblazer::Invoke::Options::HeuristicMerge.build(method(:wtf_adds)), id: "developer.wtf", append: nil]
+          [Trailblazer::Invoke::Options::HeuristicMerge.build(Trailblazer::Developer::Trace.method(:invoke_options_compiler_step)), id: "developer.trace", append: nil], # DISCUSS: redundant, we should retrieve that from Trace.
+          [Trailblazer::Invoke::Options::HeuristicMerge.build(method(:invoke_options_compiler_step)), id: "developer.wtf", append: nil]
         ] + adds_for_options_compiler,
       }
     end
 
-    def wtf_adds(*)
+    def invoke_options_compiler_step(*)
       {
         invoke_method: Trailblazer::Developer::Wtf.method(:invoke_with_rescue),
       }

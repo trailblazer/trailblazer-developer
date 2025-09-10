@@ -52,7 +52,7 @@ module Trailblazer
 
           filters = input_pipe.to_a.collect do |id, filter|
             id, class_name, info =
-              if filter.is_a?(variable_mapping::AddVariables) || filter.is_a?(variable_mapping::SetVariable)
+              if filter.is_a?(variable_mapping::SetVariable)
                 # TODO: grab user_filter here if needed for understanding
                 # _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
                 _info       = ""

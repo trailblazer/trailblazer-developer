@@ -17,30 +17,30 @@ module Trailblazer
 
       # Run at runtime when preparing a Trace::Nodes for presentation.
       module Normalizer
-        def self.Task(user_step) # TODO: we could keep this in the {activity} gem.
-          Activity::TaskWrap::Pipeline::TaskAdapter.for_step(user_step, option: false) # we don't need Option as we don't have ciruit_options here, and no {:exec_context}
+        def self.Task(user_step)
+          Activity::DSL::Linear::Normalizer.Task(user_step)
         end
 
         # Default steps for the Debugger::Node options pipeline, following the step-interface.
         module Default
           def self.compile_id(ctx, activity:, task:, **)
-            ctx[:compile_id] = Activity::Introspect.Nodes(activity, task: task)[:id]
+            ctx.merge(:compile_id => Activity::Introspect.Nodes(activity, task: task)[:id])
           end
 
           def self.runtime_id(ctx, compile_id:, **)
-            ctx[:runtime_id] = compile_id
+            ctx.merge(:runtime_id => compile_id)
           end
 
           def self.label(ctx, label: nil, runtime_id:, **)
-            ctx[:label] = label || runtime_id
+            ctx.merge(:label => label || runtime_id)
           end
 
           def self.data(ctx, data: {}, **)
-            ctx[:data] = data
+            ctx.merge(:data => data)
           end
 
           def self.incomplete?(ctx, trace_node:, **)
-            ctx[:incomplete?] = trace_node.is_a?(Developer::Trace::Node::Incomplete)
+            ctx.merge(:incomplete? => trace_node.is_a?(Developer::Trace::Node::Incomplete))
           end
         end
 

@@ -21,9 +21,9 @@ class DebuggerTest < Minitest::Spec
 
   #@ particular nodes need a special {runtime_id}
     my_compute_runtime_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
-      return compile_id unless activity.instance_variable_get(:@special)
+      return unless activity.instance_variable_get(:@special)
 
-      ctx[:runtime_id] = compile_id.to_s*9
+      ctx.merge(runtime_id: compile_id.to_s*9)
     end
 
 

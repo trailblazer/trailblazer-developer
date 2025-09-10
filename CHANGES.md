@@ -1,3 +1,18 @@
+# 0.2.0
+
+## WTF?
+
+* `:present_options`, :color_map now is passed as `circuit_options: {present_options: {render_method: my_renderer}}`.
+wtf?(activity, ctx, flow_options: ...) ==> canonical invoke API.
+
+
+Trailblazer::Developer.wtf?(B::Memo::Operation::Create, {seq: [], params: {}}) ==> Activity, signature change, you need to pass the ctx as a hash.
+* Remove `:captured_node` field in Debugger.
+
+*** Trailblazer::Developer::Trace.invoke ==> ?  Activity.__(ctx, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
+
+
+
 # 0.1.0
 
 * Improvement of tracing performance: factor ~4.

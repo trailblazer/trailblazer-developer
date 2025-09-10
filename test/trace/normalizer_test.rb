@@ -18,9 +18,9 @@ class TraceNormalizerTest < Minitest::Spec
 
   #@ particular nodes need a special {runtime_id}
     change_compile_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
-      return compile_id unless compile_id == :b
+      return unless compile_id == :b
 
-      ctx[:compile_id] = compile_id.to_s*9
+      ctx.merge(compile_id: compile_id.to_s*9)
     end
 
     original_pipelines = Trailblazer::Developer::Debugger::Normalizer::PIPELINES.clone
