@@ -40,7 +40,9 @@ module Trailblazer
         end
 
         def self.render_task_wrap_step(row, level)
-          text = row.id.to_s.ljust(33, ".") + row[1].class.to_s
+          id, task = row
+
+          text = id.to_s.ljust(33, ".") + task.class.to_s
 
           [[level, text]]
         end

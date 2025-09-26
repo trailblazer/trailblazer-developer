@@ -50,10 +50,9 @@ module Trailblazer
           label:            Normalizer.Task(Default.method(:label)),
           data:             Normalizer.Task(Default.method(:data)),
           incomplete?:      Normalizer.Task(Default.method(:incomplete?)),
-        }.
-        collect { |id, task| Activity::TaskWrap::Pipeline.Row(id, task) }
+        }
 
-        PIPELINES = [Activity::TaskWrap::Pipeline.new(default_steps)] # we do mutate this constant at compile-time. Maybe # DISCUSS and find a better way.
+        PIPELINES = [Activity.Pipeline(default_steps)] # we do mutate this constant at compile-time. Maybe # DISCUSS and find a better way.
       end
     end
   end
