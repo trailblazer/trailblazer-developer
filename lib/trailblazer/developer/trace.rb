@@ -56,30 +56,25 @@ module Trailblazer::Developer
     # taskWrap step to capture incoming arguments of a step.
     #
     # Note that we save the created {Snapshot::Before} in the wrap_ctx.
-    def capture_args(wrap_config, original_args)
-      flow_options = original_args[0][1]
-
-      snapshot, new_versions = Snapshot::Before.(flow_options[:before_snapshooter], wrap_config, original_args)
+    def capture_args(wrap_ctx, flow_options, circuit_options)
+      snapshot, new_versions = Snapshot::Before.(flow_options[:before_snapshooter], wrap_ctx, flow_options, circuit_options)
 
       # We try to be generic here in the taskWrap snapshooting code, where details happen in Snapshot::Before/After and Stack#add!.
       flow_options[:stack].add!(snapshot, new_versions)
 
-      return wrap_config.merge(snapshot_before: snapshot), original_args
+      return wrap_ctx.merge(snapshot_before: snapshot), flow_options
     end
 
     # taskWrap step to capture outgoing arguments from a step.
-    def capture_return(wrap_config, ((ctx, flow_options), circuit_options))
-      original_args = [[ctx, flow_options], circuit_options]
-
-      snapshot, new_versions = Snapshot::After.(flow_options[:after_snapshooter], wrap_config, original_args)
+    def capture_return(wrap_ctx, flow_options, circuit_options)
+        snapshot, new_versions = Snapshot::After.(flow_options[:after_snapshooter], wrap_ctx, flow_options, circuit_options)
 
       flow_options[:stack].add!(snapshot, new_versions)
 
-      return wrap_config, original_args
+      return wrap_ctx, flow_options
     end
 
-    # Insertions for the trace tasks that capture the arguments just before calling the task,
-    # and before the TaskWrap is finished.
+    # ADDS instructions to add tracing before and after {call_task}.
     TASK_WRAP_EXTENSION = Trailblazer::Activity::TaskWrap.Extension(
       [Trace.method(:capture_args),   id: "task_wrap.capture_args",   prepend: "task_wrap.call_task"],
       [Trace.method(:capture_return), id: "task_wrap.capture_return", append: nil], # append to the very end of tW.

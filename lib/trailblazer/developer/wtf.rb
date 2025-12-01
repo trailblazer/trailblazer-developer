@@ -47,17 +47,20 @@ module Trailblazer::Developer
       )
     end
 
-    def invoke_with_rescue(activity, (ctx, flow_options), present_options: {}, **circuit_options)
+    def invoke_with_rescue(activity, ctx, flow_options, circuit_options)
+      present_options = circuit_options[:present_options] || {}
+
       local_present_options_block = ->(*) { {} }
       stack = flow_options.fetch(:stack) # DISCUSS: should we really use {fetch}?
       raise_exception = false
 
       begin
         # complete_stack, signal, (ctx, flow_options) = Trace.invoke(
-        signal, (ctx, flow_options) = Trailblazer::Activity::TaskWrap.invoke( # DISCUSS: this won't work with the traditional WTF.(Activity)
+        ctx, flow_options, signal = Trailblazer::Activity::TaskWrap.invoke( # DISCUSS: this won't work with the traditional WTF.(Activity)
           activity,
-          [ctx, flow_options],
-          **circuit_options
+          ctx,
+          flow_options,
+          circuit_options
         )
 
         complete_stack = flow_options[:stack]
@@ -97,7 +100,7 @@ module Trailblazer::Developer
       puts output # TODO: allow other channels here, not only {#puts}.
 
       raise raise_exception if raise_exception
-      return signal, [ctx, flow_options], circuit_options, output, returned_args
+      return ctx, flow_options, signal, output, returned_args
     end
 
     module Exception

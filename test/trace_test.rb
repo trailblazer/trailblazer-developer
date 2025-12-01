@@ -3,7 +3,7 @@ require "test_helper"
 require "trailblazer/invoke"
 class TraceInvokeTest < Minitest::Spec
   it "traces a flat activity" do
-    signal, (ctx, flow_options), _ = kernel.__(
+     ctx, flow_options, signal, _ = kernel.__(
       flat_activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -26,7 +26,7 @@ class TraceInvokeTest < Minitest::Spec
   # TODO: can we add more {:wrap_runtime}?
 
   it "{Present}: you can pass an explicit task label via {:label}" do
-    signal, (ctx, flow_options), _ = kernel.__(flat_activity, {seq: []}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
+    ctx, flow_options, signal, _ = kernel.__(flat_activity, {seq: []}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
     output = Dev::Trace::Present.(flow_options[:stack]) do |trace_nodes:, **|
       {
@@ -46,7 +46,7 @@ class TraceInvokeTest < Minitest::Spec
   it "nested tracing" do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity(e_options: {Trailblazer::Activity::Railway.Out() => [:nil_value]})
 
-    signal, (ctx, flow_options) = kernel.__(activity, {seq: []}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
+    ctx, flow_options, signal = kernel.__(activity, {seq: []}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
     stack = flow_options[:stack]
 
@@ -98,13 +98,11 @@ class TraceTest < Minitest::Spec
   it "allows tracing by manually passing the options" do
     trace_args = Trailblazer::Developer::Trace.invoke_options_compiler_step(flat_activity, {})
 
-    signal, (ctx, flow_options), _ = Trailblazer::Activity::TaskWrap.invoke(
+    ctx, flow_options, signal, _ = Trailblazer::Activity::TaskWrap.invoke(
       flat_activity,
-      [
-        {seq: []},
-        trace_args[:flow_options]
-      ],
-      **trace_args[:circuit_options]
+      {seq: []},
+      trace_args[:flow_options],
+      trace_args[:circuit_options]
     )
 
     assert_equal signal.to_h[:semantic], :success
@@ -177,7 +175,7 @@ class TraceAPITest < Minitest::Spec
       after_snapshooter:  Snapshot.method(:after_snapshooter),
     }
 
-    signal, (ctx, flow_options) = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       Endpoint,
       {
         current_user: current_user = User.new(1),
@@ -217,31 +215,31 @@ class TraceAPITest < Minitest::Spec
     assert_snapshot versions, stack[2], current_user: 0, params: 0, seq: 0
 
     # Endpoint #authenticate
-    assert_equal stack[3].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authenticate>)
+    assert_equal CU.strip(stack[3].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:authenticate>>>)
     assert_snapshot versions, stack[3], current_user: 0, params: 0, seq: 0
-    assert_equal stack[4].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authenticate>)
+    assert_equal CU.strip(stack[4].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:authenticate>>>)
     assert_snapshot versions, stack[4], current_user: 0, params: 0, seq: 1
 
     # Endpoint #authorize
-    assert_equal stack[5].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authorize>)
+    assert_equal CU.strip(stack[5].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:authorize>>>)
     assert_snapshot versions, stack[5], current_user: 1, params: 0, seq: 1
-    assert_equal stack[6].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=authorize>)
+    assert_equal CU.strip(stack[6].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:authorize>>>)
     assert_snapshot versions, stack[6], current_user: 0, params: 0, seq: 2
 
     # Create {in}
-    assert_equal stack[7].task, Endpoint::Create
+    assert_equal stack[7].task,  Endpoint::Create
     assert_snapshot versions, stack[7], current_user: 0, params: 0, seq: 2
 
       # Create :model
-      assert_equal stack[10].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=model>)
+      assert_equal CU.strip(stack[10].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:model>>>)
       assert_snapshot versions, stack[10], current_user: 0, params: 0, seq: 2
-      assert_equal stack[11].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=model>)
+      assert_equal CU.strip(stack[11].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:model>>>)
       assert_snapshot versions, stack[11], current_user: 0, params: 0, seq: 3, model: 0
 
       # Create :screw_params!
-      assert_equal stack[12].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=screw_params!>)
+      assert_equal CU.strip(stack[12].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:screw_params!>>>)
       assert_snapshot versions, stack[12], current_user: 0, params: 0, seq: 3, model: 0
-      assert_equal stack[13].task.inspect, %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=screw_params!>)
+      assert_equal CU.strip(stack[13].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:screw_params!>>>)
       assert_snapshot versions, stack[13], current_user: 0, params: 1, seq: 4, model: 0
 
       # Create End.success
@@ -284,7 +282,7 @@ class TraceAPITest < Minitest::Spec
       end
     end
 
-    signal, (ctx, flow_options) = kernel.__(activity, {}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
+    ctx, flow_options, signal = kernel.__(activity, {}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
     stack = flow_options[:stack]
     nodes = stack.to_a
@@ -317,7 +315,7 @@ class TraceAPITest < Minitest::Spec
       end
     end
 
-    signal, (ctx, flow_options) = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       activity,
       {params: {}},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke,
@@ -342,7 +340,7 @@ class TraceAPITest < Minitest::Spec
   # We can also set it via {Trace.value_snapshooter}
     Trailblazer::Developer::Trace.instance_variable_set(:@value_snapshooter, value_snapshooter)
 
-    signal, (ctx, flow_options) = kernel.__(activity, {params: {}}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
+    ctx, flow_options, signal = kernel.__(activity, {params: {}}, **Trailblazer::Developer::Trace.options_for_canonical_invoke)
 
     stack = flow_options[:stack]
     nodes = stack.to_a
@@ -360,10 +358,10 @@ class TraceAPITest < Minitest::Spec
   end
 
   it "allows to inject custom data collector" do
-    input_collector = ->(wrap_ctx, ((ctx, _), _)) { [{ ctx: ctx.to_h, something: :else }, {}] }
-    output_collector = ->(wrap_ctx, ((ctx, _), _)) { [{ ctx: ctx.to_h, signal: wrap_ctx[:return_signal] }, {}] }
+    input_collector = ->(wrap_ctx, flow_options, _) { [{ ctx: wrap_ctx[:application_ctx].to_h, something: :else }, {}] }
+    output_collector = ->(wrap_ctx, flow_options, _) { [{ ctx: wrap_ctx[:application_ctx].to_h, signal: wrap_ctx[:return_signal] }, {}] }
 
-    signal, (ctx, flow_options) = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       flat_activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke(),

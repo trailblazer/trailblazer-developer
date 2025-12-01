@@ -20,12 +20,12 @@ module Trailblazer::Developer
       After   = Class.new(Snapshot)
 
       # This is called from {Trace.capture_args} and {Trace.capture_return} in the taskWrap.
-      def self.call(ctx_snapshooter, wrap_config, ((ctx, flow_options), circuit_options))
+      def self.call(ctx_snapshooter, wrap_ctx, flow_options, circuit_options)
         # DISCUSS: grab the {snapshooter} here from flow_options, instead of in Trace.capture_args?
-        changeset, new_versions = ctx_snapshooter.call(wrap_config, [[ctx, flow_options], circuit_options])
+        changeset, new_versions = ctx_snapshooter.call(wrap_ctx, flow_options, circuit_options)
 
         snapshot = new( # either Before or After.
-          wrap_config[:task],
+          wrap_ctx[:task],
           circuit_options[:activity],
           changeset
         ).freeze
@@ -35,8 +35,8 @@ module Trailblazer::Developer
 
       # Serialize all ctx variables before {call_task}.
       # This is run just before {call_task}, after In().
-      def self.before_snapshooter(wrap_ctx, ((ctx, flow_options), _))
-        changeset, new_versions = snapshot_for(ctx, **flow_options)
+      def self.before_snapshooter(wrap_ctx, flow_options, _)
+        changeset, new_versions = snapshot_for(wrap_ctx[:application_ctx], **flow_options)
 
         data = {
           ctx_variable_changeset: changeset,
@@ -46,9 +46,9 @@ module Trailblazer::Developer
       end
 
       # Serialize all ctx variables at the very end of taskWrap, after Out().
-      def self.after_snapshooter(wrap_ctx, _)
-        snapshot_before             = wrap_ctx[:snapshot_before]
-        returned_ctx, flow_options  = wrap_ctx[:return_args]
+      def self.after_snapshooter(wrap_ctx, flow_options, _)
+        snapshot_before  = wrap_ctx[:snapshot_before]
+        returned_ctx, _  = wrap_ctx[:return_ctx]
 
         changeset, new_versions = snapshot_for(returned_ctx, **flow_options)
 

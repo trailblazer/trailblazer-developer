@@ -4,7 +4,7 @@ module Trailblazer
       # @private
       # Public entry point to add Debugger::Node normalizer steps.
       def self.add_normalizer_step!(step, id:, normalizer: Normalizer::PIPELINES.last, **options)
-        task = Normalizer.Task(step)
+        task = Normalizer.Task(step) # FIXME.
 
         # We have a TaskWrap::Pipeline (a very simple style of "activity" used for normalizers) and
         # add another step using the "friendly interface" from {Activity::Adds}.
@@ -23,33 +23,38 @@ module Trailblazer
 
         # Default steps for the Debugger::Node options pipeline, following the step-interface.
         module Default
-          def self.compile_id(ctx, activity:, task:, **)
-            ctx.merge(:compile_id => Activity::Introspect.Nodes(activity, task: task)[:id])
+          def self.compile_id(ctx, flow_options, _, activity:, task:, **)
+            ctx = ctx.merge(:compile_id => Activity::Introspect.Nodes(activity, task: task)[:id])
+            return ctx, flow_options
           end
 
-          def self.runtime_id(ctx, compile_id:, **)
-            ctx.merge(:runtime_id => compile_id)
+          def self.runtime_id(ctx, flow_options, _, compile_id:, **)
+            ctx = ctx.merge(:runtime_id => compile_id)
+            return ctx, flow_options
           end
 
-          def self.label(ctx, label: nil, runtime_id:, **)
-            ctx.merge(:label => label || runtime_id)
+          def self.label(ctx, flow_options, _, label: nil, runtime_id:, **)
+            ctx = ctx.merge(:label => label || runtime_id)
+            return ctx, flow_options
           end
 
-          def self.data(ctx, data: {}, **)
-            ctx.merge(:data => data)
+          def self.data(ctx, flow_options, _, data: {}, **)
+            ctx = ctx.merge(:data => data)
+            return ctx, flow_options
           end
 
-          def self.incomplete?(ctx, trace_node:, **)
-            ctx.merge(:incomplete? => trace_node.is_a?(Developer::Trace::Node::Incomplete))
+          def self.incomplete?(ctx, flow_options, _, trace_node:, **)
+            ctx = ctx.merge(:incomplete? => trace_node.is_a?(Developer::Trace::Node::Incomplete))
+            return ctx, flow_options
           end
         end
 
         default_steps = {
-          compile_id:       Normalizer.Task(Default.method(:compile_id)),
-          runtime_id:       Normalizer.Task(Default.method(:runtime_id)),
-          label:            Normalizer.Task(Default.method(:label)),
-          data:             Normalizer.Task(Default.method(:data)),
-          incomplete?:      Normalizer.Task(Default.method(:incomplete?)),
+          compile_id:       Default.method(:compile_id),
+          runtime_id:       Default.method(:runtime_id),
+          label:            Default.method(:label),
+          data:             Default.method(:data),
+          incomplete?:      Default.method(:incomplete?),
         }
 
         PIPELINES = [Activity.Pipeline(default_steps)] # we do mutate this constant at compile-time. Maybe # DISCUSS and find a better way.

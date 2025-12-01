@@ -40,12 +40,13 @@ module Trailblazer
                 task:         trace_node.task,
               )
 
-            options_for_debugger_node, _ = normalizer.(
+            options_for_debugger_node, _ = Activity::DSL::Linear::Normalizer.call_normalizer(
+              normalizer,
               {
                 **options_from_trace_node,
                 **options_from_user
               },
-              []
+              {}
             )
 
             # these attributes are not changing with the presentation

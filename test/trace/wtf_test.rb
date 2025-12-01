@@ -88,10 +88,10 @@ class TraceWtfTest < Minitest::Spec
 
     # test returned values for #wtf?
     assert_equal returned_args.size, 5
-    assert_equal returned_args[0].inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
-    assert_equal CU.inspect(returned_args[1][0].to_h), %({:seq=>[:a, :b, :c], :c=>false})
-    assert_equal returned_args[1][1].class, Hash # flow_options
-    assert_equal returned_args[2].keys.inspect, %([:container_activity, :exec_context, :wrap_runtime]) # circuit_options
+    assert_equal CU.inspect(returned_args[0].to_h), %({:seq=>[:a, :b, :c], :c=>false})
+    assert_equal returned_args[1].class, Hash # flow_options
+    # assert_equal returned_args[2].keys.inspect, %([:container_activity, :exec_context, :wrap_runtime]) # circuit_options
+    assert_equal returned_args[2].inspect, %(#<Trailblazer::Activity::End semantic=:failure>)
     assert_equal returned_args[3].chomp, output.chomp # fourth returned value is the trace output.
     assert_equal returned_args[4].inspect, %(nil)
 
@@ -130,10 +130,10 @@ class TraceWtfTest < Minitest::Spec
       return "Nodes: #{debugger_trace.to_a.size}", ["additional", "returned", "args"]
     }
 
-    signal, ctx, flow_options, circuit_options, output, returned_present_args = nil
+    signal, ctx, flow_options, output, returned_present_args = nil
 
     captured_output, _ = capture_io do
-      signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(
+      ctx, flow_options, signal, output, returned_present_args = Trailblazer::Developer.wtf?(
         alpha,
         {seq: []},
 
@@ -165,7 +165,7 @@ class TraceWtfTest < Minitest::Spec
     assert_equal captured_output.chomp, %(Nodes: 15)
     assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
     assert_equal CU.inspect(ctx.to_h), %({:seq=>[:a, :b, :c, :cc, :bb, :aa]})
-    assert_equal circuit_options.keys.inspect, %([:container_activity, :exec_context, :wrap_runtime])
+    # assert_equal circuit_options.keys.inspect, %([:container_activity, :exec_context, :wrap_runtime])
     assert_equal output, captured_output.chomp
     assert_equal returned_present_args, ["additional", "returned", "args"]
   end
@@ -193,7 +193,7 @@ class TraceWtfTest < Minitest::Spec
     signal, ctx, flow_options, circuit_options, output, returned_present_args = nil
 
     captured_output, _ = capture_io do
-      signal, (ctx, flow_options), circuit_options, output, returned_present_args = Trailblazer::Developer.wtf?(
+      ctx, flow_options, signal, output, returned_present_args = Trailblazer::Developer.wtf?(
         activity,
         {seq: [], model: Module},
       )
@@ -213,7 +213,7 @@ class TraceWtfTest < Minitest::Spec
 
     my_renderer = ->(debugger_trace:, activity:, **) { "Nodes: #{debugger_trace.to_a.size}, started at #{activity}" }
 
-    signal, (ctx, flow_options), circuit_options, output = Trailblazer::Developer.wtf?(
+    ctx, flow_options, signal, output = Trailblazer::Developer.wtf?(
       PresentCreate,
       {},
       circuit_options: {
@@ -255,18 +255,18 @@ class TraceWtfTest < Minitest::Spec
   end
 
   it "we can add to {:wrap_runtime} even with {wtf?}'s :wrap_runtime being set" do
-    def add_1(wrap_ctx, original_args)
-      ctx, = original_args[0]
+    def add_1(wrap_ctx, flow_options, _)
+      ctx = wrap_ctx[:application_ctx]
       ctx[:seq] << 1
 
-      return wrap_ctx, original_args # yay to mutable state. not.
+      return wrap_ctx, flow_options # yay to mutable state. not.
     end
 
     Trailblazer::Invoke.module!(alpha.singleton_class) # FIXME: do this for all Strategy subs.
     ctx = nil
 
     output, _ = capture_io do
-      signal, (ctx, _) = Trailblazer::Developer.wtf?(
+      ctx, _, signal = Trailblazer::Developer.wtf?(
         alpha,
         {seq: []},
         circuit_options: {wrap_runtime: Hash.new(Trailblazer::Activity::TaskWrap::Extension([method(:add_1), id: "my.add_1", append: nil]))}
