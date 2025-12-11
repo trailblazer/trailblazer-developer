@@ -9,7 +9,7 @@ class DebuggerTest < Minitest::Spec
     _activity.to_h[:activity].instance_variable_set(:@special, true) # FIXME: don't kill me for this horrible flag.
 
 
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -20,16 +20,18 @@ class DebuggerTest < Minitest::Spec
     assert_equal ctx[:seq], [:a, :b, :c, :d, :e]
 
   #@ particular nodes need a special {runtime_id}
-    my_compute_runtime_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
-      return unless activity.instance_variable_get(:@special)
+    my_compute_runtime_id = ->(ctx, flow_options, _, trace_node:, activity:, compile_id:, **) do
+      return ctx, flow_options unless activity.instance_variable_get(:@special)
 
-      ctx.merge(runtime_id: compile_id.to_s*9)
+      ctx = ctx.merge(runtime_id: compile_id.to_s*9)
+
+      return ctx, flow_options
     end
 
 
     #@ this is internal API but we're never gonna need this anywhere except for other internals :)
     pipeline_extension = Trailblazer::Activity::TaskWrap::Extension.build([
-      Dev::Debugger::Normalizer.Task(my_compute_runtime_id),
+      my_compute_runtime_id,
       id: :my_compute_runtime_id,
       append: :runtime_id # so that the following {#runtime_path} picks up those changes made here.
     ])

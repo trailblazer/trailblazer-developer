@@ -49,10 +49,10 @@ class GraphTest < Minitest::Spec
     #:outputs end
 
     _(node.id).must_equal :validate
-    _(node.task.inspect).must_equal %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=validate>}
+    assert_equal CU.strip(node.task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:validate>>>)
 
     #:find-block
-    node = graph.find { |node| node.task.class == Trailblazer::Activity::Circuit::TaskAdapter }
+    node = graph.find { |node| node.task.class == Trailblazer::Activity::Circuit::Step::Binary }
     #:find-block end
 
     pp graph.termini

@@ -3,24 +3,18 @@ module Trailblazer
     module Debugger
       # @private
       # Public entry point to add Debugger::Node normalizer steps.
-      def self.add_normalizer_step!(step, id:, normalizer: Normalizer::PIPELINES.last, **options)
-        task = Normalizer.Task(step) # FIXME.
-
+      def self.add_normalizer_step!(step, id:, normalizer: Normalizer::PIPELINES.last, **options) # FIXME: use DSL's normalizer logic!
         # We have a TaskWrap::Pipeline (a very simple style of "activity" used for normalizers) and
         # add another step using the "friendly interface" from {Activity::Adds}.
         options = {append: nil} unless options.any?
 
-        pipeline_extension = Activity::TaskWrap::Extension.build([task, id: id, **options])
+        pipeline_extension = Activity::TaskWrap::Extension.build([step, id: id, **options])
 
         Normalizer::PIPELINES << pipeline_extension.(normalizer)
       end
 
       # Run at runtime when preparing a Trace::Nodes for presentation.
       module Normalizer
-        def self.Task(user_step)
-          Activity::DSL::Linear::Normalizer.Task(user_step)
-        end
-
         # Default steps for the Debugger::Node options pipeline, following the step-interface.
         module Default
           def self.compile_id(ctx, flow_options, _, activity:, task:, **)

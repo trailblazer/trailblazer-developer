@@ -10,11 +10,11 @@ class RenderCircuitTest < Minitest::Spec
     circuit = Trailblazer::Developer.render(activity.to_h)
     assert_equal circuit, %{
 #<Start/:default>
- {Trailblazer::Activity::Right} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=a>
-#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>
+ {Trailblazer::Activity::Right} => #<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:a>>>
+#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:a>>>
  {Trailblazer::Activity::Left} => #<End/:success>
- {Trailblazer::Activity::Right} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=b>
-#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>
+ {Trailblazer::Activity::Right} => #<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:b>>>
+#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:b>>>
  {Trailblazer::Activity::Left} => #<End/:failure>
  {Trailblazer::Activity::Right} => #<End/:success>
 #<End/:success>
@@ -41,8 +41,8 @@ class RenderCircuitTest < Minitest::Spec
     circuit = Trailblazer::Developer.render(activity, path: ["model", :params])
     assert_equal circuit, %{
 #<Start/:default>
- {Trailblazer::Activity::Right} => #<Trailblazer::Activity::TaskBuilder::Task user_proc=params>
-#<Trailblazer::Activity::TaskBuilder::Task user_proc=params>
+ {Trailblazer::Activity::Right} => #<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:params>>>
+#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:params>>>
  {Trailblazer::Activity::Left} => #<End/:failure>
  {Trailblazer::Activity::Right} => #<End/:success>
 #<End/:success>

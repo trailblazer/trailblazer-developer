@@ -8,7 +8,7 @@ class TraceNormalizerTest < Minitest::Spec
       include T.def_steps(:a, :b)
     end
 
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -17,10 +17,11 @@ class TraceNormalizerTest < Minitest::Spec
     stack = flow_options[:stack]
 
   #@ particular nodes need a special {runtime_id}
-    change_compile_id = ->(ctx, trace_node:, activity:, compile_id:, **) do
-      return unless compile_id == :b
+    change_compile_id = ->(ctx, flow_options, _, trace_node:, activity:, compile_id:, **) do
+      return ctx, flow_options unless compile_id == :b
 
-      ctx.merge(compile_id: compile_id.to_s*9)
+      ctx = ctx.merge(compile_id: compile_id.to_s*9)
+      return ctx, flow_options
     end
 
     original_pipelines = Trailblazer::Developer::Debugger::Normalizer::PIPELINES.clone

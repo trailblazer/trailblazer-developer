@@ -3,7 +3,7 @@ require "test_helper"
 # Test {Trace::Present.call}
 class TracePresentTest < Minitest::Spec
    it "accepts block to produce options that are merged with internal options" do
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       flat_activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -27,7 +27,7 @@ class TracePresentTest < Minitest::Spec
   end
 
   it "deprecates {:node_options}" do
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       flat_activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -49,7 +49,7 @@ class TracePresentTest < Minitest::Spec
   end
 
   it "accepts {:render_method}" do
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       nested_activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -74,7 +74,7 @@ class TracePresentTest < Minitest::Spec
   end
 
   it "accepts {:renderer} and pass through additional arguments to the renderer (e.g. {:color})" do
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       nested_activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke

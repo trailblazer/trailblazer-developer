@@ -4,7 +4,7 @@ class StackTest < Minitest::Spec
   it do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity
 
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -26,9 +26,9 @@ class StackTest < Minitest::Spec
       assert_equal stack_ary[2].data[:snapshot_before], stack_ary[1]
 
       assert_equal stack_ary[3].class, Trailblazer::Developer::Trace::Snapshot::Before
-      assert_equal stack_ary[3].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
+      assert_equal CU.strip(stack_ary[3].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:a>>>)
       assert_equal stack_ary[4].class, Trailblazer::Developer::Trace::Snapshot::After
-      assert_equal stack_ary[4].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
+      assert_equal CU.strip(stack_ary[4].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:a>>>)
       assert_equal stack_ary[4].data[:snapshot_before], stack_ary[3]
 
       # sub_activity
@@ -41,9 +41,9 @@ class StackTest < Minitest::Spec
         assert_equal stack_ary[7].data[:snapshot_before], stack_ary[6]
 
         assert_equal stack_ary[8].class, Trailblazer::Developer::Trace::Snapshot::Before
-        assert_equal stack_ary[8].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
+        assert_equal CU.strip(stack_ary[8].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:b>>>)
         assert_equal stack_ary[9].class, Trailblazer::Developer::Trace::Snapshot::After
-        assert_equal stack_ary[9].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
+        assert_equal CU.strip(stack_ary[9].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:b>>>)
         assert_equal stack_ary[9].data[:snapshot_before], stack_ary[8]
 
         # _activity
@@ -56,15 +56,15 @@ class StackTest < Minitest::Spec
           assert_equal stack_ary[12].data[:snapshot_before], stack_ary[11]
 
           assert_equal stack_ary[13].class, Trailblazer::Developer::Trace::Snapshot::Before
-          assert_equal stack_ary[13].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
+          assert_equal CU.strip(stack_ary[13].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:c>>>)
           assert_equal stack_ary[14].class, Trailblazer::Developer::Trace::Snapshot::After
-          assert_equal stack_ary[14].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
+          assert_equal CU.strip(stack_ary[14].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:c>>>)
           assert_equal stack_ary[14].data[:snapshot_before], stack_ary[13]
 
           assert_equal stack_ary[15].class, Trailblazer::Developer::Trace::Snapshot::Before
-          assert_equal stack_ary[15].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+          assert_equal CU.strip(stack_ary[15].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:d>>>)
           assert_equal stack_ary[16].class, Trailblazer::Developer::Trace::Snapshot::After
-          assert_equal stack_ary[16].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+          assert_equal CU.strip(stack_ary[16].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:d>>>)
           assert_equal stack_ary[16].data[:snapshot_before], stack_ary[15]
 
           assert_equal stack_ary[17].class, Trailblazer::Developer::Trace::Snapshot::Before
@@ -88,9 +88,9 @@ class StackTest < Minitest::Spec
       assert_equal stack_ary[22].data[:snapshot_before], stack_ary[5]
 
       assert_equal stack_ary[23].class, Trailblazer::Developer::Trace::Snapshot::Before
-      assert_equal stack_ary[23].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+      assert_equal CU.strip(stack_ary[23].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:e>>>)
       assert_equal stack_ary[24].class, Trailblazer::Developer::Trace::Snapshot::After
-      assert_equal stack_ary[24].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+      assert_equal CU.strip(stack_ary[24].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:e>>>)
       assert_equal stack_ary[24].data[:snapshot_before], stack_ary[23]
 
       assert_equal stack_ary[25].class, Trailblazer::Developer::Trace::Snapshot::Before

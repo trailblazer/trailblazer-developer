@@ -153,7 +153,7 @@ ArgumentError: wrong number of arguments (given 0, expected 1)
 }
 =begin
 #:wtf-activity
-signal, (ctx, _) = Trailblazer::Developer.wtf?(
+ctx, _, signal = Trailblazer::Developer.wtf?(
   Memo::Operation::Create, [{params: {title: "Remember me.."}}, {}]
 )
 #:wtf-activity end
@@ -281,9 +281,9 @@ TypeError: wrong argument type String (expected Symbol)
     #:type-ctx
     ctx = Trailblazer::Context({"message" => "Yes, works!"})
 
-    signal, (ctx, _) = Bla.([ctx])
+    ctx, _, signal = Bla.(ctx, {})
     #:type-ctx end
-    _(signal.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:success>}
+    assert_equal signal.inspect, %(#<Trailblazer::Activity::End semantic=:success>)
   end
 
   it do
@@ -336,15 +336,15 @@ DocsDeveloperTest::Update::CheckAttribute
     assert_raises Trailblazer::Activity::Circuit::IllegalSignalError do
       #:illegal-signal-error
       class Create < Trailblazer::Activity::Railway
-        def self.validate((ctx, flow_options), **circuit_options)
-          return :invalid_signal, [ctx, flow_options], circuit_options
+        def self.validate(ctx, flow_options, circuit_options)
+          return ctx, flow_options, :invalid_signal
         end
 
         step task: method(:validate)
       end
 
       ctx = {"message" => "Not gonna work!"} # bare hash.
-      Create.([ctx])
+      Create.(ctx, {})
 
       # IllegalSignalError: Create:
       # Unrecognized Signal `:invalid_signal` returned from `Method: Create.validate`. Registered signals are,

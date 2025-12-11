@@ -51,17 +51,18 @@ module Trailblazer
           variable_mapping = Activity::DSL::Linear::VariableMapping
 
           input_pipe = row[1].instance_variable_get(:@pipe) # this is again a {TaskWrap::Pipeline}.
-
+pp input_pipe
           filters = input_pipe.to_a.collect do |id, filter|
             id, class_name, info =
-              if filter.is_a?(variable_mapping::SetVariable)
-                # TODO: grab user_filter here if needed for understanding
-                # _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
-                _info       = ""
-
+              if filter.is_a?(Class) && filter < variable_mapping::Runtime::FilterStep::MergeVariables
+                # # TODO: grab user_filter here if needed for understanding
+                # # _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
+                _info       = filter.superclass.inspect
+                # r
                 [id, filter.class.to_s.match(/VariableMapping::.+/), _info]
-              else # generic VariableMapping::DSL step such as {VariableMapping.scope}
-                _name = filter.inspect.match(/VariableMapping\.\w+/)
+                # [id, id, _info]
+              else # generic VariableMapping::Runtime step such as {VariableMapping.scope}
+                _name = filter.inspect.match(/VariableMapping::Runtime\.\w+/)
 
                 [id.to_s, _name, ""]
               end

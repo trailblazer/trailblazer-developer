@@ -29,13 +29,13 @@ class RenderTaskWrapTest < Minitest::Spec
     assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
 `-- b
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
-    |   |-- input.add_variables.In{:model}............... ............................................. VariableMapping::SetVariable
-    |   |-- input.add_variables.In{:user>:current_user}.. ............................................. VariableMapping::SetVariable
-    |   `-- input.scope.................................. ............................................. VariableMapping.scope
+    |   |-- In {:model > :model}......................... .............................................
+    |   |-- In {:user > :current_user}................... .............................................
+    |   `-- input.scope.................................. ............................................. VariableMapping::Runtime.build_context
     |-- task_wrap.call_task..............Method
     `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
-        |-- output.default_output........................ ............................................. VariableMapping.default_output_ctx
-        `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
+        |-- output.default_output........................ ............................................. VariableMapping::Runtime.default_output_ctx
+        `-- output.merge_with_original................... ............................................. VariableMapping::Runtime.merge_with_original}
 
     #@ only with Inject()
     node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:c])
@@ -43,13 +43,13 @@ class RenderTaskWrapTest < Minitest::Spec
     assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
 `-- c
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
-    |   |-- input.default_input.......................... ............................................. VariableMapping.default_input_ctx
+    |   |-- input.default_input.......................... ............................................. VariableMapping::Runtime.default_input_ctx
     |   |-- input.add_variables.Inject{:current_user}.... ............................................. VariableMapping::SetVariable::Conditioned
-    |   `-- input.scope.................................. ............................................. VariableMapping.scope
+    |   `-- input.scope.................................. ............................................. VariableMapping::Runtime.scope
     |-- task_wrap.call_task..............Method
     `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
         |-- output.add_variables.Out{:model}............. ............................................. VariableMapping::SetVariable::Output
-        `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
+        `-- output.merge_with_original................... ............................................. VariableMapping::Runtime.merge_with_original}
 
   end
 
@@ -69,11 +69,11 @@ class RenderTaskWrapTest < Minitest::Spec
 `-- b
     |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
     |   |-- input.add_variables.In{:current_user}........ ............................................. VariableMapping::SetVariable
-    |   `-- input.scope.................................. ............................................. VariableMapping.scope
+    |   `-- input.scope.................................. ............................................. VariableMapping::Runtime.scope
     |-- task_wrap.call_task..............Method
     `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
-        |-- output.default_output........................ ............................................. VariableMapping.default_output_ctx
-        `-- output.merge_with_original................... ............................................. VariableMapping.merge_with_original}
+        |-- output.default_output........................ ............................................. VariableMapping::Runtime.default_output_ctx
+        `-- output.merge_with_original................... ............................................. VariableMapping::Runtime.merge_with_original}
   end
 end
 
