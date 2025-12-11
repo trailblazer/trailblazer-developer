@@ -2,7 +2,7 @@ require "test_helper"
 
 class TraceNodeTest < Minitest::Spec
   def inspect_task(task)
-    task.inspect
+    CU.strip(task.inspect)
   end
 
   def assert_trace_node(node, task:, inspect_task: method(:inspect_task), node_class: Trailblazer::Developer::Trace::Node)
@@ -19,7 +19,7 @@ class TraceNodeTest < Minitest::Spec
     activity, sub_activity, _activity = Tracing.three_level_nested_activity(
       sub_activity_options: {id: "B"}, _activity_options: {id: "C"})
 
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -33,19 +33,19 @@ class TraceNodeTest < Minitest::Spec
 
     assert_equal 14, trace_nodes.size
 
-    assert_trace_node trace_nodes[0],  task: activity.inspect
+    assert_trace_node trace_nodes[0],  task: CU.strip(activity.inspect)
     assert_trace_node trace_nodes[1],    task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[2],    task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=a>}
-    assert_trace_node trace_nodes[3],    task: sub_activity.inspect
+    assert_trace_node trace_nodes[2],    task: %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:a>>>)
+    assert_trace_node trace_nodes[3],    task: CU.strip(sub_activity.inspect)
     assert_trace_node trace_nodes[4],      task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[5],      task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
-    assert_trace_node trace_nodes[6],      task: _activity.inspect
+    assert_trace_node trace_nodes[5],      task: %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:b>>>)
+    assert_trace_node trace_nodes[6],      task: CU.strip(_activity.inspect)
     assert_trace_node trace_nodes[7],        task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[8],        task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
-    assert_trace_node trace_nodes[9],        task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+    assert_trace_node trace_nodes[8],        task: %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:c>>>)
+    assert_trace_node trace_nodes[9],        task: %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:d>>>)
     assert_trace_node trace_nodes[10],       task: %{#<Trailblazer::Activity::End semantic=:success>}
     assert_trace_node trace_nodes[11],     task: %{#<Trailblazer::Activity::End semantic=:success>}
-    assert_trace_node trace_nodes[12],   task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+    assert_trace_node trace_nodes[12],   task: %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:e>>>)
     assert_trace_node trace_nodes[13],   task: %{#<Trailblazer::Activity::End semantic=:success>}
 
 
@@ -77,7 +77,7 @@ class TraceNodeTest < Minitest::Spec
     assert_equal Dev::Trace::ParentMap.path_for(parent_map, trace_nodes[9]), ["B", "C", :d]
 
     # this test is to make sure the computed path and {#find_path} play along nicely.
-    assert_equal Trailblazer::Developer::Introspect.find_path(activity, ["B", "C", :d])[0].task.inspect, %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=d>}
+    assert_equal CU.strip(Trailblazer::Developer::Introspect.find_path(activity, ["B", "C", :d])[0].task.inspect), %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:d>>>)
   end
 
   it "{Tree} doesn't choke on identical, nested tasks" do
@@ -105,7 +105,7 @@ class TraceNodeTest < Minitest::Spec
       step :e
     end
 
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       activity,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -119,20 +119,20 @@ class TraceNodeTest < Minitest::Spec
 
     inspect_task = ->(task) { [task.name] }
 
-    assert_trace_node trace_nodes[0], task: activity.inspect
+    assert_trace_node trace_nodes[0], task: CU.strip(activity.inspect)
     assert_trace_node trace_nodes[1], task: %{#<Trailblazer::Activity::Start semantic=:default>}
     assert_trace_node trace_nodes[2], task: [:a], inspect_task: inspect_task
-    assert_trace_node trace_nodes[3], task: sub_activity.inspect
+    assert_trace_node trace_nodes[3], task: CU.strip(sub_activity.inspect)
     assert_trace_node trace_nodes[4], task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[5], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=b>}
-    assert_trace_node trace_nodes[6], task: _activity.inspect
+    assert_trace_node trace_nodes[5], task: %{#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:b>>>}
+    assert_trace_node trace_nodes[6], task: CU.strip(_activity.inspect)
     assert_trace_node trace_nodes[7], task: %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[8], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=c>}
+    assert_trace_node trace_nodes[8], task: %{#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:c>>>}
     assert_trace_node trace_nodes[9], task: [:a], inspect_task: inspect_task
     assert_trace_node trace_nodes[10], task: %{#<Trailblazer::Activity::End semantic=:success>}          # _activity.End.success
     assert_trace_node trace_nodes[11], task: [:a], inspect_task: inspect_task
     assert_trace_node trace_nodes[12], task: %{#<Trailblazer::Activity::End semantic=:success>}                   # sub_activity.End.success
-    assert_trace_node trace_nodes[13], task: %{#<Trailblazer::Activity::TaskBuilder::Task user_proc=e>}
+    assert_trace_node trace_nodes[13], task: %{#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:e>>>}
     assert_trace_node trace_nodes[14], task: %{#<Trailblazer::Activity::End semantic=:success>}
     # assert_nil trace_nodes[5]
   end
@@ -143,7 +143,7 @@ class TraceNodeTest < Minitest::Spec
 
     ctx = {validate: false, seq: []}
 
-    signal, (ctx, flow_options), _ = kernel.__(
+    ctx, flow_options, signal = kernel.__(
       Tracing::ValidateWithRescue,
       {seq: []},
       **Trailblazer::Developer::Trace.options_for_canonical_invoke
@@ -160,7 +160,7 @@ class TraceNodeTest < Minitest::Spec
     assert_trace_node trace_nodes[2], task:   Tracing::ValidateWithRescue.method(:rescue).inspect
     assert_trace_node trace_nodes[3], task:     %{Tracing::ValidateWithRescue::Validate}, node_class: Trailblazer::Developer::Trace::Node::Incomplete
     assert_trace_node trace_nodes[4], task:       %{#<Trailblazer::Activity::Start semantic=:default>}
-    assert_trace_node trace_nodes[5], task:       %(#<Trailblazer::Activity::TaskBuilder::Task user_proc=validate>), node_class: Trailblazer::Developer::Trace::Node::Incomplete
+    assert_trace_node trace_nodes[5], task:       %(#<Trailblazer::Activity::Circuit::Step::Binary:0x @step=#<Trailblazer::Activity::Circuit::Step::Option:0x @step=#<Trailblazer::Activity::Option::InstanceMethod:0x @filter=:validate>>>), node_class: Trailblazer::Developer::Trace::Node::Incomplete
     assert_trace_node trace_nodes[6], task:   %{#<Trailblazer::Activity::End semantic=:success>}
     assert_nil trace_nodes[7]
   end

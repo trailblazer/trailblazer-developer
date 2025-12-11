@@ -67,7 +67,7 @@ module Trailblazer::Developer
 
     # taskWrap step to capture outgoing arguments from a step.
     def capture_return(wrap_ctx, flow_options, circuit_options)
-        snapshot, new_versions = Snapshot::After.(flow_options[:after_snapshooter], wrap_ctx, flow_options, circuit_options)
+      snapshot, new_versions = Snapshot::After.(flow_options[:after_snapshooter], wrap_ctx, flow_options, circuit_options)
 
       flow_options[:stack].add!(snapshot, new_versions)
 

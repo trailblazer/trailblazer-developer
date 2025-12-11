@@ -80,16 +80,21 @@ Minitest::Spec.class_eval do
     end
 
     class ValidateWithRescue < Trailblazer::Activity::Railway
-      def self.rescue((ctx, flow_options), runner:, **circuit_options)
+      def self.rescue(ctx, flow_options, circuit_options)
+        runner = circuit_options.fetch(:runner)
+
         begin
-          signal, (ctx, flow_options) = runner.(Validate, [ctx, flow_options],
-            runner: runner,
-            **circuit_options.merge(activity: Trailblazer::Activity::TaskWrap.container_activity_for(Validate)))
+          ctx, flow_options, signal = runner.(
+            Validate,
+            ctx,
+            flow_options,
+            circuit_options.merge(activity: Trailblazer::Activity::TaskWrap.container_activity_for(Validate))
+          )
         rescue
 
         end
 
-        return Trailblazer::Activity::Right, [ctx, flow_options]
+        return ctx, flow_options, Trailblazer::Activity::Right
       end
 
       step task: method(:rescue)
