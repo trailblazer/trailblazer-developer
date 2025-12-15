@@ -65,15 +65,12 @@ module Trailblazer
         end
 
         def render_method(id, method, level)
-          name = method.to_s.sub("#<Method: ", "")
-          puts "@@@@@ #{name.inspect}"
-          m = name.match(/^(.+?)( |\()/)
-
-          name = m[1]
+          class_name = method.owner.to_s # DISCUSS: we're assuming every Method instance refers to a class.
+          name = class_name.sub("#<Class:", "").sub(">", "")
 
           name = name.sub("Trailblazer::Activity::DSL::Linear::", "") # DISCUSS: too specific.
 
-          name = "Method: #{name}"
+          name = "Method: #{name}.#{method.original_name}"
 
           return id, name
         end
