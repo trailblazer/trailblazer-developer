@@ -19,38 +19,37 @@ class RenderTaskWrapTest < Minitest::Spec
     #@ no special tW
     node, activity, _ = Trailblazer::Developer::Introspect.find_path(activity, [:a])
     pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
-    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
+    assert_inspect pipe, %(#<Trailblazer::Activity:xxx>
 `-- a
-    `-- task_wrap.call_task..............Method}
+    `-- task_wrap.call_task.......................................#<Method: Trailblazer::Activity::TaskWrap.call_task(wrap_ctx, flow_options, _))
 
     #@ only In() set
     node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:b])
     pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
-    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
+    assert_inspect pipe, %(#<Trailblazer::Activity:xxx>
 `-- b
-    |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
-    |   |-- In {:model > :model}......................... .............................................
-    |   |-- In {:user > :current_user}................... .............................................
-    |   `-- input.scope.................................. ............................................. VariableMapping::Runtime.build_context
-    |-- task_wrap.call_task..............Method
-    `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
-        |-- output.default_output........................ ............................................. VariableMapping::Runtime.default_output_ctx
-        `-- output.merge_with_original................... ............................................. VariableMapping::Runtime.merge_with_original}
+    |-- task_wrap.input...........................................#<Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input:xxx>
+    |   |-- In {:model > :model}..................................Class
+    |   |-- In {:user > :current_user}............................Class
+    |   `-- input.scope...........................................#<Method: ::VariableMapping::Runtime.build_context(wrap_ctx, flow_options, _)
+    |-- task_wrap.call_task.......................................#<Method: Trailblazer::Activity::TaskWrap.call_task(wrap_ctx, flow_options, _)
+    `-- task_wrap.output..........................................#<Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output:xxx>
+        |-- output.default_output.................................#<Method: ::VariableMapping::Runtime.default_output_ctx(wrap_ctx, flow_options, _)
+        `-- output.merge_with_original............................#<Method: ::VariableMapping::Runtime.merge_with_original(wrap_ctx, flow_options, _))
 
     #@ only with Inject()
     node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:c])
     pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
-    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
+    assert_inspect pipe, %(#<Trailblazer::Activity:xxx>
 `-- c
-    |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
-    |   |-- input.default_input.......................... ............................................. VariableMapping::Runtime.default_input_ctx
-    |   |-- input.add_variables.Inject{:current_user}.... ............................................. VariableMapping::SetVariable::Conditioned
-    |   `-- input.scope.................................. ............................................. VariableMapping::Runtime.scope
-    |-- task_wrap.call_task..............Method
-    `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
-        |-- output.add_variables.Out{:model}............. ............................................. VariableMapping::SetVariable::Output
-        `-- output.merge_with_original................... ............................................. VariableMapping::Runtime.merge_with_original}
-
+    |-- task_wrap.input...........................................#<Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input:xxx>
+    |   |-- input.default_input...................................#<Method: ::VariableMapping::Runtime.default_input_ctx(pipe_ctx, flow_options, _)
+    |   |-- Inject {:current_user}................................Class
+    |   `-- input.scope...........................................#<Method: ::VariableMapping::Runtime.build_context(wrap_ctx, flow_options, _)
+    |-- task_wrap.call_task.......................................#<Method: Trailblazer::Activity::TaskWrap.call_task(wrap_ctx, flow_options, _)
+    `-- task_wrap.output..........................................#<Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output:xxx>
+        |-- Out {:model > :model}.................................Class
+        `-- output.merge_with_original............................#<Method: ::VariableMapping::Runtime.merge_with_original(wrap_ctx, flow_options, _))
   end
 
   it "allows path to step/activity" do
@@ -65,15 +64,15 @@ class RenderTaskWrapTest < Minitest::Spec
 
     node, activity, _  = Trailblazer::Developer::Introspect.find_path(activity, [:B, :b])
     pipe = Trailblazer::Developer::Render::TaskWrap.render_for(activity, node)
-    assert_inspect pipe, %{#<Trailblazer::Activity:xxx>
+    assert_inspect pipe, %(#<Trailblazer::Activity:xxx>
 `-- b
-    |-- task_wrap.input..................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input
-    |   |-- input.add_variables.In{:current_user}........ ............................................. VariableMapping::SetVariable
-    |   `-- input.scope.................................. ............................................. VariableMapping::Runtime.scope
-    |-- task_wrap.call_task..............Method
-    `-- task_wrap.output.................Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output
-        |-- output.default_output........................ ............................................. VariableMapping::Runtime.default_output_ctx
-        `-- output.merge_with_original................... ............................................. VariableMapping::Runtime.merge_with_original}
+    |-- task_wrap.input...........................................#<Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input:xxx>
+    |   |-- In {:current_user > :current_user}....................Class
+    |   `-- input.scope...........................................#<Method: ::VariableMapping::Runtime.build_context(wrap_ctx, flow_options, _)
+    |-- task_wrap.call_task.......................................#<Method: Trailblazer::Activity::TaskWrap.call_task(wrap_ctx, flow_options, _)
+    `-- task_wrap.output..........................................#<Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output:xxx>
+        |-- output.default_output.................................#<Method: ::VariableMapping::Runtime.default_output_ctx(wrap_ctx, flow_options, _)
+        `-- output.merge_with_original............................#<Method: ::VariableMapping::Runtime.merge_with_original(wrap_ctx, flow_options, _))
   end
 end
 

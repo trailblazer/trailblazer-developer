@@ -2,8 +2,10 @@ module Trailblazer
   module Developer
     module Render
       module TaskWrap
+        module_function
+
         # @param activity Trailblazer::Activity
-        def self.render_for(activity, node)
+        def render_for(activity, node)
           task_wrap = task_wrap_for_activity(activity) # TODO: MERGE WITH BELOW
           task      = node.task
           step_wrap = task_wrap[task] # the taskWrap for the actual step, e.g. {input,call_task,output}.
@@ -17,64 +19,57 @@ module Trailblazer
         end
 
         # @param activity Activity
-        def self.task_wrap_for_activity(activity, **)
+        def task_wrap_for_activity(activity, **)
           activity.to_h[:config][:wrap_static]
         end
 
-        def self.render_pipeline(pipeline, level)
+        def render_pipeline(pipeline, level)
           renderers = Hash.new(method(:render_task_wrap_step))
           renderers.merge!(
-            Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input => method(:render_input),
-            Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output => method(:render_input),
+            # Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Input => method(:render_input),
+            # Trailblazer::Activity::DSL::Linear::VariableMapping::Pipe::Output => method(:render_input),
+            Method => method(:render_method),
           )
 # TODO: use collect
           nodes=[]
 
-          pipeline.to_a.collect do |row|
-            renderer = renderers[row[1].class]
+          pipeline.to_a.collect do |id, row|
+            renderer = renderers[row.class]
 
-            nodes = nodes + renderer.(row, level) # call the rendering component.
+            name, type = renderer.(id, row, level)
+
+            nodes = nodes + format_line(name, type, level)
+
+            if row.is_a?(Activity::Pipeline)
+              nodes += render_pipeline(row, level + 1)
+            end
+
           end
 
           nodes
         end
 
-        def self.render_task_wrap_step(row, level)
-          id, task = row
+        def format_line(name, type, level)
+          offset = level * 4
 
-          text = id.to_s.ljust(33, ".") + task.class.to_s
+          text = name.to_s.ljust(66 - offset, ".") + type
 
           [[level, text]]
         end
 
-        def self.render_input(row, level)
-          variable_mapping = Activity::DSL::Linear::VariableMapping
+        # Default renderer for tW step.
+        def render_task_wrap_step(id, task, level)
+          type = task.is_a?(Class) ? task.class.to_s : task.to_s
 
-          input_pipe = row[1].instance_variable_get(:@pipe) # this is again a {TaskWrap::Pipeline}.
-pp input_pipe
-          filters = input_pipe.to_a.collect do |id, filter|
-            id, class_name, info =
-              if filter.is_a?(Class) && filter < variable_mapping::Runtime::FilterStep::MergeVariables
-                # # TODO: grab user_filter here if needed for understanding
-                # # _info       = filter.instance_variable_get(:@user_filter).inspect # we could even grab the source code for callables here!
-                _info       = filter.superclass.inspect
-                # r
-                [id, filter.class.to_s.match(/VariableMapping::.+/), _info]
-                # [id, id, _info]
-              else # generic VariableMapping::Runtime step such as {VariableMapping.scope}
-                _name = filter.inspect.match(/VariableMapping::Runtime\.\w+/)
+          return id, type
+        end
 
-                [id.to_s, _name, ""]
-              end
+        def render_method(id, method, level)
+          name, _ = "#{method.to_s}".split(" /")
 
-            text =  "#{id.ljust(45, ".")} #{info.ljust(45, ".")} #{class_name}"
+          name = name.sub("Trailblazer::Activity::DSL::Linear", "") # DISCUSS: too specific.
 
-            [level+1, text]
-          end
-
-          # pp filters
-          render_task_wrap_step(row, level) + filters
-          # render_task_wrap_step(row, level)
+          return id, name
         end
       end
     end
