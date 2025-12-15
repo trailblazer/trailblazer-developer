@@ -267,7 +267,7 @@ ctx, _, signal = Trailblazer::Developer.wtf?(
       assert_raises TypeError do
         #:type-err
         ctx = {"message" => "Not gonna work!"} # bare hash.
-        Bla.([ctx])
+        Bla.(ctx, {})
         #:type-err end
       end
     end
