@@ -65,9 +65,15 @@ module Trailblazer
         end
 
         def render_method(id, method, level)
-          name, _ = "#{method.to_s}".split("(")
+          name = method.to_s.sub("#<Method: ", "")
+          puts "@@@@@ #{name.inspect}"
+          m = name.match(/^(.+?)( |\()/)
 
-          name = name.sub("Trailblazer::Activity::DSL::Linear", "") # DISCUSS: too specific.
+          name = m[1]
+
+          name = name.sub("Trailblazer::Activity::DSL::Linear::", "") # DISCUSS: too specific.
+
+          name = "Method: #{name}"
 
           return id, name
         end
