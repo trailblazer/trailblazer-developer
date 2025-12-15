@@ -65,7 +65,7 @@ module Trailblazer
         end
 
         def render_method(id, method, level)
-          name, _ = "#{method.to_s}".split(" /")
+          name, _ = "#{method.to_s}".split("(")
 
           name = name.sub("Trailblazer::Activity::DSL::Linear", "") # DISCUSS: too specific.
 
