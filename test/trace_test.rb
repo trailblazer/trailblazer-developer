@@ -199,7 +199,7 @@ class TraceAPITest < Minitest::Spec
     assert_equal Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(stack[11], stack_object.variable_versions), # asserted snapshot is for {After(:model)}.
       {
         current_user: {value: current_user.inspect, has_changed: false},
-        params:       {value: "{:name=>\"Q & I\"}", has_changed: false},
+        params:       {value: {:name=>"Q & I"}.inspect, has_changed: false},
         seq:          {value: "[:authenticate, :authorize, :model]", has_changed: true},
         model:        {value: "Object", has_changed: true}
       }
