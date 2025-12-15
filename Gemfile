@@ -21,3 +21,4 @@ gem "trailblazer-invoke", github: "trailblazer/trailblazer-invoke"
 gem "trailblazer-operation", github: "trailblazer/trailblazer-operation", branch: "2-2"
 
 gem "benchmark-ips"
+gem "logger"
