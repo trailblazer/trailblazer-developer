@@ -14,7 +14,7 @@ class RenderCircuitTest < Minitest::Spec
   def build_sequence_row; end
   def compile_adds_for_sequence; end
 
-  it "what" do
+  it "can render a table for a mostly linear circuit" do
     my_circuit = Trailblazer::Circuit::Builder.Circuit(
       [:normalize_macro_interface, method(:normalize_macro_interface)],
       [:is_step?, method(:is_step?), connections: {Trailblazer::Activity::Left => [:build_node_for_task, Trailblazer::Activity::Left], Trailblazer::Activity::Right => [:normalize_id_for_step, Trailblazer::Activity::Right]}],
