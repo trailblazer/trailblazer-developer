@@ -6,22 +6,22 @@ module Trailblazer
   end
 end
 
-require "trailblazer/activity/dsl/linear"
-require "trailblazer/developer/wtf"
-require "trailblazer/developer/wtf/renderer"
-require "trailblazer/developer/trace/snapshot"
-require "trailblazer/developer/trace/snapshot/value"
-require "trailblazer/developer/trace/snapshot/versions"
-require "trailblazer/developer/trace"
-require "trailblazer/developer/trace/stack"
-require "trailblazer/developer/trace/node"
-require "trailblazer/developer/trace/parent_map"
-require "trailblazer/developer/trace/present"
-require "trailblazer/developer/debugger"
+# require "trailblazer/activity/dsl/linear"
+# require "trailblazer/developer/wtf"
+# require "trailblazer/developer/wtf/renderer"
+# require "trailblazer/developer/trace/snapshot"
+# require "trailblazer/developer/trace/snapshot/value"
+# require "trailblazer/developer/trace/snapshot/versions"
+# require "trailblazer/developer/trace"
+# require "trailblazer/developer/trace/stack"
+# require "trailblazer/developer/trace/node"
+# require "trailblazer/developer/trace/parent_map"
+# require "trailblazer/developer/trace/present"
+# require "trailblazer/developer/debugger"
 require "trailblazer/developer/render/circuit"
-require "trailblazer/developer/render/linear"
-require "trailblazer/developer/render/task_wrap"
-require "trailblazer/developer/introspect" # TODO: might get removed, again.
-require "trailblazer/developer/debugger/normalizer"
-require "trailblazer/developer/introspect/graph"
-Trailblazer::Developer::Trace::Debugger = Trailblazer::Developer::Debugger # FIXME: deprecate constant!
+# require "trailblazer/developer/render/linear"
+# require "trailblazer/developer/render/task_wrap"
+# require "trailblazer/developer/introspect" # TODO: might get removed, again.
+# require "trailblazer/developer/debugger/normalizer"
+# require "trailblazer/developer/introspect/graph"
+# Trailblazer::Developer::Trace::Debugger = Trailblazer::Developer::Debugger # FIXME: deprecate constant!
