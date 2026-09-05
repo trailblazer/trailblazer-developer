@@ -15,8 +15,7 @@ module Trailblazer
           end
 
           content = cells.collect { |id, nexts|
-            puts "@@@@@ #{id.inspect} #{nexts.to_s.inspect}"
-            "│" + id.to_s.rjust(width - 60, " ") + nexts.to_s.ljust(width - 30, " ") + " │"
+            "│" + id.to_s.rjust(width - 60, " ") + " " + nexts.to_s.ljust(width - 30, " ") + " │"
           }.join("\n")
 
           top_margin    = "┌" + "".rjust(width - 2, "─") + "┐"
@@ -31,6 +30,8 @@ module Trailblazer
           end
         end
 
+        # FIXME: Resolver::Conditional
+
         def render_next_steps(connections)
           reset = "\e[0m"
           colors = {
@@ -39,9 +40,18 @@ module Trailblazer
             nil => "",
           }
 
+          arrow = "→"
+          arrow = "➜"
+          arrow = "▶" # ⎔
+
+          sort_by = [Activity::Right, Activity::Left]
+          connections = connections.sort do |(signal, next_step_id), b| # TODO: well yeah, this is pretty basic.
+            sort_by.index(signal)
+          end
+
           connections.collect do |signal, next_step_id|
-            "→ #{colors[signal]}#{next_step_id}#{reset}"
-          end.join{" "}
+            "#{colors[signal]}#{arrow} #{next_step_id}#{reset}"
+          end.join(" ")
         end
       end
     end
