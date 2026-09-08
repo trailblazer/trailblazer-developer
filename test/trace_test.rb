@@ -123,13 +123,15 @@ class TraceTest < Minitest::Spec
       ]
     )
 
-    my_options = Trailblazer::Developer::Trace.invoke_options_compiler_step(nil, nil)
-
+    flow_options = {
+      stack:              Trailblazer::Developer::Trace::Stack.new,
+      value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
+    }
 
     lib_ctx, flow_options, signal = Trailblazer::Circuit::WrapRuntime::Runner.(
       my_canonical_Create_tw_node,
       {target_ctx: {seq: []}},
-      my_options.fetch(:flow_options),
+      flow_options,
       nil,
       runner: Trailblazer::Circuit::WrapRuntime::Runner,
       wrap_runtime: Hash.new(my_extensions),
