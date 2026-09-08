@@ -7,7 +7,7 @@ module Trailblazer::Developer
 
       # @private
       def default_renderer(debugger_node:, **) # DISCUSS: for compatibility, should we pass {:task_node} here, too?
-        [debugger_node.level, debugger_node.label]
+        [debugger_node.level, debugger_node.id]
       end
 
       # whatever we return from {:render_method} is available as {returned_args}
@@ -24,10 +24,10 @@ module Trailblazer::Developer
       # Entry point for rendering a {Trace::Stack}.
       # Used in `#wtf?`.
       def call(stack, render_method: method(:render), **options, &block)
-        deprecate_node_options!(**options) # TODO: remove in 0.2.0.
-
         # Build a generic array of {Trace::Node}s.
         trace_nodes = Trace.build_nodes(stack.to_a)
+
+        return render_method.(debugger_trace: trace_nodes)
 
         # The top activity doesn't have an ID, hence we need to compute a default label.
         top_activity_trace_node = trace_nodes[0]

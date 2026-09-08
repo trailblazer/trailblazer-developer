@@ -8,21 +8,21 @@ module Trailblazer
       # be named "Trace" :D
       # It is by design coupled to both Snapshot and Ctx::Versions.
       class Stack
-        def initialize(snapshots = [], variable_versions = Snapshot::Versions.new)
+        def initialize(snapshots = {}, variable_versions = Snapshot::Versions.new)
           @snapshots          = snapshots
           @variable_versions  = variable_versions # DISCUSS: I dislike the coupling here to Stack, but introducting another object comprised of Stack and VariableVersions seems overkill.
         end
 
         attr_reader :variable_versions # TODO: the accessor sucks. But I guess to_h[:variable_versions] is slower.
 
-        def add!(snapshot, new_variable_versions)
+        def add!(capture_id, snapshot, new_variable_versions)
           # variable_versions is mutated in the snapshooter, that's
           # why we don't have to re-set it here. I'm not a huge fan of mutating it
           # in a deeply nested scenario but everything else we played with added huge amounts
           # or runtime code.
           @variable_versions.add_changes!(new_variable_versions)
 
-          @snapshots << snapshot
+          @snapshots[capture_id] = snapshot # DISCUSS: we preserve order here? DISCUSS: use merge?
         end
 
         def to_a

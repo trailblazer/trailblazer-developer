@@ -15,47 +15,28 @@ module Trailblazer::Developer
     #     variable_versions: [:current_user, 0], [:model, 0]
     #   }
     # }
-    class Snapshot < Struct.new(:task, :activity, :data)
-      Before  = Class.new(Snapshot)
-      After   = Class.new(Snapshot)
-
+    class Snapshot < Struct.new(:task, :data)
       # This is called from {Trace.capture_args} and {Trace.capture_return} in the taskWrap.
-      def self.call(ctx_snapshooter, wrap_ctx, flow_options, circuit_options)
+      def self.build(lib_ctx, flow_options, signal, id:, **options)
         # DISCUSS: grab the {snapshooter} here from flow_options, instead of in Trace.capture_args?
-        changeset, new_versions = ctx_snapshooter.call(wrap_ctx, flow_options, circuit_options)
+        changeset, new_versions = snapshoot(lib_ctx, flow_options, signal, **options) # TODO: apply LibInterface.
 
-        snapshot = new( # either Before or After.
-          wrap_ctx[:task],
-          circuit_options[:activity],
-          changeset
+        snapshot = new(
+          id,
+          changeset,
         ).freeze
 
         return snapshot, new_versions
       end
 
       # Serialize all ctx variables before {call_task}.
-      # This is run just before {call_task}, after In().
-      def self.before_snapshooter(wrap_ctx, flow_options, _)
-        changeset, new_versions = snapshot_for(wrap_ctx[:application_ctx], **flow_options)
+      # This is (per configuration) run just before {call_task}, after In(). and after Out().
+      def self.snapshoot(lib_ctx, flow_options, signal, target_ctx:, **)
+        changeset, new_versions = snapshot_for(target_ctx, **flow_options)
 
         data = {
           ctx_variable_changeset: changeset,
-        }
-
-        return data, new_versions
-      end
-
-      # Serialize all ctx variables at the very end of taskWrap, after Out().
-      def self.after_snapshooter(wrap_ctx, flow_options, _)
-        snapshot_before  = wrap_ctx[:snapshot_before]
-        returned_ctx, _  = wrap_ctx[:return_ctx]
-
-        changeset, new_versions = snapshot_for(returned_ctx, **flow_options)
-
-        data = {
-          ctx_variable_changeset: changeset,
-          signal:                 wrap_ctx[:return_signal],
-          snapshot_before:        snapshot_before, # add this so we know who belongs together.
+          signal: signal
         }
 
         return data, new_versions

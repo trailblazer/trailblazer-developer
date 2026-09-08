@@ -12,7 +12,7 @@ module Trailblazer
       end
 
       # Datastructure representing a trace.
-      class Node < Struct.new(:level, :task, :snapshot_before, :snapshot_after)
+      class Node < Struct.new(:level, :id, :snapshot_before, :snapshot_after)
         class Incomplete < Node
         end
 
@@ -40,9 +40,13 @@ module Trailblazer
           nodes = []
 
           while (level, remaining_snapshots = pop_from_instructions!(instructions))
-            raise unless remaining_snapshots[0].is_a?(Snapshot::Before) # DISCUSS: remove assertion?
+            remaining_captures = remaining_snapshots.to_a
 
-            node, new_instructions = node_and_instructions_for(remaining_snapshots[0], remaining_snapshots[1..-1], level: level)
+            capture, snapshot = remaining_captures[0]
+
+            raise if capture.delimits # meaning "this is an After" # DISCUSS: remove assertion?
+
+            node, new_instructions = node_and_instructions_for(remaining_captures[0], remaining_captures[1..-1], level: level)
             # pp BLA(new_instructions)
 
             nodes << node
@@ -57,14 +61,15 @@ module Trailblazer
         # 1. Find, for snapshot_before, the matching snapshot_after in the stack
         # 2. Extract snapshots inbetween those two. These are min. 1 level deeper in!
         # 3. Run process_siblings for 2.
-        def self.node_and_instructions_for(snapshot_before, descendants, level:)
+        def self.node_and_instructions_for((current_capture, current_snapshot), descendants, level:)
           # Find closing snapshot for this branch.
-          snapshot_after = descendants.find do |snapshot|
-            snapshot.is_a?(Snapshot::After) && snapshot.data[:snapshot_before] == snapshot_before
+          # DISCUSS: "after" here implies "delimiting, the pendant of the embracing sandwich"
+          capture_after, snapshot_after = descendants.find do |(capture, snapshot)|
+            capture.delimits == current_capture
           end
 
           if snapshot_after
-            snapshot_after_index = descendants.index(snapshot_after)
+            snapshot_after_index = descendants.index([capture_after, snapshot_after])
 
             instructions =
               if snapshot_after_index == 0 # E.g. before/Start, after/Start
@@ -86,8 +91,9 @@ module Trailblazer
                 ]
               end
 
-            node = new(level, snapshot_before.task, snapshot_before, snapshot_after)
+            node = new(level, current_capture.id, current_snapshot, snapshot_after)
           else # incomplete
+            raise
             instructions = [
               [level + 1, descendants]
             ]
