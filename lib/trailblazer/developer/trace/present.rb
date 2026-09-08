@@ -6,16 +6,16 @@ module Trailblazer::Developer
       module_function
 
       # @private
-      def default_renderer(debugger_node:, **) # DISCUSS: for compatibility, should we pass {:task_node} here, too?
-        [debugger_node.level, debugger_node.id]
+      def default_renderer(trace_node:, **)
+        [trace_node.level, trace_node.id]
       end
 
       # whatever we return from {:render_method} is available as {returned_args}
       # Returns the console output string.
       # @private
-      def render(debugger_trace:, renderer: method(:default_renderer), **options_for_renderer)
-        nodes = debugger_trace.to_a.collect do |debugger_node|
-          renderer.(debugger_node: debugger_node, debugger_trace: debugger_trace, **options_for_renderer)
+      def render(trace:, renderer: method(:default_renderer), **options_for_renderer)
+        nodes = trace.to_a.collect do |trace_node|
+          renderer.(trace_node: trace_node, trace: trace, **options_for_renderer)
         end
 
         Hirb::Console.format_output(nodes, class: :tree, type: :directory, multi_line_nodes: true)
@@ -27,32 +27,7 @@ module Trailblazer::Developer
         # Build a generic array of {Trace::Node}s.
         trace_nodes = Trace.build_nodes(stack.to_a)
 
-        return render_method.(debugger_trace: trace_nodes)
-
-        # The top activity doesn't have an ID, hence we need to compute a default label.
-        top_activity_trace_node = trace_nodes[0]
-
-        build_options = {
-          node_options: {
-            # we can pass particular label "hints".
-            top_activity_trace_node => {
-              # label: %{#{top_activity_trace_node.task.superclass} (anonymous)},
-              label: top_activity_trace_node.task.inspect,
-            },
-          }
-        }
-
-        build_options = build_options.merge(options) # since we only have {:node_options} in {build_options}, we can safely merge here.
-
-        # specific rendering.
-        options_from_block = block_given? ? block.call(trace_nodes: trace_nodes, stack: stack, **build_options) : {}
-
-        build_options = merge_local_options(options_from_block, build_options)
-
-        # currently, we agree on using a Debugger::Node list as the presentation data structure.
-        debugger_trace = Debugger::Trace.build(stack, trace_nodes, **build_options)
-
-        return render_method.(debugger_trace: debugger_trace, **build_options)
+        return render_method.(trace: trace_nodes)
       end
 
       def deprecate_node_options!(node_options: nil, **) # TODO: remove in 0.2.0.

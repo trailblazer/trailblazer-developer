@@ -105,6 +105,7 @@ class TraceTest < Minitest::Spec
     end
 
     my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
+
     # my_abc_activity_node.task.instance_variable_set(:@pipe, true) # FIXME: this is used in WrapRuntime::Runner.
     my_canonical_Create_tw_node = Trailblazer::Circuit::Node[
       Trailblazer::Circuit::Builder.Pipeline(
