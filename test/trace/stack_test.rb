@@ -1,6 +1,20 @@
 require "test_helper"
 
 class StackTest < Minitest::Spec
+  it "The Stack compares keys by identity, so we can store Structs that may look similar, but are not" do
+    my_capture_class = Struct.new(:id)
+    my_capture_1 = my_capture_class.new(:a)
+    my_capture_2 = my_capture_class.new(:a)
+
+    stack = Trailblazer::Developer::Trace::Stack.new
+    stack.add!(my_capture_1, Object, {})
+    stack.add!(my_capture_2, {}, {})
+
+    assert_equal stack.to_a.size, 2
+    assert_equal stack.to_a[my_capture_1], Object
+    assert_equal stack.to_a[my_capture_2], {}
+  end
+
   it do
     activity, sub_activity, _activity = Tracing.three_level_nested_activity
 
