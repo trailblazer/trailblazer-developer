@@ -166,7 +166,6 @@ class TraceTest < Minitest::Spec
     }
 
     runner = Trailblazer::Circuit::WrapRuntime::Runner
-    # runner = MyRunner
 
     lib_ctx, flow_options, signal = runner.(
       {target_ctx: {seq: []}},
@@ -179,17 +178,14 @@ class TraceTest < Minitest::Spec
       node: my_canonical_Create_tw_node,
     )
 
-
-    # assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
-
-
+    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
     assert_equal signal.to_h[:semantic], :success
 
     stack = flow_options[:stack]
 
     # Debugging
     stack.to_a.each do |capture, _|
-      puts [capture, capture.object_id, capture.delimits.object_id].inspect
+      # puts [capture, capture.object_id, capture.delimits.object_id].inspect
     end
 
     output = Trailblazer::Developer::Trace::Present.(stack)
@@ -214,6 +210,44 @@ assert_equal output, %(...Create
     |       `-- ...compute_binary_signal
     `-- ...End.success
         `-- ...task_wrap.call_task)
+
+  # we can also limit tracing to "business nodes".
+
+    my_resolver = Struct.new(:node_wrap_resolver) do
+      def [](node:, **circuit_options)
+        return unless node.options[:business_step]
+
+        node_wrap_resolver[node: node, **circuit_options]
+      end
+    end.new(Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions))
+
+    flow_options = {
+      stack:              Trailblazer::Developer::Trace::Stack.new,
+      value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
+    }
+    lib_ctx, flow_options, signal = runner.(
+      {target_ctx: {seq: []}},
+      flow_options,
+      nil,
+      runner: runner,
+      wrap_runtime: my_resolver,
+      context_implementation: Trailblazer::Circuit::Context,
+      id: :Create,
+      node: my_canonical_Create_tw_node,
+    )
+
+    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
+    assert_equal signal.to_h[:semantic], :success
+
+    stack = flow_options[:stack]
+
+    # Debugging
+    stack.to_a.each do |capture, _|
+      # puts [capture, capture.object_id, capture.delimits.object_id].inspect
+    end
+
+    output = Trailblazer::Developer::Trace::Present.(stack)
+
 
     assert_equal output, %(Create
 |-- a
