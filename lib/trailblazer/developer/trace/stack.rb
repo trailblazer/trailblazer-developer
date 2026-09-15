@@ -9,10 +9,8 @@ module Trailblazer
       # It is by design coupled to both Snapshot and Ctx::Versions.
       class Stack
         def initialize(snapshots = {}, variable_versions = Snapshot::Versions.new)
-          @snapshots          = snapshots
-          @snapshots.compare_by_identity # we key snapshots by their Capture instance, which is a struct that might behave like another struct with identical ID.
-
-          @variable_versions  = variable_versions # DISCUSS: I dislike the coupling here to Stack, but introducting another object comprised of Stack and VariableVersions seems overkill.
+          @snapshots = snapshots
+          @variable_versions = variable_versions # DISCUSS: I dislike the coupling here to Stack, but introducting another object comprised of Stack and VariableVersions seems overkill.
         end
 
         attr_reader :variable_versions # TODO: the accessor sucks. But I guess to_h[:variable_versions] is slower.

@@ -94,6 +94,42 @@ end
 
 # Test {Trace.call} and {Trace::Present.call}
 class TraceTest < Minitest::Spec
+  class MyRunner < Trailblazer::Circuit::Node::Runner
+    def self.call(node, lib_ctx, flow_options, signal, circuit_options)
+      # raise if node.instance_variable_get(:@extended)
+
+      return super if node.instance_variable_get(:@extended)
+
+      wrap_runtime = circuit_options.fetch(:wrap_runtime)
+      id = circuit_options.fetch(:id)
+
+      node = Trailblazer::Circuit::Node[
+        Trailblazer::Circuit::Builder.Circuit(
+          [:"task_wrap.call_task", node: node]
+        ),
+        Trailblazer::Circuit::Processor
+      ]
+
+      # pp node
+      # raise
+
+      puts "@@@@@ #{circuit_options[:id].inspect}"
+
+      # DISCUSS: use super here?
+
+      node_attrs = node.to_h
+
+      node_attrs = Trailblazer::Circuit::WrapRuntime::Runner.extend_task_wrap_pipeline(wrap_runtime, id, node, node_attrs)
+
+      node = node.class.new(**node_attrs)
+      node.instance_variable_set(:@extended, true)
+
+      node.task.nodes[:"task_wrap.call_task"].instance_variable_set(:@extended, true)
+
+      super
+    end
+  end
+
   # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
   it "allows tracing by manually passing the options" do
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
@@ -119,7 +155,8 @@ class TraceTest < Minitest::Spec
 
     my_extensions = Trailblazer::Circuit::WrapRuntime::Extension::Set.new(
       [
-        my_tracing_extension_builder
+        Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap,
+        my_tracing_extension_builder,
       ]
     )
 
@@ -128,28 +165,55 @@ class TraceTest < Minitest::Spec
       value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
     }
 
-    lib_ctx, flow_options, signal = Trailblazer::Circuit::WrapRuntime::Runner.(
-      my_canonical_Create_tw_node,
+    runner = Trailblazer::Circuit::WrapRuntime::Runner
+    # runner = MyRunner
+
+    lib_ctx, flow_options, signal = runner.(
       {target_ctx: {seq: []}},
       flow_options,
       nil,
-      runner: Trailblazer::Circuit::WrapRuntime::Runner,
-      wrap_runtime: Hash.new(my_extensions),
+      runner: runner,
+      wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions),
       context_implementation: Trailblazer::Circuit::Context,
-      # exec_context: create_instance,
       id: :Create,
+      node: my_canonical_Create_tw_node,
     )
 
 
-    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
+    # assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
 
-    # pp flow_options[:stack]
 
     assert_equal signal.to_h[:semantic], :success
 
     stack = flow_options[:stack]
+
+    # Debugging
+    stack.to_a.each do |capture, _|
+      puts [capture, capture.object_id, capture.delimits.object_id].inspect
+    end
+
     output = Trailblazer::Developer::Trace::Present.(stack)
     # output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
+
+assert_equal output, %(...Create
+`-- ...task_wrap.call_task
+    |-- ...a
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    |-- ...b
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    |-- ...c
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    `-- ...End.success
+        `-- ...task_wrap.call_task)
 
     assert_equal output, %(Create
 |-- a

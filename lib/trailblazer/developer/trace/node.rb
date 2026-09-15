@@ -3,12 +3,8 @@ module Trailblazer
     module Trace
       # Build array of {Trace::Node} from a snapshots stack.
       # @private
-      def self.build_nodes(snapshots)
-        instructions = [
-          [0, snapshots]
-        ]
-
-        _nodes = Node.process_instructions(instructions)
+      def self.build_nodes(stack)
+        Node.segment(stack.to_a.to_a, nodes: [], level: 0)
       end
 
       # Datastructure representing a trace.
@@ -16,92 +12,24 @@ module Trailblazer
         class Incomplete < Node
         end
 
-        def self.pop_from_instructions!(instructions)
-          while (level, remaining_snapshots = instructions.pop)
-            next if level.nil?
-            next if remaining_snapshots.empty?
+        def self.segment(remaining, nodes:, level:)
+          return nodes unless remaining[0]
 
-            return level, remaining_snapshots
-          end
+          sandwich_top, current_snapshot = remaining[0]
+          sandwich_bottom, bottom_snapshot = remaining[1..-1].find { |capture, _| capture.delimits.object_id == sandwich_top.object_id }
+          bottom_index = remaining.index([sandwich_bottom, bottom_snapshot])
 
-          false
-        end
+          nodes += [new(level, sandwich_top.id, current_snapshot, bottom_snapshot)]
 
-        # def self.BLA(instructions)
-        #   instructions.collect do |(level, remaining_snapshots)|
-        #     [
-        #       level,
-        #       remaining_snapshots.collect { |snap| [snap.class, snap.task] }
-        #     ]
-        #   end
-        # end
+          current_remaining = remaining[1..(bottom_index - 1)]
 
-        def self.process_instructions(instructions) # FIXME: mutating argument
-          nodes = []
+          nodes = segment(current_remaining, nodes: nodes, level: level + 1)
 
-          while (level, remaining_snapshots = pop_from_instructions!(instructions))
-            remaining_captures = remaining_snapshots.to_a
+          remaining = remaining[bottom_index+1..-1]
 
-            capture, snapshot = remaining_captures[0]
-
-            raise if capture.delimits # meaning "this is an After" # DISCUSS: remove assertion?
-
-            node, new_instructions = node_and_instructions_for(remaining_captures[0], remaining_captures[1..-1], level: level)
-            # pp BLA(new_instructions)
-
-            nodes << node
-
-            instructions += new_instructions
-          end
+          nodes = segment(remaining, nodes: nodes, level: level)
 
           return nodes
-        end
-
-        # Called per snapshot_before   "process_branch"
-        # 1. Find, for snapshot_before, the matching snapshot_after in the stack
-        # 2. Extract snapshots inbetween those two. These are min. 1 level deeper in!
-        # 3. Run process_siblings for 2.
-        def self.node_and_instructions_for((current_capture, current_snapshot), descendants, level:)
-          # Find closing snapshot for this branch.
-          # DISCUSS: "after" here implies "delimiting, the pendant of the embracing sandwich"
-          capture_after, snapshot_after = descendants.find do |(capture, snapshot)|
-            capture.delimits == current_capture
-          end
-
-          if snapshot_after
-            snapshot_after_index = descendants.index([capture_after, snapshot_after])
-
-            instructions =
-              if snapshot_after_index == 0 # E.g. before/Start, after/Start
-                [
-                  [level, descendants[1..-1]]
-                ]
-              else
-                [
-                  # instruction to go through the remaining, behind this tuple.
-                  [
-                    level,
-                    descendants[(snapshot_after_index + 1)..-1]
-                  ],
-                  # instruction to go through all snapshots between this current tuple.
-                  [
-                    level + 1,
-                    descendants[0..snapshot_after_index - 1], # "new descendants"
-                  ],
-                ]
-              end
-
-            node = new(level, current_capture.id, current_snapshot, snapshot_after)
-          else # incomplete
-            raise
-            instructions = [
-              [level + 1, descendants]
-            ]
-
-            node = Incomplete.new(level, snapshot_before.task, snapshot_before, nil)
-          end
-
-          return node, instructions
         end
       end # Node
     end
