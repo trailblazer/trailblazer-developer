@@ -1,5 +1,8 @@
 # 0.2.0
 
+* Removed Debugger, removed many options such as :present_options
+
+
 ## WTF?
 
 * `:present_options`, :color_map now is passed as `circuit_options: {present_options: {render_method: my_renderer}}`.
