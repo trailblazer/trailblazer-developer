@@ -190,8 +190,9 @@ class TraceTest < Minitest::Spec
 
     output = Trailblazer::Developer::Trace::Present.(stack)
     # output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
-
-assert_equal output, %(...Create
+puts output
+assert_equal output,
+%(...Create
 `-- ...task_wrap.call_task
     |-- ...a
     |   `-- ...task_wrap.call_task

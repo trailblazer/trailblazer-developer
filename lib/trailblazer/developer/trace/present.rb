@@ -31,6 +31,7 @@ module Trailblazer::Developer
       end
 
       # "it's only gonna be 25 mins. 2 days later, *rummages for graph theory book*"
+      # This is replacing hirb's Tree.
       module Tree
         module_function
 
@@ -52,67 +53,58 @@ module Trailblazer::Developer
         def children_count(current_level, string, index, nodes)
           offspring = offspring(current_level, string, index, nodes)
 
-          offspring.find_all { |(level, string)| level == current_level + 1 }.size
-        end
+          children = offspring.find_all { |(level, string)| level == current_level + 1 }
 
-        # a
-        #   -- in
-        #   -- call_task
-        #     -- a
-        #       -- call_task
-        #   -- out
+          return children.size, children
+        end
 
         def render(nodes)
           pp nodes
-          # raise
-          tab       = "    "
-          separator = "|-- "
-          terminus = "`--"
+          tab        = "    "
+          separator  = "|   "
+          branch_off = "|-- "
+          terminus   = "`-- "
 
           draw_column_for_level = {}
           last_level = -1
-
+# TODO: test if recursion works betta.
           lines = nodes.collect.with_index do |(level, string), i|
+            # level == last_level means we're within siblings.
+            #
             # those two if say "we're at the start of a new branching."
             if level > last_level # we got kids
-              children_count = children_count(level, string, i, nodes)
-              draw_column_for_level.merge!(level + 1 => children_count > 1)
+              children_count, children = children_count(level, string, i, nodes)
 
-              puts "@@@@@ #{string.inspect} got family: #{children_count}"
-              # has_siblings = has_siblings?(level, string, i, nodes)
-
-              # level_2_siblings = level_2_siblings.merge(level: has_siblings)
-
+              draw_column_for_level.merge!(level + 1 => [children_count > 1, children.last])
             elsif level < last_level
-              children_count = children_count(level, string, i, nodes)
-              draw_column_for_level.merge!(level + 1 => children_count > 1)
-              # DISCUSS: delete deeper levels?
+              children_count, children = children_count(level, string, i, nodes)
 
-              puts "@@@@@ #{string.inspect} got family: #{children_count}"
+              draw_column_for_level.merge!(level + 1 => [children_count > 1, children.last])
+              # DISCUSS: delete deeper levels?
+              # puts "@@@@@ #{string.inspect} got family: #{children_count}"
             end
-            # level == last_level means we're within siblings.
+
+            if i == nodes.size - 1 # last line
+              draw_column_for_level = Hash.new([false, [level, string]])
+            end
 
             last_level = level
 
-            puts ">>> #{i} #{string} #{draw_column_for_level.inspect}"
-
-            # puts "@@@@@>>> #{level} #{string.inspect} #{has_siblings.inspect}"
-            next_entry = nodes[i + 1] || [-1]
-            is_terminus = next_entry[0] < level
+            # puts ">>> #{i} #{string} #{draw_column_for_level.inspect}"
 
             line = ""
             if level > 0
               if level > 1
                 line << (1..level-1).collect do |i|
-                  draw_column_for_level[i] ? separator : tab
+                  draw_column_for_level[i][0] ? separator : tab
                 end.join("")
 
               end
 
-              line << separator
+              line << (draw_column_for_level[level][1] == [level, string] ? terminus : branch_off) # FIXME: [1] is the "last child".
             end
 
-            line << "#{string}"
+            line << "#{string}" # TODO: allow more details etc.
           end
 
           lines.join("\n")
