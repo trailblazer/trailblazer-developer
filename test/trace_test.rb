@@ -132,9 +132,34 @@ class TraceTest < Minitest::Spec
 
   # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
   it "allows tracing by manually passing the options" do
+    require "trailblazer/activity/variable_mapping"
+
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
+      _, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
+        builder: config.builder,
+        default_options: {adds_for_task_wrap: []}, # needed by :apply_adds_to_task_wrap_pipeline
+
+        helpers: {
+          Trailblazer::Activity::VariableMapping::DSL::Helper => [:In, :Out, :Inject]
+        },
+        adds: [
+          # FIXME: the next step should be already there by Path/canonical.
+          # extension/task_wrap
+          [:apply_adds_to_task_wrap_pipeline, Trailblazer::Activity::DSL::Feature::Extension::TaskWrap::Normalizer::Node, :before, :build_task_wrap_node],
+
+          [
+            :variable_mapping, Trailblazer::Activity::VariableMapping::DSL::Normalizer::Node,
+            :before, :normalize_wirings
+          ],
+        ],
+      )
+
+      config.builder = builder
+      extend helper_forwarder
+
       step :a
-      step :b
+      step :b,
+        In() => [:seq]
       step :c
 
       include T.def_steps(:a, :b, :c)
@@ -200,10 +225,20 @@ assert_equal output,
     |       |-- ...is_signal?
     |       `-- ...compute_binary_signal
     |-- ...b
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
+    |   |-- ...variable_mapping.input
+    |   |   |-- ...in.seq > seq
+    |   |   |   |-- ...invoke_provider
+    |   |   |   |   `-- ...invoke_provider
+    |   |   |   |-- ...wrap_value_with_hash
+    |   |   |   `-- ...add_value_to_aggregate
+    |   |   `-- ...input.scope
+    |   |-- ...task_wrap.call_task
+    |   |   |-- ...invoke_provider
+    |   |   |-- ...is_signal?
+    |   |   `-- ...compute_binary_signal
+    |   `-- ...variable_mapping.output
+    |   |   |-- ...output.default_output
+    |   |   `-- ...output.merge_with_original
     |-- ...c
     |   `-- ...task_wrap.call_task
     |       |-- ...invoke_provider
