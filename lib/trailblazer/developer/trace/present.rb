@@ -57,7 +57,7 @@ module Trailblazer::Developer
         end
 
         def render(nodes)
-          pp nodes
+          # pp nodes
           tab        = "    "
           separator  = "|   "
           branch_off = "|-- "
@@ -67,7 +67,7 @@ module Trailblazer::Developer
           last_level = -1
 # TODO: test if recursion works betta.
           lines = nodes.collect.with_index do |(level, string), i|
-            # level == last_level means we're within siblings.
+
             #
             # those two if say "we're at the start of a new branching."
             if level > last_level # we got kids
@@ -80,15 +80,28 @@ module Trailblazer::Developer
               draw_column_for_level.merge!(level + 1 => [children_count > 1, children.last])
               # DISCUSS: delete deeper levels?
               # puts "@@@@@ #{string.inspect} got family: #{children_count}"
+            # else # level == last_level means we're within siblings.
             end
 
             if i == nodes.size - 1 # last line
+              # puts "@@@@@   last #{string.inspect}"
               draw_column_for_level = Hash.new([false, [level, string]])
             end
 
             last_level = level
 
+            branch_start = branch_off
+
             # puts ">>> #{i} #{string} #{draw_column_for_level.inspect}"
+            if draw_column_for_level[level] && draw_column_for_level[level][1] == [level, string] # last of the branch? # FIXME: [1] is the "last child".
+              # FIXME: this is to remove the column for the last node in a branch, if it got children, we don't want the (|) col.
+              #  |   `-- b
+              # -|  (|)  |-- call_task
+              # -|  (|)      |-- d
+
+              draw_column_for_level[level] = [false, [level, string]]
+              branch_start = terminus
+            end
 
             line = ""
             if level > 0
@@ -99,7 +112,7 @@ module Trailblazer::Developer
 
               end
 
-              line << (draw_column_for_level[level][1] == [level, string] ? terminus : branch_off) # FIXME: [1] is the "last child".
+              line << branch_start
             end
 
             line << "#{string}" # TODO: allow more details etc.

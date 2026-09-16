@@ -1,5 +1,31 @@
 require "test_helper"
 
+class TracePresentTreeTest < Minitest::Spec
+  it "what" do
+    output = Trailblazer::Developer::Trace::Present::Tree.render(
+      [
+        [0, :Create],
+        [1, :call_task],
+        [2, :a],
+        [2, :b],
+        [3, :call_task],
+        [4, :d],
+        [4, :e],
+        [1, :out],
+      ]
+    )
+
+    assert_equal output, %(Create
+|-- call_task
+|   |-- a
+|   `-- b
+|       |-- call_task
+|           |-- d
+|           `-- e
+`-- out)
+  end
+end
+
 # Test {Trace::Present.call}
 class TracePresentTest < Minitest::Spec
    it "accepts block to produce options that are merged with internal options" do

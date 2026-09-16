@@ -237,8 +237,8 @@ assert_equal output,
     |   |   |-- ...is_signal?
     |   |   `-- ...compute_binary_signal
     |   `-- ...variable_mapping.output
-    |   |   |-- ...output.default_output
-    |   |   `-- ...output.merge_with_original
+    |       |-- ...output.default_output
+    |       `-- ...output.merge_with_original
     |-- ...c
     |   `-- ...task_wrap.call_task
     |       |-- ...invoke_provider
