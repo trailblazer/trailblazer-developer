@@ -1,5 +1,3 @@
-require "hirb"
-
 module Trailblazer::Developer
   module Trace
     module Present # DISCUSS: rename to Debugger?
