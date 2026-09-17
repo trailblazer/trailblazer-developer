@@ -273,7 +273,12 @@ assert_equal output,
 pp trace_nodes
 
     assert_equal trace_nodes.size, 7
-raise
+
+    # TODO: properly test all those nodes and their snapshots etc.
+    assert_equal trace_nodes[0].class, Trailblazer::Developer::Trace::Node::Incomplete
+    assert_equal trace_nodes[4].class, Trailblazer::Developer::Trace::Node
+    assert_equal trace_nodes[5].class, Trailblazer::Developer::Trace::Node
+    assert_equal trace_nodes[6].class, Trailblazer::Developer::Trace::Node::Incomplete
 
 
 
