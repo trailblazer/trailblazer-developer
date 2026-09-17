@@ -41,12 +41,18 @@ module Trailblazer
           Activity::Left => :brown,
         )
 
-        def call(trace_node:, **)
+        def call(trace_node:, trace:, **)
           label = %(#{trace_node.id})
 
           label =
             if trace_node.is_a?(Trace::Node::Incomplete)
-              colorize(label, COLORS[:gray])
+              color_key = :gray
+
+              if trace_node == trace.last # we assume this is the root of all evil resp. of the exception.
+                color_key = :red # FIXME: make it bold, too.
+              end
+
+              colorize(label, COLORS[color_key])
             else
               returned_signal = trace_node.snapshot_after.data.fetch(:signal)
 
@@ -54,7 +60,6 @@ module Trailblazer
 
               colorize(label, COLORS[color_key])
             end
-
 
           [trace_node.level, label]
         end
