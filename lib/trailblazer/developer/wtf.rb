@@ -32,6 +32,7 @@ module Trailblazer
           green: "\e[32m",
           brown: "\e[33m",
           red: "\e[31m",
+          bold_red: "\e[31m\e[1m",
           black: "\e[30m",  # we cannot interpret the signal.
         }
 
@@ -49,7 +50,7 @@ module Trailblazer
               color_key = :gray
 
               if trace_node == trace.last # we assume this is the root of all evil resp. of the exception.
-                color_key = :red # FIXME: make it bold, too.
+                color_key = :bold_red
               end
 
               colorize(label, COLORS[color_key])

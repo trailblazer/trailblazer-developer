@@ -78,7 +78,7 @@ assert_equal output,
         |       `-- \e[32m...compute_binary_signal\e[0m
         `-- \e[37m...b\e[0m
             `-- \e[37m...task_wrap.call_task\e[0m
-                `-- \e[31m...invoke_provider\e[0m
+                `-- \e[31m\e[1m...invoke_provider\e[0m
 "
   end
 
