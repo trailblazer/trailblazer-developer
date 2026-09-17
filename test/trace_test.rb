@@ -340,6 +340,10 @@ raise "make Present figure out the ID of the step instead of the generic {task_w
     assert_equal node.class, node_class
     assert_equal node.to_h, attrs
   end
+
+  it "what" do
+    raise "Trace should add another extension to figure out the runtime path, not just the ID"
+  end
 end
 
 # Test specific options such as {:snapshooter}.

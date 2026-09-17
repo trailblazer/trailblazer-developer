@@ -11,7 +11,7 @@ module Trailblazer::Developer
       # whatever we return from {:render_method} is available as {returned_args}
       # Returns the console output string.
       # @private
-      def render(trace:, renderer: method(:default_renderer), **options_for_renderer)
+      def render(trace:, renderer: method(:default_renderer), **options_for_renderer) # DISCUSS: {:options_for_renderer} is private, we actually don't need it.
         nodes = trace.to_a.collect do |trace_node|
           renderer.(trace_node: trace_node, trace: trace, **options_for_renderer)
         end
@@ -25,7 +25,7 @@ module Trailblazer::Developer
         # Build a generic array of {Trace::Node}s.
         trace_nodes = Trace.build_nodes(stack.to_a, segmenter: segmenter)
 
-        return render_method.(trace: trace_nodes)
+        return render_method.(trace: trace_nodes, **options)
       end
 
       # "it's only gonna be 25 mins. 2 days later, *rummages for graph theory book*"

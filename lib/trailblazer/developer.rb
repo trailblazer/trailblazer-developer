@@ -15,7 +15,6 @@ module Trailblazer
 end
 
 # require "trailblazer/activity/dsl/linear"
-# require "trailblazer/developer/wtf"
 # require "trailblazer/developer/wtf/renderer"
 require "trailblazer/developer/trace/snapshot"
 require "trailblazer/developer/trace/snapshot/value"
@@ -27,6 +26,7 @@ require "trailblazer/developer/trace/present"
 require "trailblazer/developer/trace/node"
 # require "trailblazer/developer/debugger"
 require "trailblazer/developer/render/circuit"
+require "trailblazer/developer/wtf"
 # require "trailblazer/developer/render/linear"
 # require "trailblazer/developer/render/task_wrap"
 # require "trailblazer/developer/introspect" # TODO: might get removed, again.

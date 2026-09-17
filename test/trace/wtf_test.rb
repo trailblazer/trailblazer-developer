@@ -26,29 +26,10 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Circuit::Processor
     ]
 
-    class Node < Trailblazer::Circuit::Node
-      def call(lib_ctx, flow_options, signal, **circuit_options)
-        exception = false
-
-        begin
-          super
-        rescue
-  puts "rescue!!!!"
-          exception = $!
-        end
-
-        output = Trailblazer::Developer::Trace::Present.(flow_options[:stack], segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter))
-        puts output
-        raise exception if exception
-
-        return lib_ctx, flow_options, signal
-      end
-    end
-
     my_wtf_circuit_fixme = Trailblazer::Circuit::Builder.Pipeline(
       [:wtf_top_canonical, node: my_canonical_Create_tw_node]
     )
-    my_wtf_node = Node[my_wtf_circuit_fixme, Trailblazer::Circuit::Processor]
+    my_wtf_node = Trailblazer::Developer::Wtf::Node[my_wtf_circuit_fixme, Trailblazer::Circuit::Processor]
 
     # DISCUSS: how to merge multiple runtime extensions? canonical invoke!
     my_tracing_extension_builder = Trailblazer::Circuit::WrapRuntime.Extension(adds: Trailblazer::Developer::Trace::Extension) # WrapRuntime::Extension means we adds
@@ -67,45 +48,40 @@ class TraceWtfTest < Minitest::Spec
 
     runner = Trailblazer::Circuit::WrapRuntime::Runner
 
-    lib_ctx, flow_options, signal = runner.(
-      {target_ctx: {seq: [], raise_from_b: true}},
-      flow_options,
-      nil,
-      runner: runner,
-      wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions),
-      context_implementation: Trailblazer::Circuit::Context,
-      id: :Create,
-      node: my_wtf_node,
-    )
+    lib_ctx, signal = nil
 
-    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
-    assert_equal signal.to_h[:semantic], :success
+    output, _ = capture_io do
+      assert_raises RuntimeError do # FIXME: use our own error to test we're raising it.
+        lib_ctx, flow_options, signal = runner.(
+          {target_ctx: {seq: [], raise_from_b: true}},
+          flow_options,
+          nil,
+          runner: runner,
+          wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions),
+          context_implementation: Trailblazer::Circuit::Context,
+          id: :Create,
+          node: my_wtf_node,
+        )
+      end
+    end
 
-    stack = flow_options[:stack]
+    # assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
+    # assert_equal signal.to_h[:semantic], :success
 
-    output = Trailblazer::Developer::Trace::Present.(stack)
-    # output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 puts output
 assert_equal output,
-%(...Create
-`-- ...task_wrap.call_task
-    |-- ...a
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    |-- ...b
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    |-- ...c
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    `-- ...End.success
-        `-- ...task_wrap.call_task)
+"\e[37m...Create\e[0m
+`-- \e[37m...wtf_top_canonical\e[0m
+    `-- \e[37m...task_wrap.call_task\e[0m
+        |-- \e[32m...a\e[0m
+        |   `-- \e[32m...task_wrap.call_task\e[0m
+        |       |-- \e[30m...invoke_provider\e[0m
+        |       |-- \e[30m...is_signal?\e[0m
+        |       `-- \e[32m...compute_binary_signal\e[0m
+        `-- \e[37m...b\e[0m
+            `-- \e[37m...task_wrap.call_task\e[0m
+                `-- \e[37m...invoke_provider\e[0m
+"
   end
 
 
