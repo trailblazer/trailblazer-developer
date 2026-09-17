@@ -132,8 +132,8 @@ class TraceTest < Minitest::Spec
 
   # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
   it "allows tracing by manually passing the options" do
-    require "trailblazer/activity/variable_mapping"
 
+    require "trailblazer/activity/variable_mapping"
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
       _, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
         builder: config.builder,
@@ -208,6 +208,14 @@ class TraceTest < Minitest::Spec
 
     stack = flow_options[:stack]
 
+
+
+
+
+
+
+
+
     # Debugging
     stack.to_a.each do |capture, _|
       # puts [capture, capture.object_id, capture.delimits.object_id].inspect
@@ -247,6 +255,35 @@ assert_equal output,
     `-- ...End.success
         `-- ...task_wrap.call_task)
 
+
+
+
+
+
+# FIXME: move to node_test?
+    # trace_nodes = Trailblazer::Developer::Trace.build_nodes(stack.to_a)
+    # pp trace_nodes
+    # raise
+    # TODO: test changeset etc, the way it's done in node_test.
+
+    # FIXME: testing Incomplete
+    pp stack.to_a.to_a[0..8]
+    # this is done in #wtf?
+    trace_nodes = Trailblazer::Developer::Trace.build_nodes(stack.to_a.to_a[0..8], segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter)) # we break at :a#compute_binary_signal.
+pp trace_nodes
+
+    assert_equal trace_nodes.size, 7
+raise
+
+
+
+
+
+
+
+
+
+
   # we can also limit tracing to "business nodes".
 
     my_resolver = Struct.new(:node_wrap_resolver) do
@@ -284,7 +321,7 @@ assert_equal output,
 
     output = Trailblazer::Developer::Trace::Present.(stack)
 
-
+raise "make Present figure out the ID of the step instead of the generic {task_wrap.call_task}"
     assert_equal output, %(Create
 |-- a
 |-- b

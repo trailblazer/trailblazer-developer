@@ -21,9 +21,9 @@ module Trailblazer::Developer
 
       # Entry point for rendering a {Trace::Stack}.
       # Used in `#wtf?`.
-      def call(stack, render_method: method(:render), **options, &block)
+      def call(stack, render_method: method(:render), segmenter: Trace::Node.method(:segmenter), **options, &block)
         # Build a generic array of {Trace::Node}s.
-        trace_nodes = Trace.build_nodes(stack.to_a)
+        trace_nodes = Trace.build_nodes(stack.to_a, segmenter: segmenter)
 
         return render_method.(trace: trace_nodes)
       end
