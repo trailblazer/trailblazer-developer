@@ -1,6 +1,115 @@
 require "test_helper"
 
 class TraceWtfTest < Minitest::Spec
+  it "what" do
+    my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
+      step :a
+      step :b
+      step :c
+
+      include T.def_steps(:a, :c)
+
+      def b(ctx, seq:, raise_from_b: false, **)
+        raise if raise_from_b
+
+        seq << :b
+      end
+    end
+
+    my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
+
+    # my_abc_activity_node.task.instance_variable_set(:@pipe, true) # FIXME: this is used in WrapRuntime::Runner.
+    my_canonical_Create_tw_node = Trailblazer::Circuit::Node[
+      Trailblazer::Circuit::Builder.Pipeline(
+        [:"task_wrap.call_task", node: my_abc_activity_node]
+      ),
+      Trailblazer::Circuit::Processor
+    ]
+
+    class Node < Trailblazer::Circuit::Node
+      def call(lib_ctx, flow_options, signal, **circuit_options)
+        exception = false
+
+        begin
+          super
+        rescue
+  puts "rescue!!!!"
+          exception = $!
+        end
+
+        output = Trailblazer::Developer::Trace::Present.(flow_options[:stack], segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter))
+        puts output
+        raise exception if exception
+
+        return lib_ctx, flow_options, signal
+      end
+    end
+
+    my_wtf_circuit_fixme = Trailblazer::Circuit::Builder.Pipeline(
+      [:wtf_top_canonical, node: my_canonical_Create_tw_node]
+    )
+    my_wtf_node = Node[my_wtf_circuit_fixme, Trailblazer::Circuit::Processor]
+
+    # DISCUSS: how to merge multiple runtime extensions? canonical invoke!
+    my_tracing_extension_builder = Trailblazer::Circuit::WrapRuntime.Extension(adds: Trailblazer::Developer::Trace::Extension) # WrapRuntime::Extension means we adds
+
+    my_extensions = Trailblazer::Circuit::WrapRuntime::Extension::Set.new(
+      [
+        Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap,
+        my_tracing_extension_builder,
+      ]
+    )
+
+    flow_options = {
+      stack:              Trailblazer::Developer::Trace::Stack.new,
+      value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
+    }
+
+    runner = Trailblazer::Circuit::WrapRuntime::Runner
+
+    lib_ctx, flow_options, signal = runner.(
+      {target_ctx: {seq: [], raise_from_b: true}},
+      flow_options,
+      nil,
+      runner: runner,
+      wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions),
+      context_implementation: Trailblazer::Circuit::Context,
+      id: :Create,
+      node: my_wtf_node,
+    )
+
+    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
+    assert_equal signal.to_h[:semantic], :success
+
+    stack = flow_options[:stack]
+
+    output = Trailblazer::Developer::Trace::Present.(stack)
+    # output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
+puts output
+assert_equal output,
+%(...Create
+`-- ...task_wrap.call_task
+    |-- ...a
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    |-- ...b
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    |-- ...c
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    `-- ...End.success
+        `-- ...task_wrap.call_task)
+  end
+
+
+
   let(:alpha) do
     charlie = Class.new(Trailblazer::Activity::Railway) do
       extend T.def_steps(:c, :cc)
