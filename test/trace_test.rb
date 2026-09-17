@@ -267,18 +267,19 @@ assert_equal output,
     # TODO: test changeset etc, the way it's done in node_test.
 
     # FIXME: testing Incomplete
-    pp stack.to_a.to_a[0..8]
+    broken_stack = stack.to_a.to_a[0..8]
     # this is done in #wtf?
-    trace_nodes = Trailblazer::Developer::Trace.build_nodes(stack.to_a.to_a[0..8], segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter)) # we break at :a#compute_binary_signal.
-pp trace_nodes
+    trace_nodes = Trailblazer::Developer::Trace.build_nodes(broken_stack, segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter)) # we break at :a#compute_binary_signal.
+    # pp trace_nodes
 
     assert_equal trace_nodes.size, 7
-
-    # TODO: properly test all those nodes and their snapshots etc.
-    assert_equal trace_nodes[0].class, Trailblazer::Developer::Trace::Node::Incomplete
-    assert_equal trace_nodes[4].class, Trailblazer::Developer::Trace::Node
-    assert_equal trace_nodes[5].class, Trailblazer::Developer::Trace::Node
-    assert_equal trace_nodes[6].class, Trailblazer::Developer::Trace::Node::Incomplete
+    assert_trace_node trace_nodes[0], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 0, id: "...Create", snapshot_before: broken_stack[0][1], snapshot_after: nil
+    assert_trace_node trace_nodes[1], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 1, id: "...task_wrap.call_task", snapshot_before: broken_stack[1][1], snapshot_after: nil
+    assert_trace_node trace_nodes[2], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 2, id: "...a", snapshot_before: broken_stack[2][1], snapshot_after: nil
+    assert_trace_node trace_nodes[3], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 3, id: "...task_wrap.call_task", snapshot_before: broken_stack[3][1], snapshot_after: nil
+    assert_trace_node trace_nodes[4], level: 4, id: "...invoke_provider", snapshot_before: broken_stack[4][1], snapshot_after: broken_stack[5][1]
+    assert_trace_node trace_nodes[5], level: 4, id: "...is_signal?", snapshot_before: broken_stack[6][1], snapshot_after: broken_stack[7][1]
+    assert_trace_node trace_nodes[6], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 4, id: "...compute_binary_signal", snapshot_before: broken_stack[8][1], snapshot_after: nil
 
 
 
@@ -332,6 +333,12 @@ raise "make Present figure out the ID of the step instead of the generic {task_w
 |-- b
 |-- c
 `-- End.success)
+  end
+
+  # FIXME: move to node_test.
+  def assert_trace_node(node, node_class: Trailblazer::Developer::Trace::Node, **attrs)
+    assert_equal node.class, node_class
+    assert_equal node.to_h, attrs
   end
 end
 
