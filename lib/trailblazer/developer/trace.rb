@@ -30,6 +30,23 @@ module Trailblazer
         end
 
       end
+
+      module Invoke
+        def self.add_options_for_trace(lib_ctx, flow_options, signal, extensions: [], **circuit_options)
+          trace_extension = Circuit::WrapRuntime.Extension(adds: Developer::Trace::Extension) # WrapRuntime::Extension means we adds
+
+          extensions = extensions + [trace_extension]
+
+          flow_options_for_trace = {
+            stack:              Trailblazer::Developer::Trace::Stack.new,
+            value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
+          }
+
+          flow_options = flow_options_for_trace.merge(flow_options)
+
+          return lib_ctx, flow_options, signal, circuit_options.merge(extensions: extensions)
+        end
+      end
     end # Trace
   end
 end
