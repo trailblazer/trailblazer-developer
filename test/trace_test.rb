@@ -130,9 +130,7 @@ class TraceTest < Minitest::Spec
     end
   end
 
-  # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
-  it "allows tracing by manually passing the options" do
-
+  def my_abc_activity
     require "trailblazer/activity/variable_mapping"
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
       _, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
@@ -164,7 +162,10 @@ class TraceTest < Minitest::Spec
 
       include T.def_steps(:a, :b, :c)
     end
+  end
 
+  # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
+  it "allows tracing by manually passing the options" do
     my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
 
     # my_abc_activity_node.task.instance_variable_set(:@pipe, true) # FIXME: this is used in WrapRuntime::Runner.
