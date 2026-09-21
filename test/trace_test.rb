@@ -336,8 +336,8 @@ raise "make Present figure out the ID of the step instead of the generic {task_w
 `-- End.success)
   end
 
-  it "can be used with Activity::Invoke.()" do
-    _, flow_options, _, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, nil)
+  it "can be used with Activity::Invoke.(). we can pass our options from the outside." do
+    _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: []})
 
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
       my_abc_activity,
@@ -346,6 +346,63 @@ raise "make Present figure out the ID of the step instead of the generic {task_w
       flow_options: flow_options,
       **circuit_options,
       id: :Create,
+    )
+
+    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
+    assert_equal signal.to_h[:semantic], :success
+
+    stack = flow_options[:stack]
+
+    output = Trailblazer::Developer::Trace::Present.(stack)
+
+    assert_equal output,
+%(...Create
+`-- ...task_wrap.call_task
+    |-- ...a
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    |-- ...b
+    |   |-- ...variable_mapping.input
+    |   |   |-- ...in.seq > seq
+    |   |   |   |-- ...invoke_provider
+    |   |   |   |   `-- ...invoke_provider
+    |   |   |   |-- ...wrap_value_with_hash
+    |   |   |   `-- ...add_value_to_aggregate
+    |   |   `-- ...input.scope
+    |   |-- ...task_wrap.call_task
+    |   |   |-- ...invoke_provider
+    |   |   |-- ...is_signal?
+    |   |   `-- ...compute_binary_signal
+    |   `-- ...variable_mapping.output
+    |       |-- ...output.default_output
+    |       `-- ...output.merge_with_original
+    |-- ...c
+    |   `-- ...task_wrap.call_task
+    |       |-- ...invoke_provider
+    |       |-- ...is_signal?
+    |       `-- ...compute_binary_signal
+    `-- ...End.success
+        `-- ...task_wrap.call_task)
+  end
+
+  # DISCUSS: not sure this test needs to exist.
+  it "we can also configure the canonical invoke pipeline to enable tracing based on ENV variables" do
+    my_canonical_invoke = Trailblazer::Circuit::Adds.(
+      Trailblazer::Activity::Invoke::Args::Compiler,
+      [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime]
+    )
+
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
+      my_abc_activity,
+      {target_ctx: {seq: []}}, # DISCUSS: we are passing the lib_ctx here, not "application_ctx".
+
+      # flow_options: flow_options,
+      # **circuit_options,
+      id: :Create,
+      compiler: my_canonical_invoke,
+      extensions: []
     )
 
     assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
