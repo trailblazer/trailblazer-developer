@@ -1,5 +1,11 @@
 module Trailblazer
   module Developer
+    def self.wtf?(circuit, target_ctx, **options_for_invoke)
+      lib_ctx = {target_ctx: target_ctx} # FIXME: use {produce_lib_ctx} step.
+
+      Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: []) # FIXME: default :extensions.
+    end
+
     module Wtf
       class Node < Trailblazer::Circuit::Node
         def call(lib_ctx, flow_options, signal, **circuit_options)

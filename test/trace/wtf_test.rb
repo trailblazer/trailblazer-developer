@@ -1,8 +1,8 @@
 require "test_helper"
 
 class TraceWtfTest < Minitest::Spec
-  it "rescues from an exception and colorizes the trace" do
-    my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
+  let(:my_abc_activity) do
+    Class.new(Trailblazer::Activity::Railway) do
       step :a
       step :b
       step :c
@@ -15,7 +15,9 @@ class TraceWtfTest < Minitest::Spec
         seq << :b
       end
     end
+  end
 
+  it "rescues from an exception and colorizes the trace" do
     my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
 
     # my_abc_activity_node.task.instance_variable_set(:@pipe, true) # FIXME: this is used in WrapRuntime::Runner.
@@ -69,5 +71,69 @@ assert_equal output,
 
   it "what" do
     raise "allow correct coloring for nested activities "
+  end
+
+  describe "Developer.wtf?" do
+    let(:my_compiler) do
+      # DISCUSS: this should be done by trailblazer-rails.
+      Trailblazer::Circuit::Adds.(
+        Trailblazer::Activity::Invoke::Args::Compiler,
+        [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+        [:my_wtf, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_wtf_node), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+      )
+    end
+
+    it "provides the Developer.wtf? method that uses the canonical debug pipe" do
+      output, _ = capture_io do
+        assert_raises RuntimeError do # FIXME: use our own error to test we're raising it.
+          Trailblazer::Developer.wtf?(my_abc_activity, {seq: [], raise_from_b: true}, id: :Create, compiler: my_compiler)
+        end
+      end
+
+      assert_equal output,
+"\e[37m...Create\e[0m
+`-- \e[37m...wtf_top_canonical\e[0m
+    `-- \e[37m...task_wrap.call_task\e[0m
+        |-- \e[32m...a\e[0m
+        |   `-- \e[32m...task_wrap.call_task\e[0m
+        |       |-- \e[30m...invoke_provider\e[0m
+        |       |-- \e[30m...is_signal?\e[0m
+        |       `-- \e[32m...compute_binary_signal\e[0m
+        `-- \e[37m...b\e[0m
+            `-- \e[37m...task_wrap.call_task\e[0m
+                `-- \e[31m\e[1m...invoke_provider\e[0m
+"
+    end
+
+    it "returns the circuit interface return set" do
+      output, _ = capture_io do
+        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler)
+
+        assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
+      end
+
+      puts output
+      assert_equal output, %(\e[37m...Create\e[0m
+`-- \e[30m...wtf_top_canonical\e[0m
+    `-- \e[30m...task_wrap.call_task\e[0m
+        |-- \e[32m...a\e[0m
+        |   `-- \e[32m...task_wrap.call_task\e[0m
+        |       |-- \e[30m...invoke_provider\e[0m
+        |       |-- \e[30m...is_signal?\e[0m
+        |       `-- \e[32m...compute_binary_signal\e[0m
+        |-- \e[32m...b\e[0m
+        |   `-- \e[32m...task_wrap.call_task\e[0m
+        |       |-- \e[30m...invoke_provider\e[0m
+        |       |-- \e[30m...is_signal?\e[0m
+        |       `-- \e[32m...compute_binary_signal\e[0m
+        |-- \e[32m...c\e[0m
+        |   `-- \e[32m...task_wrap.call_task\e[0m
+        |       |-- \e[30m...invoke_provider\e[0m
+        |       |-- \e[30m...is_signal?\e[0m
+        |       `-- \e[32m...compute_binary_signal\e[0m
+        `-- \e[30m...End.success\e[0m
+            `-- \e[30m...task_wrap.call_task\e[0m
+)
+    end
   end
 end
