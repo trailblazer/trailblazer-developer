@@ -2,42 +2,6 @@ require "test_helper"
 
 # Test {Trace.call} and {Trace::Present.call}
 class TraceTest < Minitest::Spec
-  class MyRunner < Trailblazer::Circuit::Node::Runner
-    def self.call(node, lib_ctx, flow_options, signal, circuit_options)
-      # raise if node.instance_variable_get(:@extended)
-
-      return super if node.instance_variable_get(:@extended)
-
-      wrap_runtime = circuit_options.fetch(:wrap_runtime)
-      id = circuit_options.fetch(:id)
-
-      node = Trailblazer::Circuit::Node[
-        Trailblazer::Circuit::Builder.Circuit(
-          [:"task_wrap.call_task", node: node]
-        ),
-        Trailblazer::Circuit::Processor
-      ]
-
-      # pp node
-      # raise
-
-      puts "@@@@@ #{circuit_options[:id].inspect}"
-
-      # DISCUSS: use super here?
-
-      node_attrs = node.to_h
-
-      node_attrs = Trailblazer::Circuit::WrapRuntime::Runner.extend_task_wrap_pipeline(wrap_runtime, id, node, node_attrs)
-
-      node = node.class.new(**node_attrs)
-      node.instance_variable_set(:@extended, true)
-
-      node.task.nodes[:"task_wrap.call_task"].instance_variable_set(:@extended, true)
-
-      super
-    end
-  end
-
   def my_abc_activity
     require "trailblazer/activity/variable_mapping"
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
