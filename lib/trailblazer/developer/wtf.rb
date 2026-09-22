@@ -11,6 +11,7 @@ module Trailblazer
             exception = $!
           end
 
+          # DISCUSS: rendering could happen in a separate, asyncable step.
           output = Trailblazer::Developer::Trace::Present.(
             flow_options[:stack],
             segmenter: Trace::Node::Incomplete.method(:segmenter),
@@ -21,6 +22,22 @@ module Trailblazer
           raise exception if exception
 
           return lib_ctx, flow_options, signal
+        end
+      end
+
+      module Invoke
+        def self.produce_wtf_node(lib_ctx, flow_options, circuit_options, **)
+          node = circuit_options.fetch(:node) # the original node, eg {Create.task_wrap}.
+          # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
+          # ideally, this uses the same logic for canonical and for pure.
+
+          # DISCUSS: the whole Wtf? logic could be a pipe, where one step can render and be async?
+          wtf_circuit = Circuit::Builder.Pipeline(
+            [:wtf_top_canonical, node: node]
+          )
+          wtf_node = Wtf::Node[wtf_circuit, Circuit::Processor]
+
+          return lib_ctx, flow_options, circuit_options.merge(node: wtf_node)
         end
       end
 

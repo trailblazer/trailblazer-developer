@@ -26,25 +26,11 @@ class TraceWtfTest < Minitest::Spec
       Trailblazer::Circuit::Processor
     ]
 
-    my_wtf_circuit_fixme = Trailblazer::Circuit::Builder.Pipeline(
-      [:wtf_top_canonical, node: my_canonical_Create_tw_node]
-    )
-    my_wtf_node = Trailblazer::Developer::Wtf::Node[my_wtf_circuit_fixme, Trailblazer::Circuit::Processor]
-
-    # DISCUSS: how to merge multiple runtime extensions? canonical invoke!
-    my_tracing_extension_builder = Trailblazer::Circuit::WrapRuntime.Extension(adds: Trailblazer::Developer::Trace::Extension) # WrapRuntime::Extension means we adds
-
-    my_extensions = Trailblazer::Circuit::WrapRuntime::Extension::Set.new(
-      [
-        Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap,
-        my_tracing_extension_builder,
-      ]
-    )
-
-    flow_options = {
-      stack:              Trailblazer::Developer::Trace::Stack.new,
-      value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
-    }
+    # mimicking the Invoke pipe here.
+    # I decided to leave this test and its prototypical nature to remind us how things work internally.
+    _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: [], node: my_canonical_Create_tw_node})
+    _, flow_options, circuit_options = Trailblazer::Activity::Invoke.produce_wrap_runtime({}, flow_options, circuit_options)
+    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_wtf_node({}, flow_options, circuit_options)
 
     runner = Trailblazer::Circuit::WrapRuntime::Runner
 
@@ -55,10 +41,9 @@ class TraceWtfTest < Minitest::Spec
           flow_options,
           nil,
           runner: runner,
-          wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions),
+          **circuit_options,
           context_implementation: Trailblazer::Circuit::Context,
           id: :Create,
-          node: my_wtf_node,
         )
       end
     end
