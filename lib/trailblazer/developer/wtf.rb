@@ -12,7 +12,7 @@ module Trailblazer
           exception = false
 
           begin
-            super
+            lib_ctx, flow_options, signal = super
           rescue
             exception = $!
           end

@@ -110,6 +110,8 @@ assert_equal output,
         lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler)
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
+        assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
+        assert_equal flow_options[:stack].to_a.size, 40 # TODO: better test.
       end
 
       puts output
