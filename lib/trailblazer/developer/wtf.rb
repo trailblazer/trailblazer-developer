@@ -3,7 +3,7 @@ module Trailblazer
     def self.wtf?(circuit, target_ctx, **options_for_invoke)
       lib_ctx = {target_ctx: target_ctx} # FIXME: use {produce_lib_ctx} step.
 
-      Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: []) # FIXME: default :extensions.
+      Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: [], conditions: []) # FIXME: default :extensions.
     end
 
     module Wtf
@@ -32,7 +32,9 @@ module Trailblazer
       end
 
       module Invoke
-        def self.produce_wtf_node(lib_ctx, flow_options, circuit_options, **)
+        module_function
+
+        def produce_wtf_node(lib_ctx, flow_options, circuit_options, **)
           node = circuit_options.fetch(:node) # the original node, eg {Create.task_wrap}.
           # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
           # ideally, this uses the same logic for canonical and for pure.
@@ -44,6 +46,19 @@ module Trailblazer
           wtf_node = Wtf::Node[wtf_circuit, Circuit::Processor]
 
           return lib_ctx, flow_options, circuit_options.merge(node: wtf_node)
+        end
+
+        CONDITION_FOR_BUSINESS_STEP = ->(node:, **) { node.to_h[:options][:business_step] } # The :business_step option is set in the dsl gem.
+
+        def produce_condition(lib_ctx, flow_options, circuit_options, **)
+          only_business_nodes = circuit_options[:only_business_nodes] || false
+          conditions = circuit_options.fetch(:conditions)
+
+          if only_business_nodes
+            conditions += [CONDITION_FOR_BUSINESS_STEP]
+          end
+
+          return lib_ctx, flow_options, circuit_options.merge(conditions: conditions)
         end
       end
 

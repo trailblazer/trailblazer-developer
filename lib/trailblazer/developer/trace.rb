@@ -22,10 +22,12 @@ module Trailblazer
       class Extension # TODO: use canonical Node::Extension or whatever we name it?!
         # Called through WrapRuntime::Runner, obviously at runtime.
         def self.call(id:, **)
+          traced_id = id.wrapped_id # {id} is a NodeWrap::Id instance.
+
           # produce ADDs
           [
-            [:"task_wrap.capture_args",   Circuit::Node[capture_before = Capture.new(id, nil, rand), Circuit::Task::Adapter::LibInterface, options: {already_wrapped: true}],   :before, :"task_wrap.call_task"],
-            [:"task_wrap.capture_return", Circuit::Node[Capture.new(id, capture_before), Circuit::Task::Adapter::LibInterface, options: {already_wrapped: true}], :after, nil], # append to the very end of tW.
+            [:"task_wrap.capture_args",   Circuit::Node[capture_before = Capture.new(traced_id, nil, rand), Circuit::Task::Adapter::LibInterface, options: {already_wrapped: true}],   :before, :"task_wrap.call_task"],
+            [:"task_wrap.capture_return", Circuit::Node[Capture.new(traced_id, capture_before), Circuit::Task::Adapter::LibInterface, options: {already_wrapped: true}], :after, nil], # append to the very end of tW.
           ]
         end
 

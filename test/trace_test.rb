@@ -70,7 +70,7 @@ class TraceTest < Minitest::Spec
       flow_options,
       nil,
       runner: runner,
-      wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions),
+      wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(default_extension_set: my_extensions, conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION]),
       context_implementation: Trailblazer::Circuit::Context,
       id: :Create,
       node: my_canonical_Create_tw_node,
@@ -98,35 +98,35 @@ class TraceTest < Minitest::Spec
     # output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
 puts output
 assert_equal output,
-%(...Create
-`-- ...task_wrap.call_task
-    |-- ...a
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    |-- ...b
-    |   |-- ...variable_mapping.input
-    |   |   |-- ...in.seq > seq
-    |   |   |   |-- ...invoke_provider
-    |   |   |   |   `-- ...invoke_provider
-    |   |   |   |-- ...wrap_value_with_hash
-    |   |   |   `-- ...add_value_to_aggregate
-    |   |   `-- ...input.scope
-    |   |-- ...task_wrap.call_task
-    |   |   |-- ...invoke_provider
-    |   |   |-- ...is_signal?
-    |   |   `-- ...compute_binary_signal
-    |   `-- ...variable_mapping.output
-    |       |-- ...output.default_output
-    |       `-- ...output.merge_with_original
-    |-- ...c
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    `-- ...End.success
-        `-- ...task_wrap.call_task)
+%(Create
+`-- task_wrap.call_task
+    |-- a
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    |-- b
+    |   |-- variable_mapping.input
+    |   |   |-- in.seq > seq
+    |   |   |   |-- invoke_provider
+    |   |   |   |   `-- invoke_provider
+    |   |   |   |-- wrap_value_with_hash
+    |   |   |   `-- add_value_to_aggregate
+    |   |   `-- input.scope
+    |   |-- task_wrap.call_task
+    |   |   |-- invoke_provider
+    |   |   |-- is_signal?
+    |   |   `-- compute_binary_signal
+    |   `-- variable_mapping.output
+    |       |-- output.default_output
+    |       `-- output.merge_with_original
+    |-- c
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    `-- End.success
+        `-- task_wrap.call_task)
 
 
 
@@ -146,13 +146,13 @@ assert_equal output,
     # pp trace_nodes
 
     assert_equal trace_nodes.size, 7
-    assert_trace_node trace_nodes[0], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 0, id: "...Create", snapshot_before: broken_stack[0][1], snapshot_after: nil
-    assert_trace_node trace_nodes[1], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 1, id: "...task_wrap.call_task", snapshot_before: broken_stack[1][1], snapshot_after: nil
-    assert_trace_node trace_nodes[2], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 2, id: "...a", snapshot_before: broken_stack[2][1], snapshot_after: nil
-    assert_trace_node trace_nodes[3], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 3, id: "...task_wrap.call_task", snapshot_before: broken_stack[3][1], snapshot_after: nil
-    assert_trace_node trace_nodes[4], level: 4, id: "...invoke_provider", snapshot_before: broken_stack[4][1], snapshot_after: broken_stack[5][1]
-    assert_trace_node trace_nodes[5], level: 4, id: "...is_signal?", snapshot_before: broken_stack[6][1], snapshot_after: broken_stack[7][1]
-    assert_trace_node trace_nodes[6], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 4, id: "...compute_binary_signal", snapshot_before: broken_stack[8][1], snapshot_after: nil
+    assert_trace_node trace_nodes[0], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 0, id: :Create, snapshot_before: broken_stack[0][1], snapshot_after: nil
+    assert_trace_node trace_nodes[1], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 1, id: :"task_wrap.call_task", snapshot_before: broken_stack[1][1], snapshot_after: nil
+    assert_trace_node trace_nodes[2], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 2, id: :a, snapshot_before: broken_stack[2][1], snapshot_after: nil
+    assert_trace_node trace_nodes[3], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 3, id: :"task_wrap.call_task", snapshot_before: broken_stack[3][1], snapshot_after: nil
+    assert_trace_node trace_nodes[4], level: 4, id: :invoke_provider, snapshot_before: broken_stack[4][1], snapshot_after: broken_stack[5][1]
+    assert_trace_node trace_nodes[5], level: 4, id: :is_signal?, snapshot_before: broken_stack[6][1], snapshot_after: broken_stack[7][1]
+    assert_trace_node trace_nodes[6], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 4, id: :compute_binary_signal, snapshot_before: broken_stack[8][1], snapshot_after: nil
 
 
 
@@ -165,13 +165,9 @@ assert_equal output,
 
   # we can also limit tracing to "business nodes".
 
-    my_resolver = Struct.new(:node_wrap_resolver) do
-      def [](node:, **circuit_options)
-        return unless node.options[:business_step]
-
-        node_wrap_resolver[node: node, **circuit_options]
-      end
-    end.new(Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver.new(my_extensions))
+    my_resolver = Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(
+      default_extension_set: my_extensions,
+      conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }])
 
     flow_options = {
       stack:              Trailblazer::Developer::Trace::Stack.new,
@@ -228,35 +224,35 @@ raise "make Present figure out the ID of the step instead of the generic {task_w
     output = Trailblazer::Developer::Trace::Present.(stack)
 
     assert_equal output,
-%(...Create
-`-- ...task_wrap.call_task
-    |-- ...a
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    |-- ...b
-    |   |-- ...variable_mapping.input
-    |   |   |-- ...in.seq > seq
-    |   |   |   |-- ...invoke_provider
-    |   |   |   |   `-- ...invoke_provider
-    |   |   |   |-- ...wrap_value_with_hash
-    |   |   |   `-- ...add_value_to_aggregate
-    |   |   `-- ...input.scope
-    |   |-- ...task_wrap.call_task
-    |   |   |-- ...invoke_provider
-    |   |   |-- ...is_signal?
-    |   |   `-- ...compute_binary_signal
-    |   `-- ...variable_mapping.output
-    |       |-- ...output.default_output
-    |       `-- ...output.merge_with_original
-    |-- ...c
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    `-- ...End.success
-        `-- ...task_wrap.call_task)
+%(Create
+`-- task_wrap.call_task
+    |-- a
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    |-- b
+    |   |-- variable_mapping.input
+    |   |   |-- in.seq > seq
+    |   |   |   |-- invoke_provider
+    |   |   |   |   `-- invoke_provider
+    |   |   |   |-- wrap_value_with_hash
+    |   |   |   `-- add_value_to_aggregate
+    |   |   `-- input.scope
+    |   |-- task_wrap.call_task
+    |   |   |-- invoke_provider
+    |   |   |-- is_signal?
+    |   |   `-- compute_binary_signal
+    |   `-- variable_mapping.output
+    |       |-- output.default_output
+    |       `-- output.merge_with_original
+    |-- c
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    `-- End.success
+        `-- task_wrap.call_task)
   end
 
   # DISCUSS: not sure this test needs to exist.
@@ -285,35 +281,35 @@ raise "make Present figure out the ID of the step instead of the generic {task_w
     output = Trailblazer::Developer::Trace::Present.(stack)
 
     assert_equal output,
-%(...Create
-`-- ...task_wrap.call_task
-    |-- ...a
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    |-- ...b
-    |   |-- ...variable_mapping.input
-    |   |   |-- ...in.seq > seq
-    |   |   |   |-- ...invoke_provider
-    |   |   |   |   `-- ...invoke_provider
-    |   |   |   |-- ...wrap_value_with_hash
-    |   |   |   `-- ...add_value_to_aggregate
-    |   |   `-- ...input.scope
-    |   |-- ...task_wrap.call_task
-    |   |   |-- ...invoke_provider
-    |   |   |-- ...is_signal?
-    |   |   `-- ...compute_binary_signal
-    |   `-- ...variable_mapping.output
-    |       |-- ...output.default_output
-    |       `-- ...output.merge_with_original
-    |-- ...c
-    |   `-- ...task_wrap.call_task
-    |       |-- ...invoke_provider
-    |       |-- ...is_signal?
-    |       `-- ...compute_binary_signal
-    `-- ...End.success
-        `-- ...task_wrap.call_task)
+%(Create
+`-- task_wrap.call_task
+    |-- a
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    |-- b
+    |   |-- variable_mapping.input
+    |   |   |-- in.seq > seq
+    |   |   |   |-- invoke_provider
+    |   |   |   |   `-- invoke_provider
+    |   |   |   |-- wrap_value_with_hash
+    |   |   |   `-- add_value_to_aggregate
+    |   |   `-- input.scope
+    |   |-- task_wrap.call_task
+    |   |   |-- invoke_provider
+    |   |   |-- is_signal?
+    |   |   `-- compute_binary_signal
+    |   `-- variable_mapping.output
+    |       |-- output.default_output
+    |       `-- output.merge_with_original
+    |-- c
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    `-- End.success
+        `-- task_wrap.call_task)
   end
 
   # FIXME: move to node_test.
