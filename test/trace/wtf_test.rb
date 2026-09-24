@@ -20,7 +20,6 @@ class TraceWtfTest < Minitest::Spec
   it "rescues from an exception and colorizes the trace" do
     my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
 
-    # my_abc_activity_node.task.instance_variable_set(:@pipe, true) # FIXME: this is used in WrapRuntime::Runner.
     my_canonical_Create_tw_node = Trailblazer::Circuit::Node[
       Trailblazer::Circuit::Builder.Pipeline(
         [:"task_wrap.call_task", node: my_abc_activity_node]
@@ -30,9 +29,10 @@ class TraceWtfTest < Minitest::Spec
 
     # mimicking the Invoke pipe here.
     # I decided to leave this test and its prototypical nature to remind us how things work internally.
-    _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: [], node: my_canonical_Create_tw_node})
+    _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: [], node: my_canonical_Create_tw_node, conditions: []})
+    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_wtf_node({}, flow_options, circuit_options.merge(id: :Create))
+    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_condition({}, flow_options, circuit_options)
     _, flow_options, circuit_options = Trailblazer::Activity::Invoke.produce_wrap_runtime({}, flow_options, circuit_options)
-    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_wtf_node({}, flow_options, circuit_options)
 
     runner = Trailblazer::Circuit::WrapRuntime::Runner
 
@@ -55,17 +55,16 @@ class TraceWtfTest < Minitest::Spec
 
 puts output
 assert_equal output,
-"\e[37mCreate\e[0m
-`-- \e[37mwtf_top_canonical\e[0m
-    `-- \e[37mtask_wrap.call_task\e[0m
-        |-- \e[32ma\e[0m
-        |   `-- \e[32mtask_wrap.call_task\e[0m
-        |       |-- \e[30minvoke_provider\e[0m
-        |       |-- \e[30mis_signal?\e[0m
-        |       `-- \e[32mcompute_binary_signal\e[0m
-        `-- \e[37mb\e[0m
-            `-- \e[37mtask_wrap.call_task\e[0m
-                `-- \e[31m\e[1minvoke_provider\e[0m
+"\e[30mCreate\e[0m
+`-- \e[37mtask_wrap.call_task\e[0m
+    |-- \e[32ma\e[0m
+    |   `-- \e[32mtask_wrap.call_task\e[0m
+    |       |-- \e[30minvoke_provider\e[0m
+    |       |-- \e[30mis_signal?\e[0m
+    |       `-- \e[32mcompute_binary_signal\e[0m
+    `-- \e[37mb\e[0m
+        `-- \e[37mtask_wrap.call_task\e[0m
+            `-- \e[31m\e[1minvoke_provider\e[0m
 "
   end
 
@@ -92,17 +91,16 @@ assert_equal output,
       end
 
       assert_equal output,
-"\e[37mCreate\e[0m
-`-- \e[37mwtf_top_canonical\e[0m
-    `-- \e[37mtask_wrap.call_task\e[0m
-        |-- \e[32ma\e[0m
-        |   `-- \e[32mtask_wrap.call_task\e[0m
-        |       |-- \e[30minvoke_provider\e[0m
-        |       |-- \e[30mis_signal?\e[0m
-        |       `-- \e[32mcompute_binary_signal\e[0m
-        `-- \e[37mb\e[0m
-            `-- \e[37mtask_wrap.call_task\e[0m
-                `-- \e[31m\e[1minvoke_provider\e[0m
+"\e[30mCreate\e[0m
+`-- \e[37mtask_wrap.call_task\e[0m
+    |-- \e[32ma\e[0m
+    |   `-- \e[32mtask_wrap.call_task\e[0m
+    |       |-- \e[30minvoke_provider\e[0m
+    |       |-- \e[30mis_signal?\e[0m
+    |       `-- \e[32mcompute_binary_signal\e[0m
+    `-- \e[37mb\e[0m
+        `-- \e[37mtask_wrap.call_task\e[0m
+            `-- \e[31m\e[1minvoke_provider\e[0m
 "
     end
 
@@ -112,17 +110,21 @@ assert_equal output,
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
-        assert_equal flow_options[:stack].to_a.size, 8   # TODO: better test.
+        assert_equal flow_options[:stack].to_a.size, 10   # TODO: better test.
       end
 
       puts output
       assert_equal output,
-%(\e[37mCreate\e[0m
-`-- \e[32mtask_wrap.call_task\e[0m
-`-- \e[32mtask_wrap.call_task\e[0m
-`-- \e[32mtask_wrap.call_task\e[0m
-`-- \e[32mtask_wrap.call_task\e[0m
+%(\e[30mCreate\e[0m
+|-- \e[32ma\e[0m
+|-- \e[32mb\e[0m
+|-- \e[32mc\e[0m
+`-- \e[30mEnd.success\e[0m
 )
+    end
+
+    it "raise and business nodes, only" do
+      raise "test me"
     end
 
     it "returns the circuit interface return set" do
@@ -131,30 +133,29 @@ assert_equal output,
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
-        assert_equal flow_options[:stack].to_a.size, 40 # TODO: better test.
+        assert_equal flow_options[:stack].to_a.size, 38 # TODO: better test.
       end
 
       puts output
-      assert_equal output, %(\e[37mCreate\e[0m
-`-- \e[30mwtf_top_canonical\e[0m
-    `-- \e[30mtask_wrap.call_task\e[0m
-        |-- \e[32ma\e[0m
-        |   `-- \e[32mtask_wrap.call_task\e[0m
-        |       |-- \e[30minvoke_provider\e[0m
-        |       |-- \e[30mis_signal?\e[0m
-        |       `-- \e[32mcompute_binary_signal\e[0m
-        |-- \e[32mb\e[0m
-        |   `-- \e[32mtask_wrap.call_task\e[0m
-        |       |-- \e[30minvoke_provider\e[0m
-        |       |-- \e[30mis_signal?\e[0m
-        |       `-- \e[32mcompute_binary_signal\e[0m
-        |-- \e[32mc\e[0m
-        |   `-- \e[32mtask_wrap.call_task\e[0m
-        |       |-- \e[30minvoke_provider\e[0m
-        |       |-- \e[30mis_signal?\e[0m
-        |       `-- \e[32mcompute_binary_signal\e[0m
-        `-- \e[30mEnd.success\e[0m
-            `-- \e[30mtask_wrap.call_task\e[0m
+      assert_equal output, %(\e[30mCreate\e[0m
+`-- \e[30mtask_wrap.call_task\e[0m
+    |-- \e[32ma\e[0m
+    |   `-- \e[32mtask_wrap.call_task\e[0m
+    |       |-- \e[30minvoke_provider\e[0m
+    |       |-- \e[30mis_signal?\e[0m
+    |       `-- \e[32mcompute_binary_signal\e[0m
+    |-- \e[32mb\e[0m
+    |   `-- \e[32mtask_wrap.call_task\e[0m
+    |       |-- \e[30minvoke_provider\e[0m
+    |       |-- \e[30mis_signal?\e[0m
+    |       `-- \e[32mcompute_binary_signal\e[0m
+    |-- \e[32mc\e[0m
+    |   `-- \e[32mtask_wrap.call_task\e[0m
+    |       |-- \e[30minvoke_provider\e[0m
+    |       |-- \e[30mis_signal?\e[0m
+    |       `-- \e[32mcompute_binary_signal\e[0m
+    `-- \e[30mEnd.success\e[0m
+        `-- \e[30mtask_wrap.call_task\e[0m
 )
     end
   end

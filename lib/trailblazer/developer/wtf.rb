@@ -9,14 +9,16 @@ module Trailblazer
     module Wtf
       class Node < Trailblazer::Circuit::Node
         def call(lib_ctx, flow_options, signal, **circuit_options)
-          exception = false
-
           begin
             lib_ctx, flow_options, signal = super
           rescue
-            exception = $!
+            flow_options = flow_options.merge(exception: $!)
           end
 
+          return lib_ctx, flow_options, signal
+        end
+
+        def self.render(lib_ctx, flow_options, signal, **)
           # DISCUSS: rendering could happen in a separate, asyncable step.
           output = Trailblazer::Developer::Trace::Present.(
             flow_options[:stack],
@@ -24,7 +26,18 @@ module Trailblazer
             renderer: Renderer,
           )
 
-          puts output
+          return lib_ctx, flow_options.merge(output: output), signal
+        end
+
+        def self.print(lib_ctx, flow_options, signal, **)
+          puts flow_options.fetch(:output)
+
+          return lib_ctx, flow_options, signal
+        end
+
+        def self.reraise(lib_ctx, flow_options, signal, **)
+          exception = flow_options[:exception]
+
           raise exception if exception
 
           return lib_ctx, flow_options, signal
@@ -38,17 +51,26 @@ module Trailblazer
           node = circuit_options.fetch(:node) # the original node, eg {Create.task_wrap}.
           # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
           # ideally, this uses the same logic for canonical and for pure.
+          id = circuit_options.fetch(:id)
 
-          # DISCUSS: the whole Wtf? logic could be a pipe, where one step can render and be async?
+          rescue_node = Wtf::Node.new(**node.to_h) # FIXME: provide generic Node "coerce-cloning" and use it in NodeWrap, too.
+
+          options_for_node = {options: {trace: false}}
+
           wtf_circuit = Circuit::Builder.Pipeline(
-            [:wtf_top_canonical, node: node]
+            [id, node: rescue_node, **options_for_node], # execute the actual activity in begin..rescue.
+            [:render, Node.method(:render), Circuit::Task::Adapter::LibInterface, **options_for_node],
+            [:print, Node.method(:print), Circuit::Task::Adapter::LibInterface, **options_for_node],
+            [:reraise, Node.method(:reraise), Circuit::Task::Adapter::LibInterface, **options_for_node], # DISCUSS: use routing instead of if here.
           )
-          wtf_node = Wtf::Node[wtf_circuit, Circuit::Processor]
 
-          return lib_ctx, flow_options, circuit_options.merge(node: wtf_node)
+          node = Circuit::Node[wtf_circuit, Circuit::Processor, **options_for_node]
+
+          return lib_ctx, flow_options, circuit_options.merge(node: node)
         end
 
         CONDITION_FOR_BUSINESS_STEP = ->(node:, **) { node.to_h[:options][:business_step] } # The :business_step option is set in the dsl gem.
+        CONDITION_FOR_TRACE_FLAG = ->(node:, **) { ! (node.to_h[:options][:trace] === false) } # we set the :trace flag in the wtf pipeline.
 
         def produce_condition(lib_ctx, flow_options, circuit_options, **)
           only_business_nodes = circuit_options[:only_business_nodes] || false
@@ -57,6 +79,8 @@ module Trailblazer
           if only_business_nodes
             conditions += [CONDITION_FOR_BUSINESS_STEP]
           end
+
+          conditions += [CONDITION_FOR_TRACE_FLAG]
 
           return lib_ctx, flow_options, circuit_options.merge(conditions: conditions)
         end
