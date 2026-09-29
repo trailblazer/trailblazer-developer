@@ -104,6 +104,23 @@ assert_equal output,
 "
     end
 
+    it "wtf with a step returning an illegal signal (error on library level, in routing)" do
+      my_activity = Class.new(Trailblazer::Activity::Railway) do
+        step task: T.def_tasks(:a).method(:a), id: :a
+      end
+
+      output, _ = capture_io do
+        assert_raises KeyError do # FIXME: use our own error to test we're raising it.
+          Trailblazer::Developer.wtf?(my_activity, {seq: [], a: Trailblazer::Activity::Signal}, id: :Create, compiler: my_compiler, only_business_nodes: true)
+        end
+      end
+
+      # Problem here is, there is no Node::Incomplete to detect an error, since the {:a} task is finished and we get an error afterwards.
+      assert_equal output, %(\e[30mCreate\e[0m
+`-- \e[31m\e[1ma\e[0m
+)
+    end
+
     it "Developer.wtf? can use an option to trace only business nodes" do
       output, _ = capture_io do
         lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler, only_business_nodes: true)

@@ -2,7 +2,7 @@ module Trailblazer
   module Developer
     def self.wtf?(circuit, target_ctx, **options_for_invoke)
       lib_ctx = {target_ctx: target_ctx} # FIXME: use {produce_lib_ctx} step.
-
+# FIXME: use predefined compiler!!!!
       Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: [], conditions: []) # FIXME: default :extensions.
     end
 
@@ -24,6 +24,7 @@ module Trailblazer
             flow_options[:stack],
             segmenter: Trace::Node::Incomplete.method(:segmenter),
             renderer: Renderer,
+            exception: flow_options[:exception],
           )
 
           return lib_ctx, flow_options.merge(output: output), signal
@@ -57,6 +58,7 @@ module Trailblazer
 
           options_for_node = {options: {trace: false}}
 
+          # DISCUSS: we could probably improve performance here.
           wtf_circuit = Circuit::Builder.Pipeline(
             [id, node: rescue_node, **options_for_node], # execute the actual activity in begin..rescue.
             [:render, Node.method(:render), Circuit::Task::Adapter::LibInterface, **options_for_node],
@@ -104,25 +106,21 @@ module Trailblazer
           Activity::Left => :brown,
         )
 
-        def call(trace_node:, trace:, **)
+        def call(trace_node:, trace:, exception:, **)
           label = %(#{trace_node.id})
 
-          label =
-            if trace_node.is_a?(Trace::Node::Incomplete)
-              color_key = :gray
-
-              if trace_node == trace.last # we assume this is the root of all evil resp. of the exception.
-                color_key = :bold_red
-              end
-
-              colorize(label, COLORS[color_key])
+          color_key =
+            if trace_node == trace.last && exception  # we assume this is the root of all evil resp. of the exception.
+              :bold_red
+            elsif trace_node.is_a?(Trace::Node::Incomplete)
+              :gray
             else
               returned_signal = trace_node.snapshot_after.data.fetch(:signal)
 
-              color_key = SIGNAL_TO_COLOR_KEY[returned_signal]
-
-              colorize(label, COLORS[color_key])
+              SIGNAL_TO_COLOR_KEY[returned_signal]
             end
+
+          label = colorize(label, COLORS[color_key])
 
           [trace_node.level, label]
         end
