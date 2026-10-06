@@ -104,7 +104,62 @@ class TraceTest < Minitest::Spec
     assert_trace_node trace_nodes[20], level: 3, id: :"task_wrap.call_task", snapshot_before: snapshots[37][1], snapshot_after: snapshots[38][1] # :End.success.call_task
   end
 
+  it "{Present.call} with complete stack" do
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler)
+    assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
+
+    output = Trailblazer::Developer::Trace::Present.(flow_options[:stack])
+    puts output
+
+    assert_equal output,
+%(Create
+`-- task_wrap.call_task
+    |-- a
+    |   `-- task_wrap.call_task
+    |       |-- invoke_provider
+    |       |-- is_signal?
+    |       `-- compute_binary_signal
+    |-- B
+    |   `-- task_wrap.call_task
+    |       |-- C
+    |       |   `-- task_wrap.call_task
+    |       |       |-- c
+    |       |       |   `-- task_wrap.call_task
+    |       |       `-- End.success
+    |       |           `-- task_wrap.call_task
+    |       |-- b
+    |       |   `-- task_wrap.call_task
+    |       `-- End.success
+    |           `-- task_wrap.call_task
+    `-- End.success
+        `-- task_wrap.call_task)
+  end
+
+  it "we can also limit tracing to business nodes by using a custom condition in the Resolver" do
+    # my_resolver = Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(
+    #   default_extension_set: my_extensions,
+    #   )
+
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler,
+      conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }]
+      )
+    assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
+
+    output = Trailblazer::Developer::Trace::Present.(flow_options[:stack])
+    # puts output
+    assert_equal output, %(Create
+|-- a
+|-- B
+|   |-- C
+|       |-- c
+|       `-- End.success
+|   |-- b
+|   |-- End.success
+`-- End.success)
+  end
+
   # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
+  # FIXME: THIS IS A FULL-BLOWN INTEGRATION TEST vv
   it "allows tracing by manually passing the options" do
     my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
 
@@ -231,44 +286,7 @@ assert_equal output,
 
 
 
-  # we can also limit tracing to "business nodes".
-
-    my_resolver = Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(
-      default_extension_set: my_extensions,
-      conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }])
-
-    flow_options = {
-      stack:              Trailblazer::Developer::Trace::Stack.new,
-      value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
-    }
-    lib_ctx, flow_options, signal = runner.(
-      {target_ctx: {seq: []}},
-      flow_options,
-      nil,
-      runner: runner,
-      wrap_runtime: my_resolver,
-      context_implementation: Trailblazer::Circuit::Context,
-      id: :Create,
-      node: my_canonical_Create_tw_node,
-    )
-
-    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
-    assert_equal signal.to_h[:semantic], :success
-
-    stack = flow_options[:stack]
-
-    # Debugging
-    stack.to_a.each do |capture, _|
-      # puts [capture, capture.object_id, capture.delimits.object_id].inspect
-    end
-
-    output = Trailblazer::Developer::Trace::Present.(stack)
-
-    assert_equal output, %(Create
-|-- a
-|-- b
-|-- c
-`-- End.success)
+  #
   end
 
   it "can be used with Activity::Invoke.(). we can pass our options from the outside." do
