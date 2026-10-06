@@ -5,18 +5,14 @@ class TraceTest < Minitest::Spec
   def my_abc_activity
     require "trailblazer/activity/variable_mapping"
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
-      _, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
+      _, _, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
         builder: config.builder,
-        default_options: {adds_for_task_wrap: []}, # needed by :apply_adds_to_task_wrap_pipeline
+        default_options: {},
 
         helpers: {
           Trailblazer::Activity::VariableMapping::DSL::Helper => [:In, :Out, :Inject]
         },
         adds: [
-          # FIXME: the next step should be already there by Path/canonical.
-          # extension/task_wrap
-          [:apply_adds_to_task_wrap_pipeline, Trailblazer::Activity::DSL::Feature::Extension::TaskWrap::Normalizer::Node, :before, :build_task_wrap_node],
-
           [
             :variable_mapping, Trailblazer::Activity::VariableMapping::DSL::Normalizer::Node,
             :before, :normalize_wirings
