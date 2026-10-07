@@ -135,6 +135,31 @@ class TraceTest < Minitest::Spec
         `-- task_wrap.call_task)
   end
 
+  it "{Present.call} with Incomplete stack" do
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler)
+
+    assert_equal signal, my_a_b_activity.to_h[:outputs][:success].signal
+    assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
+
+    stack = flow_options[:stack].to_a.to_a[0..13]
+
+    # this is done in #wtf?
+    trace_nodes = Trailblazer::Developer::Trace.build_nodes(stack, segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter)) # we break at :a#compute_binary_signal.
+
+    snapshots = stack
+
+    assert_equal trace_nodes.size, 9
+    assert_trace_node trace_nodes[0], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 0, id: :Create, snapshot_before: stack[0][1], snapshot_after: nil
+    assert_trace_node trace_nodes[1], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 1, id: :"task_wrap.call_task", snapshot_before: stack[1][1], snapshot_after: nil
+    assert_trace_node trace_nodes[2], level: 2, id: :a, snapshot_before: stack[2][1], snapshot_after: stack[11][1]
+    assert_trace_node trace_nodes[3], level: 3, id: :"task_wrap.call_task", snapshot_before: stack[3][1], snapshot_after: stack[10][1]
+    assert_trace_node trace_nodes[4], level: 4, id: :invoke_provider, snapshot_before: stack[4][1], snapshot_after: stack[5][1]
+    assert_trace_node trace_nodes[5], level: 4, id: :is_signal?, snapshot_before: stack[6][1], snapshot_after: stack[7][1]
+    assert_trace_node trace_nodes[6], level: 4, id: :compute_binary_signal, snapshot_before: stack[8][1], snapshot_after: stack[9][1]
+    assert_trace_node trace_nodes[7], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 2, id: :B, snapshot_before: stack[12][1], snapshot_after: nil
+    assert_trace_node trace_nodes[8], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 3, id: :"task_wrap.call_task", snapshot_before: stack[13][1], snapshot_after: nil
+  end
+
   it "we can also limit tracing to business nodes by using a custom condition in the Resolver" do
     # my_resolver = Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(
     #   default_extension_set: my_extensions,
@@ -250,43 +275,6 @@ assert_equal output,
     |       `-- compute_binary_signal
     `-- End.success
         `-- task_wrap.call_task)
-
-
-
-
-
-
-# FIXME: move to node_test?
-    # trace_nodes = Trailblazer::Developer::Trace.build_nodes(stack.to_a)
-    # pp trace_nodes
-    # raise
-    # TODO: test changeset etc, the way it's done in node_test.
-
-    # FIXME: testing Incomplete
-    broken_stack = stack.to_a.to_a[0..8]
-    # this is done in #wtf?
-    trace_nodes = Trailblazer::Developer::Trace.build_nodes(broken_stack, segmenter: Trailblazer::Developer::Trace::Node::Incomplete.method(:segmenter)) # we break at :a#compute_binary_signal.
-    # pp trace_nodes
-
-    assert_equal trace_nodes.size, 7
-    assert_trace_node trace_nodes[0], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 0, id: :Create, snapshot_before: broken_stack[0][1], snapshot_after: nil
-    assert_trace_node trace_nodes[1], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 1, id: :"task_wrap.call_task", snapshot_before: broken_stack[1][1], snapshot_after: nil
-    assert_trace_node trace_nodes[2], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 2, id: :a, snapshot_before: broken_stack[2][1], snapshot_after: nil
-    assert_trace_node trace_nodes[3], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 3, id: :"task_wrap.call_task", snapshot_before: broken_stack[3][1], snapshot_after: nil
-    assert_trace_node trace_nodes[4], level: 4, id: :invoke_provider, snapshot_before: broken_stack[4][1], snapshot_after: broken_stack[5][1]
-    assert_trace_node trace_nodes[5], level: 4, id: :is_signal?, snapshot_before: broken_stack[6][1], snapshot_after: broken_stack[7][1]
-    assert_trace_node trace_nodes[6], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 4, id: :compute_binary_signal, snapshot_before: broken_stack[8][1], snapshot_after: nil
-
-
-
-
-
-
-
-
-
-
-  #
   end
 
   it "can be used with Activity::Invoke.(). we can pass our options from the outside." do
