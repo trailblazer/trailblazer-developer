@@ -15,14 +15,17 @@ module Trailblazer::Developer
     #     variable_versions: [:current_user, 0], [:model, 0]
     #   }
     # }
-    class Snapshot < Struct.new(:task, :data) # DISCUSS: make data [:changeset and :signal]?
+    class Snapshot < Struct.new(:id, :data) # DISCUSS: make data [:changeset and :signal]?
       # This is called from {Trace.capture_args} and {Trace.capture_return} in the taskWrap.
+      #
+      # The idea is that this is the public interface for the tracing tW logic. We pass in all arguments
+      # and let the Snapshot implementation decide what to collect.
       def self.call(lib_ctx, flow_options, signal, id:, **options)
         # DISCUSS: grab the {snapshooter} here from flow_options, instead of in Trace.capture_args?
         changeset, new_versions = snapshoot(lib_ctx, flow_options, signal, **options) # TODO: apply LibInterface.
 
         snapshot = new(
-          id,
+          id, # DISCUSS: does a Snapshot need an ID? Currently, it's keyed by a Capture instance that holds an ID.
           changeset,
         ).freeze
 
@@ -43,6 +46,8 @@ module Trailblazer::Developer
       end
 
       def self.snapshot_for(ctx, value_snapshooter:, stack:, **)
+        ctx = ctx.to_h # Convert any kind of Context into a plain hash (slower than #collect?)
+
         variable_versions = stack.variable_versions
 
         variable_versions.changeset_for(ctx, value_snapshooter: value_snapshooter) # return {changeset, new_versions}
