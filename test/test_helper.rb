@@ -1,10 +1,13 @@
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "trailblazer/circuit"
-require "trailblazer/activity/dsl"
-require "trailblazer/activity"
+# require "trailblazer/circuit"
+# require "trailblazer/activity/dsl"
+# require "trailblazer/activity"
+require "trailblazer/operation"
 
 require "trailblazer/developer"
 require "trailblazer/core"
+
+
 
 require "minitest/autorun"
 require "pp"
@@ -19,6 +22,7 @@ Minitest::Spec.class_eval do
 
   T = Trailblazer::Core
 
+  # let(:my_compiler) do
   let(:my_compiler) do
     # DISCUSS: this should be done by trailblazer-rails.
     # DISCUSS: where do we do this, is that some "global" constant in Trace?

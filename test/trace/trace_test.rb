@@ -3,26 +3,7 @@ require "test_helper"
 # Test {Trace.call} and {Trace::Present.call}
 class TraceTest < Minitest::Spec
   def my_abc_activity
-    require "trailblazer/activity/variable_mapping"
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
-      _, _, builder, helper_forwarder = Trailblazer::Activity::DSL::Topology.build(
-        builder: config.builder,
-        default_options: {},
-
-        helpers: {
-          Trailblazer::Activity::VariableMapping::DSL::Helper => [:In, :Out, :Inject]
-        },
-        adds: [
-          [
-            :variable_mapping, Trailblazer::Activity::VariableMapping::DSL::Normalizer::Node,
-            :before, :normalize_wirings
-          ],
-        ],
-      )
-
-      config.builder = builder
-      extend helper_forwarder
-
       step :a
       step :b,
         In() => [:seq]
@@ -170,6 +151,23 @@ class TraceTest < Minitest::Spec
 |   |-- b
 |   |-- End.success
 `-- End.success)
+  end
+
+  it "Trace///TaskWrap extends task_wrap nodes instead of creating a new NodeWrap" do
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
+      my_abc_activity,
+      {target_ctx: {seq: [], current_user: Object}},
+
+      extensions: [], id: :Create, compiler: my_compiler,
+      conditions: [Trailblazer::Developer::Trace::TaskWrap::Resolver::CONDITION],
+      add_node_wrap_extension: false,
+    )
+    assert_equal lib_ctx[:target_ctx][:seq], [:a, :b, :c]
+
+    before_b_snapshot = flow_options[:stack].to_a.values[2]
+    assert_equal before_b_snapshot.id, :b
+    assert_equal before_b_snapshot.data[:ctx_variable_changeset].size, 1 # FIXME: better test for "we only see :seq in the trace as it's run AFTER In() logic."
+    assert_equal before_b_snapshot.data[:ctx_variable_changeset][0][0], :seq # FIXME: better test for "we only see :seq in the trace as it's run AFTER In() logic."
   end
 
   # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
