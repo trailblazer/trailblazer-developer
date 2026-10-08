@@ -73,7 +73,7 @@ assert_equal output,
   end
 
   describe "Developer.wtf?" do
-    let(:my_compiler) do
+    let(:my_compiler_for_wtf) do
       # DISCUSS: this should be done by trailblazer-rails.
       Trailblazer::Circuit::Adds.(
         Trailblazer::Activity::Invoke::Args::Compiler,
@@ -86,7 +86,7 @@ assert_equal output,
     it "provides the Developer.wtf? method that uses the canonical debug pipe" do
       output, _ = capture_io do
         assert_raises RuntimeError do # FIXME: use our own error to test we're raising it.
-          Trailblazer::Developer.wtf?(my_abc_activity, {seq: [], raise_from_b: true}, id: :Create, compiler: my_compiler)
+          Trailblazer::Developer.wtf?(my_abc_activity, {seq: [], raise_from_b: true}, id: :Create, compiler: my_compiler_for_wtf)
         end
       end
 
@@ -111,7 +111,7 @@ assert_equal output,
 
       output, _ = capture_io do
         assert_raises KeyError do # FIXME: use our own error to test we're raising it.
-          Trailblazer::Developer.wtf?(my_activity, {seq: [], a: Trailblazer::Activity::Signal}, id: :Create, compiler: my_compiler, only_business_nodes: true)
+          Trailblazer::Developer.wtf?(my_activity, {seq: [], a: Trailblazer::Activity::Signal}, id: :Create, compiler: my_compiler_for_wtf, only_business_nodes: true)
         end
       end
 
@@ -123,7 +123,7 @@ assert_equal output,
 
     it "Developer.wtf? can use an option to trace only business nodes" do
       output, _ = capture_io do
-        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler, only_business_nodes: true)
+        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler_for_wtf, only_business_nodes: true)
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
@@ -146,7 +146,7 @@ assert_equal output,
 
     it "returns the circuit interface return set" do
       output, _ = capture_io do
-        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler)
+        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler_for_wtf)
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal

@@ -1,6 +1,10 @@
 require "test_helper"
 
 # Test {Trace.call} and {Trace::Present.call}
+#
+# NOTE: I use Invoke and {:my_compiler_with_trace} here to enable tracing as I'm not sure
+#       we need a public method right now. People either use Operation/Developer.wtf? or
+#       they (should!) know what they're doing.
 class TraceTest < Minitest::Spec
   def my_abc_activity
     my_abc_activity = Class.new(Trailblazer::Activity::Railway) do
@@ -31,7 +35,7 @@ class TraceTest < Minitest::Spec
   end
 
   it "Trace.build_nodes" do # DISCUSS: can't we use a higher abstraction for testing the nodes?
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler)
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace)
 
     assert_equal signal, my_a_b_activity.to_h[:outputs][:success].signal
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
@@ -75,7 +79,7 @@ class TraceTest < Minitest::Spec
   end
 
   it "{Present.call} with complete stack" do
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler)
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace)
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
 
     output = Trailblazer::Developer::Trace::Present.(flow_options[:stack])
@@ -106,7 +110,7 @@ class TraceTest < Minitest::Spec
   end
 
   it "{Present.call} with Incomplete stack" do
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler)
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace)
 
     assert_equal signal, my_a_b_activity.to_h[:outputs][:success].signal
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
@@ -135,7 +139,7 @@ class TraceTest < Minitest::Spec
     #   default_extension_set: my_extensions,
     #   )
 
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler,
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace,
       conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }]
     )
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
@@ -158,7 +162,7 @@ class TraceTest < Minitest::Spec
       my_abc_activity,
       {target_ctx: {seq: [], current_user: Object}},
 
-      extensions: [], id: :Create, compiler: my_compiler,
+      extensions: [], id: :Create, compiler: my_compiler_with_trace,
       conditions: [Trailblazer::Developer::Trace::TaskWrap::Resolver::CONDITION],
       add_node_wrap_extension: false,
     )

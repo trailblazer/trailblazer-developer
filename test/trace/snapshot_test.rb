@@ -59,7 +59,7 @@ class SnapshotTest < Minitest::Spec
       },
       extensions: [],
       id: :Endpoint,
-      compiler: my_compiler, # FIXME: passing my_compiler shouldn't be necessary.
+      compiler: my_compiler_with_trace, # FIXME: passing my_compiler shouldn't be necessary.
       conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }]
     )
 

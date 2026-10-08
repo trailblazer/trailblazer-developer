@@ -23,7 +23,7 @@ Minitest::Spec.class_eval do
   T = Trailblazer::Core
 
   # let(:my_compiler) do
-  let(:my_compiler) do
+  let(:my_compiler_with_trace) do
     # DISCUSS: this should be done by trailblazer-rails.
     # DISCUSS: where do we do this, is that some "global" constant in Trace?
     Trailblazer::Circuit::Adds.(
