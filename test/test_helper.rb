@@ -18,4 +18,15 @@ Minitest::Spec.class_eval do
   include Trailblazer::Core::Utils::AssertEqual
 
   T = Trailblazer::Core
+
+  let(:my_compiler) do
+    # DISCUSS: this should be done by trailblazer-rails.
+    # DISCUSS: where do we do this, is that some "global" constant in Trace?
+    Trailblazer::Circuit::Adds.(
+      Trailblazer::Activity::Invoke::Args::Compiler,
+      [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+      # [:my_wtf, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_wtf_node), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+      # [:my_wtf_2, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_condition), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+    )
+  end
 end
