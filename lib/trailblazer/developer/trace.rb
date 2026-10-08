@@ -2,14 +2,15 @@ module Trailblazer
   module Developer
     module Trace
       @value_snapshooter = Trace::Snapshot::Value.build()
-      singleton_class.attr_reader :value_snapshooter # NOTE: this is semi-private.
+      singleton_class.attr_reader :value_snapshooter # NOTE: this is semi-private. # DISCUSS: do we want that?
 
       # {delimits: nil} means we're a Before.
       # FIXME: two Capture instances referring to "task_wrap.call_task" will use the same Hash key. test that explicitly.
+      # FIXME: why not use circuit_options here and save the Id stuff?
       class Capture < Struct.new(:id, :delimits, :internal_id)
         # Created at runtime by WrapRuntime.
         def call(lib_ctx, flow_options, signal, **options) # DISCUSS: do we need to default snapshot_before? with canonical invoke?
-          snapshot, new_versions = Snapshot.build(lib_ctx, flow_options, signal, **options, id: id, delimits: delimits)
+          snapshot, new_versions = Snapshot.(lib_ctx, flow_options, signal, **options, id: id, delimits: delimits)
 
           # We try to be generic here in the taskWrap snapshooting code, where details happen in Snapshot::Before/After and Stack#add!.
           flow_options[:stack].add!(self, snapshot, new_versions)
@@ -22,6 +23,7 @@ module Trailblazer
       class Extension # TODO: use canonical Node::Extension or whatever we name it?!
         # Called through WrapRuntime::Runner, obviously at runtime.
         def self.call(id:, **)
+          # we know we're receiving a NodeWrap::Id instance here.
           traced_id = id.wrapped_id # {id} is a NodeWrap::Id instance.
 
           # produce ADDs

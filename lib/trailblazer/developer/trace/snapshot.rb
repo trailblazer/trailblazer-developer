@@ -15,9 +15,9 @@ module Trailblazer::Developer
     #     variable_versions: [:current_user, 0], [:model, 0]
     #   }
     # }
-    class Snapshot < Struct.new(:task, :data)
+    class Snapshot < Struct.new(:task, :data) # DISCUSS: make data [:changeset and :signal]?
       # This is called from {Trace.capture_args} and {Trace.capture_return} in the taskWrap.
-      def self.build(lib_ctx, flow_options, signal, id:, **options)
+      def self.call(lib_ctx, flow_options, signal, id:, **options)
         # DISCUSS: grab the {snapshooter} here from flow_options, instead of in Trace.capture_args?
         changeset, new_versions = snapshoot(lib_ctx, flow_options, signal, **options) # TODO: apply LibInterface.
 
