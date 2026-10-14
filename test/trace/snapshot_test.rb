@@ -47,7 +47,30 @@ class SnapshotTest < Minitest::Spec
     end
   end
 
-  it "snapshots that are taken before and after the NodeWrap node. this means we don't see I/o logic" do
+  it "mixing NodeWrap and application-trace: snapshots taken via NodeWrap don't see I/o logic because the entire taskWrap is within a WrapNode" do
+    # This is mixing application-tracing and NodeWrap.
+    #
+    # we only create a NodeWrap for {task_wrap: true} nodes.
+    my_wrap_and_trace_extension = Trailblazer::Circuit::WrapRuntime::Extension.new(
+      # conditions:
+      Trailblazer::Circuit::WrapRuntime::Extension::Conditions.new(
+        [
+          ->(node:, **) { node.options[:task_wrap] },
+          Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::CONDITION
+        ]
+      ),
+      # extension chain:
+      Trailblazer::Circuit::WrapRuntime::Extension::Chain.new(
+        [
+          Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::EXTENSION,
+          Trailblazer::Circuit::WrapRuntime::Extension::AddsInstructions.new(Trailblazer::Developer::Trace::Extension)
+        ]
+      )
+    )
+    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
+    # _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, {extensions: [my_wrap_and_trace_extension]}) # normally, this'd happen in the Invoke pipeline.
+
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
       Endpoint,
       {
@@ -57,10 +80,9 @@ class SnapshotTest < Minitest::Spec
           params: {name: "Q & I"},
         }
       },
-      extensions: [],
+      flow_options: flow_options_for_trace,
       id: :Endpoint,
-      compiler: my_compiler_with_trace, # FIXME: passing my_compiler shouldn't be necessary.
-      conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }]
+      **circuit_options_for_trace
     )
 
     ctx = lib_ctx[:target_ctx]

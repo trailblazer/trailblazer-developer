@@ -32,6 +32,7 @@ module Trailblazer
 
         # FIXME: Resolver::Conditional
 
+        # TODO: allow different chars for signal, for b/w output.
         def render_next_steps(connections)
           reset = "\e[0m"
           colors = {
@@ -45,7 +46,7 @@ module Trailblazer
           arrow = "▶" # ⎔
 
           sort_by = [Activity::Right, Activity::Left]
-          connections = connections.sort do |(signal, next_step_id), b| # TODO: well yeah, this is pretty basic.
+          connections = connections.sort do |(signal, next_step_id), b| # TODO: well yeah, this is pretty basic and won't work when there's a connection other than Right as element 0.
             sort_by.index(signal)
           end
 

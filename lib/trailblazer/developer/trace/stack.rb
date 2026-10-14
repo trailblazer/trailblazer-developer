@@ -28,6 +28,10 @@ module Trailblazer
         def to_a
           @snapshots
         end
+
+        def to_h # FIXME: use Struct
+          {variable_versions: self.variable_versions}
+        end
       end # Stack
     end
   end

@@ -29,9 +29,10 @@ class TraceWtfTest < Minitest::Spec
 
     # mimicking the Invoke pipe here.
     # I decided to leave this test and its prototypical nature to remind us how things work internally.
+
     _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: [], node: my_canonical_Create_tw_node, conditions: []})
+    _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options, circuit_options) # normally, this'd happen in the Invoke pipeline.
     _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_wtf_node({}, flow_options, circuit_options.merge(id: :Create))
-    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_condition({}, flow_options, circuit_options)
     _, flow_options, circuit_options = Trailblazer::Activity::Invoke.produce_wrap_runtime({}, flow_options, circuit_options)
 
     runner = Trailblazer::Circuit::WrapRuntime::Runner
@@ -45,7 +46,7 @@ class TraceWtfTest < Minitest::Spec
           runner: runner,
           **circuit_options,
           context_implementation: Trailblazer::Circuit::Context,
-          id: :Create,
+          # id: :Create, # we currently compute the :id in {#produce_wtf_node}
         )
       end
     end
@@ -73,20 +74,11 @@ assert_equal output,
   end
 
   describe "Developer.wtf?" do
-    let(:my_compiler_for_wtf) do
-      # DISCUSS: this should be done by trailblazer-rails.
-      Trailblazer::Circuit::Adds.(
-        Trailblazer::Activity::Invoke::Args::Compiler,
-        [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
-        [:my_wtf, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_wtf_node), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
-        [:my_wtf_2, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_condition), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
-      )
-    end
-
     it "provides the Developer.wtf? method that uses the canonical debug pipe" do
       output, _ = capture_io do
         assert_raises RuntimeError do # FIXME: use our own error to test we're raising it.
-          Trailblazer::Developer.wtf?(my_abc_activity, {seq: [], raise_from_b: true}, id: :Create, compiler: my_compiler_for_wtf)
+          Trailblazer::Developer.wtf?(my_abc_activity, {seq: [], raise_from_b: true},
+            id: :Create) # FIXME: where does ID come from? canonical invoke!
         end
       end
 
@@ -111,19 +103,22 @@ assert_equal output,
 
       output, _ = capture_io do
         assert_raises KeyError do # FIXME: use our own error to test we're raising it.
-          Trailblazer::Developer.wtf?(my_activity, {seq: [], a: Trailblazer::Activity::Signal}, id: :Create, compiler: my_compiler_for_wtf, only_business_nodes: true)
+          Trailblazer::Developer.wtf?(my_activity, {seq: [], a: Trailblazer::Activity::Signal},
+            only_application: true,
+            id: :Create
+          )
         end
       end
 
       # Problem here is, there is no Node::Incomplete to detect an error, since the {:a} task is finished and we get an error afterwards.
-      assert_equal output, %(\e[30mCreate\e[0m
+      assert_equal output, %(\e[37mCreate\e[0m
 `-- \e[31m\e[1ma\e[0m
 )
     end
 
     it "Developer.wtf? can use an option to trace only business nodes" do
       output, _ = capture_io do
-        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler_for_wtf, only_business_nodes: true)
+        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, only_application: true)
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
@@ -146,11 +141,11 @@ assert_equal output,
 
     it "returns the circuit interface return set" do
       output, _ = capture_io do
-        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create, compiler: my_compiler_for_wtf)
+        lib_ctx, flow_options, signal = Trailblazer::Developer.wtf?(my_abc_activity, {seq: []}, id: :Create)
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
-        assert_equal flow_options[:stack].to_a.size, 38 # TODO: better test.
+        assert_equal flow_options[:stack].to_a.size, 46 # TODO: better test.
       end
 
       puts output

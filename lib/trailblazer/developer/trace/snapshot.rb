@@ -52,6 +52,13 @@ module Trailblazer::Developer
 
         variable_versions.changeset_for(ctx, value_snapshooter: value_snapshooter) # return {changeset, new_versions}
       end
+
+      # TODO: currently only used in testing in OP (and in trace?)
+      def self.ctx_from_snapshot(snapshot, variable_versions)
+        ctx = Trailblazer::Developer::Trace::Snapshot.snapshot_ctx_for(snapshot, variable_versions)
+
+        ctx.collect { |variable_name, data| [variable_name, data[:value]] }.to_h
+      end
     end
   end
 end

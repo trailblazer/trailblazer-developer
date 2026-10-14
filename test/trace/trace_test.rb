@@ -134,13 +134,19 @@ class TraceTest < Minitest::Spec
     assert_trace_node trace_nodes[8], node_class: Trailblazer::Developer::Trace::Node::Incomplete, level: 3, id: :"task_wrap.call_task", snapshot_before: stack[13][1], snapshot_after: nil
   end
 
-  it "we can also limit tracing to business nodes by using a custom condition in the Resolver" do
-    # my_resolver = Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(
-    #   default_extension_set: my_extensions,
-    #   )
+  # it "we can also limit tracing to business nodes by using a custom condition in the Resolver" do # FIXME: how to allow custom conditions like {id == :a}?
+  it "we can trace application nodes, only" do
+    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_application_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
 
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace,
-      conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION, ->(node:, **) { node.options[:business_step] }]
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
+      my_a_b_activity,
+      {target_ctx: {seq: []}},
+      id: :Create,
+      # compiler: my_compiler_with_trace,
+      flow_options: flow_options_for_trace,
+      **circuit_options_for_trace
     )
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
 
@@ -157,29 +163,40 @@ class TraceTest < Minitest::Spec
 `-- End.success)
   end
 
-  it "Trace///TaskWrap extends task_wrap nodes instead of creating a new NodeWrap" do
+  it "Trace///TaskWrap extends task_wrap nodes instead of creating a new NodeWrap. This allows i/o nodes to hook into specific positions in the taskWrap" do # DISCUSS: this is the actual wtf? behavior we are used to.
+    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_application_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
+
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
       my_abc_activity,
       {target_ctx: {seq: [], current_user: Object}},
 
-      extensions: [], id: :Create, compiler: my_compiler_with_trace,
-      conditions: [Trailblazer::Developer::Trace::TaskWrap::Resolver::CONDITION],
-      add_node_wrap_extension: false,
+      id: :Create, #compiler: my_compiler_with_trace,
+
+      flow_options: flow_options_for_trace,
+      **circuit_options_for_trace
     )
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :b, :c]
 
-    before_b_snapshot = flow_options[:stack].to_a.values[2]
+    # puts "@@@@@ #{flow_options[:stack].to_a.values[1].inspect}"
+
+    before_b_snapshot = flow_options[:stack].to_a.values[3]
     assert_equal before_b_snapshot.id, :b
     assert_equal before_b_snapshot.data[:ctx_variable_changeset].size, 1 # FIXME: better test for "we only see :seq in the trace as it's run AFTER In() logic."
     assert_equal before_b_snapshot.data[:ctx_variable_changeset][0][0], :seq # FIXME: better test for "we only see :seq in the trace as it's run AFTER In() logic."
   end
 
+  # here, we want NodeWrap behavior.
+  it "Developer.wtf?" do
+
+  end
+
   # This is for people who were using Developer::Trace.(MyActivity) to trace on their own.
   # FIXME: THIS IS A FULL-BLOWN INTEGRATION TEST vv
-  it "allows tracing by manually passing the options" do
+  it "allows application-tracing by manually passing the options" do
     my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
 
-    # my_abc_activity_node.task.instance_variable_set(:@pipe, true) # FIXME: this is used in WrapRuntime::Runner.
     my_canonical_Create_tw_node = Trailblazer::Circuit::Node[
       Trailblazer::Circuit::Builder.Pipeline(
         [:"task_wrap.call_task", node: my_abc_activity_node]
@@ -187,32 +204,22 @@ class TraceTest < Minitest::Spec
       Trailblazer::Circuit::Processor
     ]
 
-    # DISCUSS: how to merge multiple runtime extensions? canonical invoke!
-    my_tracing_extension_builder = Trailblazer::Circuit::WrapRuntime.Extension(adds: Trailblazer::Developer::Trace::Extension) # WrapRuntime::Extension means we adds
+    # manually compile the necessary args for tracing:
+    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
 
-    my_extensions = Trailblazer::Circuit::WrapRuntime::Extension::Set.new(
-      [
-        Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap,
-        my_tracing_extension_builder,
-      ]
-    )
-
-    flow_options = {
-      stack:              Trailblazer::Developer::Trace::Stack.new,
-      value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
-    }
-
-    runner = Trailblazer::Circuit::WrapRuntime::Runner
+    runner = Trailblazer::Circuit::WrapRuntime::Runner # DISCUSS: use #assert_run?
 
     lib_ctx, flow_options, signal = runner.(
       {target_ctx: {seq: []}},
-      flow_options,
+      flow_options_for_trace,
       nil,
       runner: runner,
-      wrap_runtime: Trailblazer::Circuit::WrapRuntime::Extension::Resolver.new(default_extension_set: my_extensions, conditions: [Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::Resolver::CONDITION]),
       context_implementation: Trailblazer::Circuit::Context,
       id: :Create,
       node: my_canonical_Create_tw_node,
+      **circuit_options_for_trace,
     )
 
     assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
@@ -269,14 +276,16 @@ assert_equal output,
   end
 
   it "can be used with Activity::Invoke.(). we can pass our options from the outside." do
-    _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: []})
+    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
 
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
       my_abc_activity,
       {target_ctx: {seq: []}}, # DISCUSS: we are passing the lib_ctx here, not "application_ctx".
 
-      flow_options: flow_options,
-      **circuit_options,
+      flow_options: flow_options_for_trace,
+      **circuit_options_for_trace,
       id: :Create,
     )
 
@@ -321,59 +330,7 @@ assert_equal output,
 
   # DISCUSS: not sure this test needs to exist.
   it "we can also configure the canonical invoke pipeline to enable tracing based on ENV variables" do
-    my_canonical_invoke = Trailblazer::Circuit::Adds.(
-      Trailblazer::Activity::Invoke::Args::Compiler,
-      [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime]
-    )
 
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
-      my_abc_activity,
-      {target_ctx: {seq: []}}, # DISCUSS: we are passing the lib_ctx here, not "application_ctx".
-
-      # flow_options: flow_options,
-      # **circuit_options,
-      id: :Create,
-      compiler: my_canonical_invoke,
-      extensions: []
-    )
-
-    assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
-    assert_equal signal.to_h[:semantic], :success
-
-    stack = flow_options[:stack]
-
-    output = Trailblazer::Developer::Trace::Present.(stack)
-
-    assert_equal output,
-%(Create
-`-- task_wrap.call_task
-    |-- a
-    |   `-- task_wrap.call_task
-    |       |-- invoke_provider
-    |       |-- is_signal?
-    |       `-- compute_binary_signal
-    |-- b
-    |   |-- variable_mapping.input
-    |   |   |-- in.seq > seq
-    |   |   |   |-- invoke_provider
-    |   |   |   |   `-- invoke_provider
-    |   |   |   |-- wrap_value_with_hash
-    |   |   |   `-- add_value_to_aggregate
-    |   |   `-- input.scope
-    |   |-- task_wrap.call_task
-    |   |   |-- invoke_provider
-    |   |   |-- is_signal?
-    |   |   `-- compute_binary_signal
-    |   `-- variable_mapping.output
-    |       |-- output.default_output
-    |       `-- output.merge_with_original
-    |-- c
-    |   `-- task_wrap.call_task
-    |       |-- invoke_provider
-    |       |-- is_signal?
-    |       `-- compute_binary_signal
-    `-- End.success
-        `-- task_wrap.call_task)
   end
 
   # DISCUSS: move to node_test.

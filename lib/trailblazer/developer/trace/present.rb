@@ -23,9 +23,9 @@ module Trailblazer::Developer
       # Used in `#wtf?`.
       def call(stack, render_method: method(:render), segmenter: Trace::Node.method(:segmenter), **options, &block)
         # Build a generic array of {Trace::Node}s.
-        trace_nodes = Trace.build_nodes(stack.to_a, segmenter: segmenter)
+        trace_nodes = Trace.build_nodes(stack.to_a, segmenter: segmenter) # TODO: make this another step in the invoke/tracing pipe.
 
-        return render_method.(trace: trace_nodes, **options)
+        return render_method.(trace: trace_nodes, **stack.to_h, **options)
       end
 
       # "it's only gonna be 25 mins. 2 days later, *rummages for graph theory book*"

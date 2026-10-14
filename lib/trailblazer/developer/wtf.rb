@@ -1,9 +1,15 @@
 module Trailblazer
   module Developer
-    def self.wtf?(circuit, target_ctx, **options_for_invoke)
+    def self.wtf?(circuit, target_ctx, compiler: Wtf::Invoke::Compiler, only_application: false, **options_for_invoke)
+      if only_application
+        compiler = Wtf::Rly::Invoke::Compiler
+
+        options_for_invoke = options_for_invoke.merge(flow_options: {trim_stack: false})
+      end
+
       lib_ctx = {target_ctx: target_ctx} # FIXME: use {produce_lib_ctx} step.
-# FIXME: use predefined compiler!!!!
-      Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: [], conditions: []) # FIXME: default :extensions.
+
+      Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: [], compiler: compiler) # FIXME: default :extensions.
     end
 
     module Wtf
@@ -19,11 +25,23 @@ module Trailblazer
         end
 
         def self.render(lib_ctx, flow_options, signal, **)
+          renderer = flow_options[:renderer] || Renderer # TODO: test me in developer.
+
+          stack = flow_options[:stack]
+
+          trim_stack = flow_options.key?(:trim_stack) ? flow_options[:trim_stack] : true # DISCUSS: not super happy with this flag, but moving it to another step breaks the trimming.
+          if trim_stack
+            stack = flow_options[:stack].to_a.to_a
+            # pp stack.to_a.values[0]
+            # pp stack.to_a.values[-1]
+            stack = stack[1..-2] # Cut off {<wtf.Create} and {<wtf.render}. # DISCUSS: not sure this is the final implementation.
+          end
+
           # DISCUSS: rendering could happen in a separate, asyncable step.
           output = Trailblazer::Developer::Trace::Present.(
-            flow_options[:stack],
+            stack,
             segmenter: Trace::Node::Incomplete.method(:segmenter),
-            renderer: Renderer,
+            renderer: renderer,
             exception: flow_options[:exception],
           )
 
@@ -53,38 +71,43 @@ module Trailblazer
           # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
           # ideally, this uses the same logic for canonical and for pure.
           id = circuit_options.fetch(:id)
+# FIXME: wtf should be wrapping the canonical node, not just the "circuit".
 
           rescue_node = Wtf::Node.new(**node.to_h) # FIXME: provide generic Node "coerce-cloning" and use it in NodeWrap, too.
 
-          options_for_node = {options: {trace: false}}
-
           # DISCUSS: we could probably improve performance here.
           wtf_circuit = Circuit::Builder.Pipeline(
-            [id, node: rescue_node, **options_for_node], # execute the actual activity in begin..rescue.
-            [:render, Node.method(:render), Circuit::Task::Adapter::LibInterface, **options_for_node],
-            [:print, Node.method(:print), Circuit::Task::Adapter::LibInterface, **options_for_node],
-            [:reraise, Node.method(:reraise), Circuit::Task::Adapter::LibInterface, **options_for_node], # DISCUSS: use routing instead of if here.
+            [id, node: rescue_node], # execute the actual activity in begin..rescue.
+            [:render, Node.method(:render)],
+            [:print, Node.method(:print)],
+            [:reraise, Node.method(:reraise)], # DISCUSS: use routing instead of if here.
           )
 
-          node = Circuit::Node[wtf_circuit, Circuit::Processor, **options_for_node]
+          node = Circuit::Node[wtf_circuit, Circuit::Processor]
 
-          return lib_ctx, flow_options, circuit_options.merge(node: node)
+          return lib_ctx, flow_options, circuit_options.merge(node: node, id: "wtf.#{id}")
         end
 
-        CONDITION_FOR_BUSINESS_STEP = ->(node:, **) { node.to_h[:options][:business_step] } # The :business_step option is set in the dsl gem.
-        CONDITION_FOR_TRACE_FLAG = ->(node:, **) { ! (node.to_h[:options][:trace] === false) } # we set the :trace flag in the wtf pipeline.
+        Compiler = Circuit::Adds.(
+          Activity::Invoke::Args::Compiler,
+          [:"trace.flow_options", Circuit::Node[Developer::Trace::Invoke.method(:add_options_for_trace), Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+          [:"trace.extensions.wrap_node", Circuit::Node[Developer::Trace::Invoke.method(:add_extension_for_wrap_node_tracing), Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+          [:"wtf.node", Circuit::Node[Developer::Wtf::Invoke.method(:produce_wtf_node), Circuit::Task::Adapter::LibInterface], :after],
+        )
 
-        def produce_condition(lib_ctx, flow_options, circuit_options, **)
-          only_business_nodes = circuit_options[:only_business_nodes] || false
-          conditions = circuit_options.fetch(:conditions)
+        # Trailblazer::Developer.puts(Compiler)
+      end
 
-          if only_business_nodes
-            conditions += [CONDITION_FOR_BUSINESS_STEP]
-          end
-
-          conditions += [CONDITION_FOR_TRACE_FLAG]
-
-          return lib_ctx, flow_options, circuit_options.merge(conditions: conditions)
+      module Rly # TODO: move.
+        module Invoke
+          Compiler = Circuit::Adds.(
+            Wtf::Invoke::Compiler,
+            [
+              :"trace.extensions.extend_task_wrap",
+              Circuit::Node[Trace::Invoke.method(:add_extension_for_application_tracing), Circuit::Task::Adapter::LibInterface],
+              :replace, :"trace.extensions.wrap_node"
+            ],
+          )
         end
       end
 

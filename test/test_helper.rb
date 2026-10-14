@@ -29,6 +29,8 @@ Minitest::Spec.class_eval do
     Trailblazer::Circuit::Adds.(
       Trailblazer::Activity::Invoke::Args::Compiler,
       [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+      [:"trace.all_nodes", Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_extension_for_wrap_node_tracing), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+
       # [:my_wtf, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_wtf_node), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
       # [:my_wtf_2, Trailblazer::Circuit::Node[Trailblazer::Developer::Wtf::Invoke.method(:produce_condition), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
     )
