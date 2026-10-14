@@ -32,7 +32,9 @@ class TraceWtfTest < Minitest::Spec
 
     _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({}, {}, {extensions: [], node: my_canonical_Create_tw_node, conditions: []})
     _, flow_options, circuit_options = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options, circuit_options) # normally, this'd happen in the Invoke pipeline.
+    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.add_flow_options({}, flow_options, circuit_options)
     _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.produce_wtf_node({}, flow_options, circuit_options.merge(id: :Create))
+    _, flow_options, circuit_options = Trailblazer::Developer::Wtf::Invoke.add_trim_trace({}, flow_options, circuit_options)
     _, flow_options, circuit_options = Trailblazer::Activity::Invoke.produce_wrap_runtime({}, flow_options, circuit_options)
 
     runner = Trailblazer::Circuit::WrapRuntime::Runner
@@ -145,7 +147,8 @@ assert_equal output,
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
-        assert_equal flow_options[:stack].to_a.size, 46 # TODO: better test.
+        assert_equal flow_options[:stack].to_a.size, 50 # TODO: better test.
+        assert_equal flow_options[:trace].to_a.size, 19 # TODO: better test.
       end
 
       puts output

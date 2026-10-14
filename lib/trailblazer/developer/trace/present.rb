@@ -19,13 +19,25 @@ module Trailblazer::Developer
         Tree.render(nodes)
       end
 
-      # Entry point for rendering a {Trace::Stack}.
-      # Used in `#wtf?`.
-      def call(stack, render_method: method(:render), segmenter: Trace::Node.method(:segmenter), **options, &block)
-        # Build a generic array of {Trace::Node}s.
-        trace_nodes = Trace.build_nodes(stack.to_a, segmenter: segmenter) # TODO: make this another step in the invoke/tracing pipe.
+      def build_trace_from_stack(lib_ctx, flow_options, signal, **) # FIXME: MOVE TO Trace::Node?
+        stack = flow_options.fetch(:stack)
 
-        return render_method.(trace: trace_nodes, **stack.to_h, **options)
+        segmenter = flow_options[:segmenter] || Trace::Node.method(:segmenter) # FIXME: move to options_for_trace?
+
+        # Build a generic array of {Trace::Node}s.
+        trace_nodes = Trace.build_nodes(stack.to_a, segmenter: segmenter)
+
+        return lib_ctx, flow_options.merge(trace: trace_nodes), signal
+      end
+
+      def render_output(lib_ctx, flow_options, signal, **)
+        # render_method = flow_options.fetch(:render_method)
+        render_method = flow_options[:render_method] || method(:render) # FIXME: where to default this?  # FIXME: couldn't this be another step?
+
+        # DISCUSS: rendering could happen in a separate, asyncable step.
+        output = render_method.(**flow_options)
+
+        return lib_ctx, flow_options.merge(output: output), signal
       end
 
       # "it's only gonna be 25 mins. 2 days later, *rummages for graph theory book*"

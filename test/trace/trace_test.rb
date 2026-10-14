@@ -82,10 +82,12 @@ class TraceTest < Minitest::Spec
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace)
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
 
-    output = Trailblazer::Developer::Trace::Present.(flow_options[:stack])
-    puts output
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.render_output(lib_ctx, flow_options, signal)
 
-    assert_equal output,
+    puts flow_options[:output]
+
+    assert_equal flow_options[:output],
 %(Create
 `-- task_wrap.call_task
     |-- a
@@ -109,7 +111,7 @@ class TraceTest < Minitest::Spec
         `-- task_wrap.call_task)
   end
 
-  it "{Present.call} with Incomplete stack" do
+  it "{Trace.build_nodes} with Incomplete stack" do
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace)
 
     assert_equal signal, my_a_b_activity.to_h[:outputs][:success].signal
@@ -150,9 +152,10 @@ class TraceTest < Minitest::Spec
     )
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
 
-    output = Trailblazer::Developer::Trace::Present.(flow_options[:stack])
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.render_output(lib_ctx, flow_options, signal)
     # puts output
-    assert_equal output, %(Create
+    assert_equal flow_options[:output], %(Create
 |-- a
 |-- B
 |   |-- C
@@ -240,10 +243,11 @@ class TraceTest < Minitest::Spec
       # puts [capture, capture.object_id, capture.delimits.object_id].inspect
     end
 
-    output = Trailblazer::Developer::Trace::Present.(stack)
-    # output = output.gsub(/0x\w+/, "").gsub(/0x\w+/, "").gsub(/@.+_test/, "")
-puts output
-assert_equal output,
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.render_output(lib_ctx, flow_options, signal)
+
+puts flow_options[:output]
+assert_equal flow_options[:output],
 %(Create
 `-- task_wrap.call_task
     |-- a
@@ -294,9 +298,10 @@ assert_equal output,
 
     stack = flow_options[:stack]
 
-    output = Trailblazer::Developer::Trace::Present.(stack)
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.render_output(lib_ctx, flow_options, signal)
 
-    assert_equal output,
+    assert_equal flow_options[:output],
 %(Create
 `-- task_wrap.call_task
     |-- a
