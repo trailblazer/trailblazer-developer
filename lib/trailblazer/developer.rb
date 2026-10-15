@@ -27,6 +27,8 @@ require "trailblazer/developer/trace/node"
 # require "trailblazer/developer/debugger"
 require "trailblazer/developer/render/circuit"
 require "trailblazer/developer/wtf"
+require "trailblazer/developer/wtf/renderer"
+require "trailblazer/developer/wtf/application"
 # require "trailblazer/developer/render/linear"
 # require "trailblazer/developer/render/task_wrap"
 # require "trailblazer/developer/introspect" # TODO: might get removed, again.

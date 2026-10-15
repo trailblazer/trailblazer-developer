@@ -1,0 +1,47 @@
+module Trailblazer
+  module Developer
+    module Wtf
+      module Renderer
+        module_function
+
+        COLORS = {
+          gray: "\e[37m", # we don't know the signal, it's not recorded. hence "gray", like a map.
+          green: "\e[32m",
+          brown: "\e[33m",
+          red: "\e[31m",
+          bold_red: "\e[31m\e[1m",
+          black: "\e[30m",  # we cannot interpret the signal.
+        }
+
+        SIGNAL_TO_COLOR_KEY = Hash.new(:black)
+        SIGNAL_TO_COLOR_KEY.merge!( # TODO: allow to lookup nested OP's semantic etc!
+          Activity::Right => :green,
+          Activity::Left => :brown,
+        )
+
+        def call(trace_node:, trace:, exception: nil, **)
+          label = %(#{trace_node.id})
+
+          color_key =
+            if trace_node == trace.last && exception  # we assume this is the root of all evil resp. of the exception.
+              :bold_red
+            elsif trace_node.is_a?(Trace::Node::Incomplete)
+              :gray
+            else
+              returned_signal = trace_node.snapshot_after.data.fetch(:signal)
+
+              SIGNAL_TO_COLOR_KEY[returned_signal]
+            end
+
+          label = colorize(label, COLORS[color_key])
+
+          [trace_node.level, label]
+        end
+
+        def colorize(string, color)
+          "#{color}#{string}\e[0m"
+        end
+      end
+    end
+  end
+end

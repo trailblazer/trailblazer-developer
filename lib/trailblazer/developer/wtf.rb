@@ -2,9 +2,7 @@ module Trailblazer
   module Developer
     def self.wtf?(circuit, target_ctx, compiler: Wtf::Invoke::Compiler, only_application: false, **options_for_invoke)
       if only_application
-        compiler = Wtf::Rly::Invoke::Compiler
-
-        options_for_invoke = options_for_invoke.merge(flow_options: {trim_stack: false})
+        compiler = Wtf::Application::Invoke::Compiler
       end
 
       lib_ctx = {target_ctx: target_ctx} # FIXME: use {produce_lib_ctx} step.
@@ -112,67 +110,6 @@ module Trailblazer
           [:"wtf.node.add_trim_trace", Circuit::Node[Developer::Wtf::Invoke.method(:add_trim_trace), Circuit::Task::Adapter::LibInterface], :after, :"wtf.node"],
         )
       end
-
-      module Rly # TODO: move.
-        module Invoke
-          Compiler = Circuit::Adds.(
-            Wtf::Invoke::Compiler,
-            [
-              :"trace.extensions.extend_task_wrap",
-              Circuit::Node[Trace::Invoke.method(:add_extension_for_application_tracing), Circuit::Task::Adapter::LibInterface],
-              :replace, :"trace.extensions.wrap_node"
-            ],
-            [
-              nil,
-              nil,
-              :delete, :"wtf.node.add_trim_trace"
-            ]
-          )
-          # Trailblazer::Developer.puts(Compiler)
-        end
-      end
-
-      module Renderer
-        module_function
-
-        COLORS = {
-          gray: "\e[37m", # we don't know the signal, it's not recorded. hence "gray", like a map.
-          green: "\e[32m",
-          brown: "\e[33m",
-          red: "\e[31m",
-          bold_red: "\e[31m\e[1m",
-          black: "\e[30m",  # we cannot interpret the signal.
-        }
-
-        SIGNAL_TO_COLOR_KEY = Hash.new(:black)
-        SIGNAL_TO_COLOR_KEY.merge!( # TODO: allow to lookup nested OP's semantic etc!
-          Activity::Right => :green,
-          Activity::Left => :brown,
-        )
-
-        def call(trace_node:, trace:, exception: nil, **)
-          label = %(#{trace_node.id})
-
-          color_key =
-            if trace_node == trace.last && exception  # we assume this is the root of all evil resp. of the exception.
-              :bold_red
-            elsif trace_node.is_a?(Trace::Node::Incomplete)
-              :gray
-            else
-              returned_signal = trace_node.snapshot_after.data.fetch(:signal)
-
-              SIGNAL_TO_COLOR_KEY[returned_signal]
-            end
-
-          label = colorize(label, COLORS[color_key])
-
-          [trace_node.level, label]
-        end
-
-        def colorize(string, color)
-          "#{color}#{string}\e[0m"
-        end
-      end
-    end
+    end # Wtf
   end
 end
