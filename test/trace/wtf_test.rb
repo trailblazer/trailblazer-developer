@@ -173,5 +173,48 @@ assert_equal output,
         `-- \e[30mtask_wrap.call_task\e[0m
 )
     end
+
+    # DISCUSS: technically, this
+    it "{:renderer} can see {:variable_versions} from Stack" do
+      my_operation = Class.new(Trailblazer::Operation) do
+        step :a
+        step :b,
+          In() => [:seq],
+          Out() => [:seq]
+
+        include T.def_steps(:a)
+
+        def b(ctx, seq:, **)
+          ctx[:pollute] = true
+          ctx[:seq] += [:b]
+        end
+      end
+
+      my_renderer = ->(trace_node:, trace:, stack:, **) {
+        variable_versions = stack.variable_versions # TODO: discuss API.
+
+        ctx_before = Trailblazer::Developer::Trace::Snapshot.ctx_from_snapshot(trace_node.snapshot_before, variable_versions)
+        ctx_after  = Trailblazer::Developer::Trace::Snapshot.ctx_from_snapshot(trace_node.snapshot_after, variable_versions)
+
+        [trace_node.level, "#{trace_node.id} #{ctx_before} #{ctx_after}"]
+      }
+
+      result = nil
+      output, _ = capture_io do
+        result = my_operation.wtf?({seq: [1], rubbish: 1}, {flow_options: {renderer: my_renderer}}) # DISCUSS: do we like this signature?
+      end
+
+      # We can see the ctx *after* In() and *after* Out() in {b}.
+      # assert_result result, true, seq: [1, :a, :b], rubbish: 1
+      assert_equal result.success?, true
+      assert_equal result.to_h, {seq: [1, :a, :b], rubbish: 1}
+
+      # puts output
+      assert_equal output.sub(/0x\w+/, ""), %(#<Class:> {:seq=>"[1]", :rubbish=>"1"} {:seq=>"[1, :a, :b]", :rubbish=>"1"}
+|-- a {:seq=>"[1]", :rubbish=>"1"} {:seq=>"[1, :a]", :rubbish=>"1"}
+|-- b {:seq=>"[1, :a]"} {:seq=>"[1, :a, :b]", :rubbish=>"1"}
+`-- End.success {:seq=>"[1, :a, :b]", :rubbish=>"1"} {:seq=>"[1, :a, :b]", :rubbish=>"1"}
+)
+    end
   end
 end
