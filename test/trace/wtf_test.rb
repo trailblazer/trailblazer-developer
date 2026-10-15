@@ -98,7 +98,7 @@ assert_equal output,
 "
     end
 
-    it "wtf with a step returning an illegal signal (error on library level, in routing)" do
+    it "wtf? + {:only_application} with a step returning an illegal signal (error on library level, in routing)" do
       my_activity = Class.new(Trailblazer::Activity::Railway) do
         step task: T.def_tasks(:a).method(:a), id: :a
       end
@@ -135,10 +135,6 @@ assert_equal output,
 |-- \e[32mc\e[0m
 `-- \e[30mEnd.success\e[0m
 )
-    end
-
-    it "raise and business nodes, only" do
-      raise "test me"
     end
 
     it "returns the circuit interface return set" do
