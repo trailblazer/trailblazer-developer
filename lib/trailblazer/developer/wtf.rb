@@ -47,31 +47,52 @@ module Trailblazer
         end
       end
 
+      # DISCUSS: Behavior?
+      dont_trace_options = {options: {already_wrapped: true}}
+
+      Present = Circuit::Builder.Pipeline(
+        [:build_trace, Trace::Present.method(:build_trace_from_stack), dont_trace_options],
+        [:render, Trace::Present.method(:render_output)],
+        [:print, Node.method(:print)],
+        [:reraise, Node.method(:reraise)], # DISCUSS: use routing instead of if here.
+      )
+
+      # module TaskWrap
+        module Extension
+          module_function
+
+          # basically, only apply this once, to the very top canonical node.
+          CONDITION = ->(node:, id:, **) { node.options[:canonical] && node.options[:task_wrap] && ! node.is_a?(Wtf::Node) }
+
+          def produce_wtf_node(node:,  id:, **circuit_options)
+            # puts "@@@@@/ #{id.inspect}";
+
+            # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
+            # ideally, this uses the same logic for canonical and for pure.
+
+            rescue_node = Wtf::Node.new(**node.to_h) # FIXME: provide generic Node "coerce-cloning" and use it in NodeWrap, too.
+
+            wtf_circuit = Circuit::Builder.Pipeline(
+              [id, node: rescue_node], # execute the actual activity in begin..rescue.
+              [:"wtf.present", Present, Circuit::Processor, options: {already_wrapped: true}]
+            )
+
+            # FIXME: {already_wrapped: true} means "don't trace me", currently, but only in WrapNode mode.
+            node = Circuit::Node[wtf_circuit, Circuit::Processor, options: {already_wrapped: true}] # this is the new canonical node named :"wtf.#{id}"
+
+            return circuit_options.merge(node: node, id: :"wtf.#{id}")
+          end
+
+
+          ProduceWtfNode = Circuit::WrapRuntime::Extension.new(
+            # only execute this for the very top node, the canonical tW.
+            Extension::CONDITION,
+            Extension.method(:produce_wtf_node)
+          )
+        end
+
       module Invoke
         module_function
-
-        def produce_wtf_node(lib_ctx, flow_options, circuit_options, **)
-          node = circuit_options.fetch(:node) # the original node, eg {Create.task_wrap}.
-          # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
-          # ideally, this uses the same logic for canonical and for pure.
-          id = circuit_options.fetch(:id)
-# FIXME: wtf should be wrapping the canonical node, not just the "circuit".
-
-          rescue_node = Wtf::Node.new(**node.to_h) # FIXME: provide generic Node "coerce-cloning" and use it in NodeWrap, too.
-
-          # DISCUSS: we could probably improve performance here.
-          wtf_circuit = Circuit::Builder.Pipeline(
-            [id, node: rescue_node], # execute the actual activity in begin..rescue.
-            [:build_trace, Trace::Present.method(:build_trace_from_stack)],
-            [:render, Trace::Present.method(:render_output)],
-            [:print, Node.method(:print)],
-            [:reraise, Node.method(:reraise)], # DISCUSS: use routing instead of if here.
-          )
-
-          node = Circuit::Node[wtf_circuit, Circuit::Processor]
-
-          return lib_ctx, flow_options, circuit_options.merge(node: node, id: "wtf.#{id}")
-        end
 
         def add_flow_options(lib_ctx, flow_options, circuit_options, **)
           wtf_flow_options = {
@@ -83,31 +104,20 @@ module Trailblazer
           return lib_ctx, wtf_flow_options.merge(flow_options), circuit_options # FIXME: test we don't override :renderer.
         end
 
-        # at Invoke time, add the trim_trace step to the Wtf::Node circuit.
-        # DISCUSS: maybe the rendering pipe could be a pre-compiled circuit, so we can simply maintain two.
-        def add_trim_trace(lib_ctx, flow_options, circuit_options, **)
-          node = circuit_options.fetch(:node)
+        def add_circuit_options(lib_ctx, flow_options, circuit_options, **)
+          wtf_circuit_options = {
+            extensions: [Extension::ProduceWtfNode] + circuit_options[:extensions]
+          }
 
-          wtf_circuit_with_trimming = Circuit::Adds.(
-            node.task,
-            [
-              :trim_trace, Circuit::Node[Node.method(:trim_trace), Circuit::Task::Adapter::LibInterface],
-              :after, :build_trace
-            ]
-          )
-
-          node = Circuit::Node[wtf_circuit_with_trimming, Circuit::Processor]
-
-          return lib_ctx, flow_options, circuit_options.merge(node: node)
+          return lib_ctx, flow_options, circuit_options.merge(wtf_circuit_options)
         end
 
         Compiler = Circuit::Adds.(
           Activity::Invoke::Args::Compiler,
           [:"trace.flow_options", Circuit::Node[Developer::Trace::Invoke.method(:add_options_for_trace), Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
           [:"wtf.flow_options", Circuit::Node[Developer::Wtf::Invoke.method(:add_flow_options), Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+          [:"wtf.circuit_options", Circuit::Node[Developer::Wtf::Invoke.method(:add_circuit_options), Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
           [:"trace.extensions.wrap_node", Circuit::Node[Developer::Trace::Invoke.method(:add_extension_for_wrap_node_tracing), Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
-          [:"wtf.node", Circuit::Node[Developer::Wtf::Invoke.method(:produce_wtf_node), Circuit::Task::Adapter::LibInterface], :after],
-          [:"wtf.node.add_trim_trace", Circuit::Node[Developer::Wtf::Invoke.method(:add_trim_trace), Circuit::Task::Adapter::LibInterface], :after, :"wtf.node"],
         )
       end
     end # Wtf

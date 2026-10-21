@@ -12,11 +12,6 @@ module Trailblazer
               Circuit::Node[Trace::Invoke.method(:add_extension_for_application_tracing), Circuit::Task::Adapter::LibInterface],
               :replace, :"trace.extensions.wrap_node"
             ],
-            [
-              nil,
-              nil,
-              :delete, :"wtf.node.add_trim_trace"
-            ]
           )
           # Trailblazer::Developer.puts(Compiler)
         end

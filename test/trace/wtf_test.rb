@@ -143,7 +143,7 @@ assert_equal output,
 
         assert_equal lib_ctx, {target_ctx: {seq: [:a, :b, :c]}}
         assert_equal signal, my_abc_activity.to_h[:outputs][:success].signal
-        assert_equal flow_options[:stack].to_a.size, 50 # TODO: better test.
+        assert_equal flow_options[:stack].to_a.size, 44 # TODO: better test.
         assert_equal flow_options[:trace].to_a.size, 19 # TODO: better test.
       end
 
