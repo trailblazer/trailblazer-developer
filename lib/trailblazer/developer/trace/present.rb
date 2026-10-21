@@ -8,7 +8,6 @@ module Trailblazer::Developer
         [trace_node.level, trace_node.id]
       end
 
-      # whatever we return from {:render_method} is available as {returned_args}
       # Returns the console output string.
       # @private
       def render(trace:, renderer: method(:default_renderer), **options_for_renderer) # DISCUSS: {:options_for_renderer} is private, we actually don't need it.

@@ -49,12 +49,12 @@ module Trailblazer
           extensions = circuit_options.fetch(:extensions)
 
           trace_extension = Circuit::WrapRuntime.Extension(
-            Circuit::WrapRuntime::Extension::NodeWrap::USER_CONDITION,
+            Circuit::WrapRuntime::Extension::NodeWrap::USER_CONDITION, # only apply tracing to Node{wrap_node: true}
             adds: Extension
           ) # TODO: constant
 
           extensions += [
-            Circuit::WrapRuntime::Extension::NodeWrap::EXTENSION,
+            Circuit::WrapRuntime::Extension::NodeWrap::EXTENSION, # DISCUSS: if we wanted to add "don't wrap {wtf.xxx}", this would have to be injected here somehow.
             trace_extension,
           ]
 
