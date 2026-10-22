@@ -62,9 +62,9 @@ module Trailblazer
           module_function
 
           # basically, only apply this once, to the very top canonical node.
-          CONDITION = ->(node:, id:, **) { node.options[:canonical] && node.options[:task_wrap] && ! node.is_a?(Wtf::Node) }
+          CONDITION = ->(*, node:, id:, **) { node.options[:canonical] && node.options[:task_wrap] && ! node.is_a?(Wtf::Node) }
 
-          def produce_wtf_node(node:,  id:, **circuit_options)
+          def produce_wtf_node(*args, node:,  id:, **circuit_options)
             # puts "@@@@@/ #{id.inspect}";
 
             # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
@@ -80,7 +80,7 @@ module Trailblazer
             # FIXME: {already_wrapped: true} means "don't trace me", currently, but only in WrapNode mode.
             node = Circuit::Node[wtf_circuit, Circuit::Processor, options: {already_wrapped: true}] # this is the new canonical node named :"wtf.#{id}"
 
-            return circuit_options.merge(node: node, id: :"wtf.#{id}")
+            return *args, circuit_options.merge(node: node, id: :"wtf.#{id}")
           end
 
 

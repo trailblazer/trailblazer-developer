@@ -3,7 +3,7 @@ module Trailblazer
     module Trace
       module TaskWrap # FIXME: location, naming?
         module Resolver
-          CONDITION = ->(node:, **) { node.options[:task_wrap] } # only apply changes/extend "task_wrap" nodes. NOTE: this is a concept from activity/dsl.
+          CONDITION = ->(*, node:, **) { node.options[:task_wrap] } # only apply changes/extend "task_wrap" nodes. NOTE: this is a concept from activity/dsl.
         end
       end
 
@@ -29,7 +29,7 @@ module Trailblazer
       # FIXME: extract this.
       class Extension # TODO: use canonical Node::Extension or whatever we name it?!
         # Called through WrapRuntime::Runner, obviously at runtime.
-        def self.call(id:, **)
+        def self.call(*, id:, **)
           # we know we're receiving a NodeWrap::Id instance here.
           traced_id = id.to_sym # {id} is a NodeWrap::Id instance (in NodeWrap mode, not in taskWrap mode, omg).
 

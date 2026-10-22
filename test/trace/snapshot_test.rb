@@ -55,7 +55,7 @@ class SnapshotTest < Minitest::Spec
       # conditions:
       Trailblazer::Circuit::WrapRuntime::Extension::Conditions.new(
         [
-          ->(node:, **) { node.options[:task_wrap] },
+          ->(*, node:, **) { node.options[:task_wrap] },
           Trailblazer::Circuit::WrapRuntime::Extension::NodeWrap::CONDITION
         ]
       ),
