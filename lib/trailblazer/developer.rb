@@ -1,3 +1,4 @@
+require "trailblazer/circuit"
 require "trailblazer/developer/version"
 
 module Trailblazer
