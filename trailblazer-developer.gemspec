@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.description   = "Developer tools for Trailblazer: debugger, activity visualizer and tracing."
   spec.homepage      = "http://trailblazer.to/2.1/docs/trailblazer.html#trailblazer-developer"
   spec.license       = "LGPL-3.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test)/})
