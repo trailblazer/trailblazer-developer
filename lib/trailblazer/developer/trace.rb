@@ -3,7 +3,7 @@ module Trailblazer
     module Trace
       module TaskWrap # FIXME: location, naming?
         module Resolver
-          CONDITION = ->(*, node:, **) { node.options[:task_wrap] } # only apply changes/extend "task_wrap" nodes. NOTE: this is a concept from activity/dsl.
+          CONDITION = ->(*, node, _) { node.options[:task_wrap] } # only apply changes/extend "task_wrap" nodes. NOTE: this is a concept from activity/dsl.
         end
       end
 
@@ -29,7 +29,7 @@ module Trailblazer
       # FIXME: extract this.
       class Extension # TODO: use canonical Node::Extension or whatever we name it?!
         # Called through WrapRuntime::Runner, obviously at runtime.
-        def self.call(*, id:, **)
+        def self.call(*, id)
           # we know we're receiving a NodeWrap::Id instance here.
           traced_id = id.to_sym # {id} is a NodeWrap::Id instance (in NodeWrap mode, not in taskWrap mode, omg).
 
@@ -45,9 +45,7 @@ module Trailblazer
       module Invoke
         module_function
 
-        def add_extension_for_wrap_node_tracing(lib_ctx, flow_options, circuit_options, **)
-          extensions = circuit_options.fetch(:extensions)
-
+        def add_extension_for_wrap_node_tracing(lib_ctx, _, args, extensions:, **)
           trace_extension = Circuit::WrapRuntime.Extension(
             Circuit::WrapRuntime::Extension::NodeWrap::USER_CONDITION, # only apply tracing to Node{wrap_node: true}
             adds: Extension
@@ -58,12 +56,10 @@ module Trailblazer
             trace_extension,
           ]
 
-          return lib_ctx, flow_options, circuit_options.merge(extensions: extensions)
+          return lib_ctx.merge(extensions: extensions), _, args
         end
 
-        def add_extension_for_application_tracing(lib_ctx, flow_options, circuit_options, **)
-          extensions = circuit_options.fetch(:extensions)
-
+        def add_extension_for_application_tracing(lib_ctx, _, args, extensions:, **)
           extension = Trailblazer::Circuit::WrapRuntime.Extension(
             Trailblazer::Developer::Trace::TaskWrap::Resolver::CONDITION,
             adds: Trailblazer::Developer::Trace::Extension
@@ -71,18 +67,18 @@ module Trailblazer
 
           extensions += [extension]
 
-          return lib_ctx, flow_options, circuit_options.merge(extensions: extensions)
+          return lib_ctx.merge(extensions: extensions), _, args
         end
 
-        def add_options_for_trace(lib_ctx, flow_options, circuit_options, **)
+        def add_options_for_trace(lib_ctx, _, (ctx, runner), **)
           flow_options_for_trace = {
             stack:              Trailblazer::Developer::Trace::Stack.new,
             value_snapshooter:  Trailblazer::Developer::Trace.value_snapshooter
           }
 
-          flow_options = flow_options_for_trace.merge(flow_options)
+          runner = runner.reverse_merge(**flow_options_for_trace)
 
-          return lib_ctx, flow_options, circuit_options#.merge(extensions: extensions)
+          return lib_ctx, _, [ctx, runner]
         end
       end
     end # Trace

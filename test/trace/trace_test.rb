@@ -110,6 +110,38 @@ class TraceTest < Minitest::Spec
     `-- End.success
         `-- task_wrap.call_task)
   end
+  it "Present#render bug " do
+    my_trace_compiler = Trailblazer::Circuit::Adds.(
+      Trailblazer::Activity::Invoke::Args::Compiler,
+      [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+      [:"trace.all_nodes", Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_extension_for_wrap_node_tracing), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
+      [nil, nil, :delete, :build_canonical_node]
+    )
+
+    my_exec_context = T.def_tasks(:a, :b, :c, :d, :e, :f, :g)
+    my_inner_circuit = Trailblazer::Circuit::Builder.Circuit([:d, my_exec_context.method(:d)], [:e, my_exec_context.method(:e)])
+    my_circuit = Trailblazer::Circuit::Builder.Circuit(
+      [:a, my_exec_context.method(:a)],
+      [:b, my_inner_circuit, Trailblazer::Circuit::Processor],
+      [:f, my_exec_context.method(:f)],
+    )
+
+    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_circuit, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_trace_compiler)
+    assert_equal lib_ctx[:target_ctx][:seq], [:a, :d, :e, :f]
+
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
+    _, flow_options, _ = Trailblazer::Developer::Trace::Present.render_output(lib_ctx, flow_options, signal)
+
+    puts flow_options[:output]
+
+    assert_equal flow_options[:output], %(Create
+|-- a
+|-- b
+|   |-- d
+|   `-- e
+`-- f
+)
+  end
 
   it "{Trace.build_nodes} with Incomplete stack" do
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_a_b_activity, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_compiler_with_trace)
@@ -137,19 +169,25 @@ class TraceTest < Minitest::Spec
   end
 
   # it "we can also limit tracing to business nodes by using a custom condition in the Resolver" do # FIXME: how to allow custom conditions like {id == :a}?
-  it "we can trace application nodes, only" do
-    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_application_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
+  let(:my_convenient_trace_compiler) do
+    Trailblazer::Circuit::Builder.Circuit(
+      [4, Trailblazer::Activity::Invoke.method(:build_activity_node)],
+      [5, Trailblazer::Activity::Invoke.method(:build_canonical_node)],
+      [1, Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace)],
+      [2, Trailblazer::Developer::Trace::Invoke.method(:add_extension_for_application_tracing)],
+      [3, Trailblazer::Activity::Invoke.method(:produce_wrap_runtime)]
+    )
+  end
 
+  it "we can trace application nodes, only" do
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
       my_a_b_activity,
       {target_ctx: {seq: []}},
       id: :Create,
-      # compiler: my_compiler_with_trace,
-      flow_options: flow_options_for_trace,
-      **circuit_options_for_trace
+      compiler: my_convenient_trace_compiler,
+      extensions: []
     )
+
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :c, :b]
 
     _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
@@ -167,24 +205,24 @@ class TraceTest < Minitest::Spec
   end
 
   it "Trace///TaskWrap extends task_wrap nodes instead of creating a new NodeWrap. This allows i/o nodes to hook into specific positions in the taskWrap" do # DISCUSS: this is the actual wtf? behavior we are used to.
-    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_application_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
+    my_trace_compiler = Trailblazer::Circuit::Builder.Circuit(
+      [1, Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace)],
+      [2, Trailblazer::Developer::Trace::Invoke.method(:add_extension_for_application_tracing)],
+      [3, Trailblazer::Activity::Invoke.method(:produce_wrap_runtime)]
+    )
 
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
-      my_abc_activity,
+      nil,
       {target_ctx: {seq: [], current_user: Object}},
-
-      id: :Create, #compiler: my_compiler_with_trace,
-
-      flow_options: flow_options_for_trace,
-      **circuit_options_for_trace
+      node: Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor],
+      id: :Create,
+      compiler: my_trace_compiler,
+      extensions: []
     )
+
     assert_equal lib_ctx[:target_ctx][:seq], [:a, :b, :c]
 
-    # puts "@@@@@ #{flow_options[:stack].to_a.values[1].inspect}"
-
-    before_b_snapshot = flow_options[:stack].to_a.values[3]
+    before_b_snapshot = flow_options[:stack].to_a.values[2]
     assert_equal before_b_snapshot.id, :b
     assert_equal before_b_snapshot.data[:ctx_variable_changeset].size, 1 # FIXME: better test for "we only see :seq in the trace as it's run AFTER In() logic."
     assert_equal before_b_snapshot.data[:ctx_variable_changeset][0][0], :seq # FIXME: better test for "we only see :seq in the trace as it's run AFTER In() logic."
@@ -208,21 +246,16 @@ class TraceTest < Minitest::Spec
     ]
 
     # manually compile the necessary args for tracing:
-    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
-
-    runner = Trailblazer::Circuit::WrapRuntime::Runner # DISCUSS: use #assert_run?
+    lib_ctx, flow_options, args = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({extensions: []}, {}, [{}, Trailblazer::Circuit::WrapRuntime::Runner.new]) # normally, this'd happen in the Invoke pipeline.
+    lib_ctx, flow_options, args = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(lib_ctx, flow_options, args, **lib_ctx) # normally, this'd happen in the Invoke pipeline.
+    lib_ctx, flow_options, (_, runner) = Trailblazer::Activity::Invoke.produce_wrap_runtime(lib_ctx, flow_options, args, **lib_ctx) # normally, this'd happen in the Invoke pipeline.
 
     lib_ctx, flow_options, signal = runner.(
       {target_ctx: {seq: []}},
-      flow_options_for_trace,
+      runner,
       nil,
-      runner: runner,
-      context_implementation: Trailblazer::Circuit::Context,
-      id: :Create,
-      node: my_canonical_Create_tw_node,
-      **circuit_options_for_trace,
+      my_canonical_Create_tw_node,
+      :Create,
     )
 
     assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}
@@ -280,17 +313,27 @@ assert_equal flow_options[:output],
   end
 
   it "can be used with Activity::Invoke.(). we can pass our options from the outside." do
-    _, flow_options_for_trace, _ = Trailblazer::Developer::Trace::Invoke.add_options_for_trace(nil, {}, nil) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(nil, flow_options_for_trace, {extensions: []}) # normally, this'd happen in the Invoke pipeline.
-    _, flow_options_for_trace, circuit_options_for_trace = Trailblazer::Activity::Invoke.produce_wrap_runtime(nil, flow_options_for_trace, circuit_options_for_trace) # normally, this'd happen in the Invoke pipeline.
+    my_abc_activity_node = Trailblazer::Circuit::Node[my_abc_activity, Trailblazer::Circuit::Processor]
 
-    lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(
-      my_abc_activity,
-      {target_ctx: {seq: []}}, # DISCUSS: we are passing the lib_ctx here, not "application_ctx".
+    my_canonical_Create_tw_node = Trailblazer::Circuit::Node[
+      Trailblazer::Circuit::Builder.Pipeline(
+        [:"task_wrap.call_task", node: my_abc_activity_node]
+      ),
+      Trailblazer::Circuit::Processor
+    ]
 
-      flow_options: flow_options_for_trace,
-      **circuit_options_for_trace,
-      id: :Create,
+    lib_ctx, flow_options, args = Trailblazer::Developer::Trace::Invoke.add_options_for_trace({extensions: []}, {}, [{}, Trailblazer::Circuit::WrapRuntime::Runner.new]) # normally, this'd happen in the Invoke pipeline.
+    lib_ctx, flow_options, args = Trailblazer::Developer::Trace::Invoke.add_extension_for_wrap_node_tracing(lib_ctx, flow_options, args, **lib_ctx) # normally, this'd happen in the Invoke pipeline.
+    lib_ctx, flow_options, (_, runner) = Trailblazer::Activity::Invoke.produce_wrap_runtime(lib_ctx, flow_options, args, **lib_ctx) # normally, this'd happen in the Invoke pipeline.
+
+
+
+    lib_ctx, flow_options, signal = runner.(
+      {target_ctx: {seq: []}},
+      runner,
+      nil,
+      my_canonical_Create_tw_node,
+      :Create,
     )
 
     assert_equal lib_ctx, {:target_ctx=>{:seq=>[:a, :b, :c]}}

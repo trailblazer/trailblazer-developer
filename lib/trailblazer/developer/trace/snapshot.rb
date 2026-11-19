@@ -35,7 +35,7 @@ module Trailblazer::Developer
       # Serialize all ctx variables before {call_task}.
       # This is (per configuration) run just before {call_task}, after In(). and after Out().
       def self.snapshoot(lib_ctx, flow_options, signal, target_ctx:, **)
-        changeset, new_versions = snapshot_for(target_ctx, **flow_options)
+        changeset, new_versions = snapshot_for(target_ctx, **flow_options.to_h)
 
         data = {
           ctx_variable_changeset: changeset,

@@ -34,7 +34,7 @@ module Trailblazer::Developer
         render_method = flow_options[:render_method] || method(:render) # FIXME: where to default this?  # FIXME: couldn't this be another step?
 
         # DISCUSS: rendering could happen in a separate, asyncable step.
-        output = render_method.(**flow_options)
+        output = render_method.(**flow_options.to_h)
 
         return lib_ctx, flow_options.merge(output: output), signal
       end
@@ -85,6 +85,7 @@ module Trailblazer::Developer
               children_count, children = children_count(level, string, i, nodes)
 
               draw_column_for_level.merge!(level + 1 => [children_count > 1, children.last])
+              puts "ids: #{i}"
             elsif level < last_level
               children_count, children = children_count(level, string, i, nodes)
 
@@ -103,7 +104,7 @@ module Trailblazer::Developer
 
             branch_start = branch_off
 
-            # puts ">>> #{i} #{string} #{draw_column_for_level.inspect}"
+            puts ">>> #{i}@#{level} #{string} #{draw_column_for_level.inspect}"
             if draw_column_for_level[level] && draw_column_for_level[level][1] == [level, string] # last of the branch? # FIXME: [1] is the "last child".
               # FIXME: this is to remove the column for the last node in a branch, if it got children, we don't want the (|) col.
               #  |   `-- b
