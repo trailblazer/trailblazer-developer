@@ -62,9 +62,9 @@ module Trailblazer
           module_function
 
           # basically, only apply this once, to the very top canonical node.
-          CONDITION = ->(*, node:, id:, **) { node.options[:canonical] && node.options[:task_wrap] && ! node.is_a?(Wtf::Node) }
+          CONDITION = ->(*, node, id) { node.options[:canonical] && node.options[:task_wrap] && ! node.is_a?(Wtf::Node) }
 
-          def produce_wtf_node(*args, node:,  id:, **circuit_options)
+          def produce_wtf_node(*args, node, id)
             # puts "@@@@@/ #{id.inspect}";
 
             # whatever wtf looks like internally, we need to build the wtf circuit node and wrap the original node.
@@ -80,7 +80,7 @@ module Trailblazer
             # FIXME: {already_wrapped: true} means "don't trace me", currently, but only in WrapNode mode.
             node = Circuit::Node[wtf_circuit, Circuit::Processor, options: {already_wrapped: true}] # this is the new canonical node named :"wtf.#{id}"
 
-            return *args, circuit_options.merge(node: node, id: :"wtf.#{id}")
+            return *args, node, :"wtf.#{id}"
           end
 
 
@@ -94,22 +94,20 @@ module Trailblazer
       module Invoke
         module_function
 
-        def add_flow_options(lib_ctx, flow_options, circuit_options, **)
+        def add_flow_options(lib_ctx, _, (ctx, runner), **)
           wtf_flow_options = {
             segmenter: Trace::Node::Incomplete.method(:segmenter),
             renderer: Renderer, # FIXME: rename to {:trace_node_renderer}?
             render_method: Trace::Present.method(:render),
           }
 
-          return lib_ctx, wtf_flow_options.merge(flow_options), circuit_options # FIXME: test we don't override :renderer.
+          return lib_ctx, _, [ctx, runner.reverse_merge(**wtf_flow_options)]  # FIXME: test we don't override :renderer.
         end
 
-        def add_circuit_options(lib_ctx, flow_options, circuit_options, **)
-          wtf_circuit_options = {
-            extensions: [Extension::ProduceWtfNode] + circuit_options[:extensions]
-          }
+        def add_circuit_options(lib_ctx, _, args, extensions:, **)
+          extensions = [Extension::ProduceWtfNode] + extensions
 
-          return lib_ctx, flow_options, circuit_options.merge(wtf_circuit_options)
+          return lib_ctx.merge(extensions: extensions), _, args
         end
 
         Compiler = Circuit::Adds.(
