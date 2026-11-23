@@ -1,13 +1,13 @@
 module Trailblazer
   module Developer
-    def self.wtf?(circuit, target_ctx, compiler: Wtf::Invoke::Compiler, only_application: false, **options_for_invoke)
+    def self.wtf?(circuit, target_ctx, compiler: Wtf::Invoke::Compiler, only_application: false, id:, **options_for_invoke)
       if only_application
         compiler = Wtf::Application::Invoke::Compiler
       end
 
       lib_ctx = {target_ctx: target_ctx} # FIXME: use {produce_lib_ctx} step.
 
-      Activity::Invoke.(circuit, lib_ctx, **options_for_invoke, extensions: [], compiler: compiler) # FIXME: default :extensions.
+      Activity::Invoke.(circuit, lib_ctx, id: id, **options_for_invoke, extensions: [], compiler: compiler) # FIXME: default :extensions.
     end
 
     module Wtf

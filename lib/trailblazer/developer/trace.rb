@@ -48,7 +48,7 @@ module Trailblazer
         def add_extension_for_wrap_node_tracing(lib_ctx, _, args, extensions:, **)
           trace_extension = Circuit::WrapRuntime.Extension(
             Circuit::WrapRuntime::Extension::NodeWrap::USER_CONDITION, # only apply tracing to Node{wrap_node: true}
-            adds: Extension
+            adds_producer: Extension
           ) # TODO: constant
 
           extensions += [
@@ -62,7 +62,7 @@ module Trailblazer
         def add_extension_for_application_tracing(lib_ctx, _, args, extensions:, **)
           extension = Trailblazer::Circuit::WrapRuntime.Extension(
             Trailblazer::Developer::Trace::TaskWrap::Resolver::CONDITION,
-            adds: Trailblazer::Developer::Trace::Extension
+            adds_producer: Trailblazer::Developer::Trace::Extension
           )
 
           extensions += [extension]

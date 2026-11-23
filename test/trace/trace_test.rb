@@ -292,7 +292,6 @@ assert_equal flow_options[:output],
     |   |-- variable_mapping.input
     |   |   |-- in.seq > seq
     |   |   |   |-- invoke_provider
-    |   |   |   |   `-- invoke_provider
     |   |   |   |-- wrap_value_with_hash
     |   |   |   `-- add_value_to_aggregate
     |   |   `-- input.scope
@@ -356,7 +355,6 @@ assert_equal flow_options[:output],
     |   |-- variable_mapping.input
     |   |   |-- in.seq > seq
     |   |   |   |-- invoke_provider
-    |   |   |   |   `-- invoke_provider
     |   |   |   |-- wrap_value_with_hash
     |   |   |   `-- add_value_to_aggregate
     |   |   `-- input.scope
