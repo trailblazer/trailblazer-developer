@@ -13,12 +13,13 @@ gemspec
 # gem "trailblazer-activity",           github: "trailblazer/trailblazer-activity"
 # gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear"
 
-gem "trailblazer-activity-dsl-linear", github: "trailblazer/trailblazer-activity-dsl-linear", branch: "2-2-positional-circuit-interface"
-gem "trailblazer-activity", github: "trailblazer/trailblazer-activity", branch: "2-2-positional-circuit-interface"
+gem "trailblazer-activity-dsl", github: "trailblazer/trailblazer-activity-dsl"
+gem "trailblazer-activity", github: "trailblazer/trailblazer-activity"
+gem "trailblazer-circuit", github: "trailblazer/trailblazer-circuit"
+gem "trailblazer-activity-variable-mapping", github: "trailblazer/trailblazer-activity-variable-mapping"
 # gem "trailblazer-developer", github: "trailblazer/trailblazer-developer", branch: "2-2"
 gem "trailblazer-core-utils", github: "trailblazer/trailblazer-core-utils"
-gem "trailblazer-invoke", github: "trailblazer/trailblazer-invoke"
-gem "trailblazer-operation", github: "trailblazer/trailblazer-operation", branch: "2-2"
+gem "trailblazer-operation", github: "trailblazer/trailblazer-operation"
 
 gem "benchmark-ips"
 gem "logger"
