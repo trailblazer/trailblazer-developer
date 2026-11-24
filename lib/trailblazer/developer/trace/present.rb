@@ -79,8 +79,6 @@ module Trailblazer::Developer
 
           graph_nodes = normalize_graph_attributes(nil, nodes_with_index, -1, index: nil)
 
-          pp graph_nodes
-
           tab        = "    "
           pipe       = "|   "
           branch_off = "|-- "
