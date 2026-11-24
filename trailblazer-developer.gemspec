@@ -19,11 +19,9 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "minitest"
   spec.add_development_dependency "minitest-line"
   spec.add_development_dependency "rake"
-  # spec.add_development_dependency "trailblazer-operation"#, ">= 0.12.0"
-  # spec.add_development_dependency "trailblazer-core-utils"#,  ">= 0.0.8"
+  spec.add_development_dependency "trailblazer-core-utils",  ">= 0.0.11"
 
-  # spec.add_dependency "trailblazer-activity-dsl-linear", ">= 2.0.0", "< 2.1.0"
+  spec.add_dependency "trailblazer-circuit", "~> 3.0"
 end
