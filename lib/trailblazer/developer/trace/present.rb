@@ -44,93 +44,71 @@ module Trailblazer::Developer
       module Tree
         module_function
 
-        # count nodes in this branch.
-        def offspring(current_level, string, index, nodes)
-          remaining = nodes[index + 1..-1]
+        def normalize_graph_attributes(current, _nodes, level, index:)
+          child_branches = _nodes.slice_when { |prev, curr| curr[0] == level + 1 }.to_a
+          # pp child_branches#.to_a
+          # [
+          #   [[1, :a]],
+          #   [[1, :b], [2, :d], [2, :e]],
+          #   [[1, :f]]
+          # ]
 
-          index_of_delimiter = remaining.find_index { |(level, string)| level <= current_level } # we only want to find greater indexes, which is offsprings.
+          leaf_child_branch = child_branches.last
 
-          if index_of_delimiter.nil?
-            remaining
-          elsif index_of_delimiter == 0
-            []
-          else
-            remaining[0..index_of_delimiter - 1]
+          child_branches = child_branches.flat_map do |ary|
+            options_for_node = ary == leaf_child_branch ? {leaf: true} : {}
+
+            child, *nephews = ary
+
+            [
+              child + [**options_for_node, parent_i: index],
+              *normalize_graph_attributes(
+                child,
+                nephews,
+                child[0],
+                index: child[2],
+              )
+            ]
           end
-        end
 
-        def children_count(current_level, string, index, nodes)
-          offspring = offspring(current_level, string, index, nodes)
-
-          children = offspring.find_all { |(level, string)| level == current_level + 1 }
-
-          return children.size, children
+          return child_branches
         end
 
         def render(nodes)
-          # pp nodes
+          nodes_with_index = nodes.collect.with_index { |node, index| [*node, index] }
+
+          graph_nodes = normalize_graph_attributes(nil, nodes_with_index, -1, index: nil)
+
+          pp graph_nodes
+
           tab        = "    "
-          separator  = "|   "
+          pipe       = "|   "
           branch_off = "|-- "
           terminus   = "`-- "
 
-          draw_column_for_level = {}
-          last_level = -1
-# TODO: test if recursion works betta.
-          lines = nodes.collect.with_index do |(level, string), i|
+          output = graph_nodes.collect do |level, string, id, options|
+            leaf, parent_i = options[:leaf], options[:parent_i]
 
-            #
-            # those two if say "we're at the start of a new branching."
-            if level > last_level # we got kids
-              children_count, children = children_count(level, string, i, nodes)
-
-              draw_column_for_level.merge!(level + 1 => [children_count > 1, children.last])
-              # puts "ids: #{i}"
-            elsif level < last_level
-              children_count, children = children_count(level, string, i, nodes)
-
-              draw_column_for_level.merge!(level + 1 => [children_count > 1, children.last])
-              # DISCUSS: delete deeper levels?
-              # puts "@@@@@ #{string.inspect} got family: #{children_count}"
-            # else # level == last_level means we're within siblings.
-            end
-
-            if i == nodes.size - 1 # last line
-              # puts "@@@@@   last #{string.inspect}"
-              draw_column_for_level = Hash.new([false, [level, string]])
-            end
-
-            last_level = level
-
-            branch_start = branch_off
-
-            # puts ">>> #{i}@#{level} #{string} #{draw_column_for_level.inspect}"
-            if draw_column_for_level[level] && draw_column_for_level[level][1] == [level, string] # last of the branch? # FIXME: [1] is the "last child".
-              # FIXME: this is to remove the column for the last node in a branch, if it got children, we don't want the (|) col.
-              #  |   `-- b
-              # -|  (|)  |-- call_task
-              # -|  (|)      |-- d
-
-              draw_column_for_level[level] = [false, [level, string]]
-              branch_start = terminus
-            end
-
-            line = ""
+            left = ""
             if level > 0
-              if level > 1
-                line << (1..level-1).collect do |i|
-                  draw_column_for_level[i][0] ? separator : tab
-                end.join("")
+              connector = leaf ? terminus : branch_off
 
-              end
+              # find out for which "tab" we need a pipe |, if the parent is not leaf.
+              left = (0..level - 2).to_a.collect do
+                parent = graph_nodes[parent_i]
+                parent_i = parent[3][:parent_i]
 
-              line << branch_start
+                parent[3][:leaf] ? tab : pipe
+              end.reverse
+
+              left << connector
+              left = left.join("")
             end
 
-            line << "#{string}" # TODO: allow more details etc.
-          end
+            "#{left}#{string}"
+          end.join("\n")
 
-          lines.join("\n")
+          return output
         end
       end
     end # Present

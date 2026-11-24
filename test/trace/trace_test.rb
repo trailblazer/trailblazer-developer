@@ -110,24 +110,30 @@ class TraceTest < Minitest::Spec
     `-- End.success
         `-- task_wrap.call_task)
   end
-  it "Present#render bug " do
+
+  it "Present#render unit test" do
     my_trace_compiler = Trailblazer::Circuit::Adds.(
       Trailblazer::Activity::Invoke::Args::Compiler,
       [:my_trace, Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_options_for_trace), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
       [:"trace.all_nodes", Trailblazer::Circuit::Node[Trailblazer::Developer::Trace::Invoke.method(:add_extension_for_wrap_node_tracing), Trailblazer::Circuit::Task::Adapter::LibInterface], :before, :produce_wrap_runtime],
       [nil, nil, :delete, :build_canonical_node]
     )
+    _, my_circuit = T.pipe("a|",
+      :a,
+      T.pipe("b|",
+        :b,
+        T.pipe("c|",
+          :c,
+          T.pipe("f|",
+            :f)),
+        T.pipe("d|",
+          :d),),
+      :e
+      )
 
-    my_exec_context = T.def_tasks(:a, :b, :c, :d, :e, :f, :g)
-    my_inner_circuit = Trailblazer::Circuit::Builder.Circuit([:d, my_exec_context.method(:d)], [:e, my_exec_context.method(:e)])
-    my_circuit = Trailblazer::Circuit::Builder.Circuit(
-      [:a, my_exec_context.method(:a)],
-      [:b, my_inner_circuit, Trailblazer::Circuit::Processor],
-      [:f, my_exec_context.method(:f)],
-    )
 
     lib_ctx, flow_options, signal = Trailblazer::Activity::Invoke.(my_circuit, {target_ctx: {seq: []}}, extensions: [], id: :Create, compiler: my_trace_compiler)
-    assert_equal lib_ctx[:target_ctx][:seq], [:a, :d, :e, :f]
+    assert_equal lib_ctx[:target_ctx][:seq], [:a, :b, :c, :f, :d, :e]
 
     _, flow_options, _ = Trailblazer::Developer::Trace::Present.build_trace_from_stack(lib_ctx, flow_options, signal)
     _, flow_options, _ = Trailblazer::Developer::Trace::Present.render_output(lib_ctx, flow_options, signal)
@@ -136,11 +142,15 @@ class TraceTest < Minitest::Spec
 
     assert_equal flow_options[:output], %(Create
 |-- a
-|-- b
-|   |-- d
-|   `-- e
-`-- f
-)
+|-- b|
+|   |-- b
+|   |-- c|
+|   |   |-- c
+|   |   `-- f|
+|   |       `-- f
+|   `-- d|
+|       `-- d
+`-- e)
   end
 
   it "{Trace.build_nodes} with Incomplete stack" do
@@ -197,10 +207,10 @@ class TraceTest < Minitest::Spec
 |-- a
 |-- B
 |   |-- C
-|       |-- c
-|       `-- End.success
+|   |   |-- c
+|   |   `-- End.success
 |   |-- b
-|   |-- End.success
+|   `-- End.success
 `-- End.success)
   end
 
